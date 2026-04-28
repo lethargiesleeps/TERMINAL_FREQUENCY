@@ -30,19 +30,19 @@ namespace TERMINAL_FREQUENCY.Core
                     currentChar[y, x] = '\0';
         }
 
-        public void Clear()
+        public void Clear(ConsoleColor backgroundColor = ConsoleColor.Black)
         {
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++)
                 {
                     nextChar[y, x] = ' ';
-                    nextColor[y, x] = ConsoleColor.Black;
+                    nextColor[y, x] = backgroundColor;
                 }
         }
 
         public void SetPixel(int x, int y, char c, ConsoleColor color = ConsoleColor.White)
         {
-            // Silently ignore if out of bounds
+            //silently ignore if out of bounds
             if (x < 0 || x >= Width || y < 0 || y >= Height)
                 return;
 
@@ -72,7 +72,7 @@ namespace TERMINAL_FREQUENCY.Core
 
         public void Render()
         {
-            // Handle console resize
+            //handle console resize
             if (Width != Console.WindowWidth || Height != Console.WindowHeight)
             {
                 Width = Console.WindowWidth;

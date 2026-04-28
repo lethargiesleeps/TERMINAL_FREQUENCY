@@ -13,7 +13,25 @@ namespace TERMINAL_FREQUENCY
         private static List<IVisualization> _visualizations;
         static void Main(string[] args)
         {
-            Console.Title = "TERMINAL FREQUENCY";
+            bool isChild = args.Length > 0 && args[0] == "--child";
+
+            if (!isChild)
+            {
+                for (int i = 1; i < Config.Config.INSTANCES; i++)
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = Environment.ProcessPath,
+                        Arguments = "--child",
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    });
+                    Thread.Sleep(300);
+                }
+            }
+
+            // Rest of your code...
+            Console.Title = isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
             Console.CursorVisible = false;
 
             Utility.PrintStartup();
@@ -22,7 +40,8 @@ namespace TERMINAL_FREQUENCY
             {
                 _visualizations = new List<IVisualization>()
                 {
-                    new KickCircle()
+                    new Rings(),
+                    new Waterfall()
                 };
 
                 AudioCapture audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
@@ -48,8 +67,10 @@ namespace TERMINAL_FREQUENCY
                 {
                     if (_isPaused) return;
 
-                    if (currentVisualization is KickCircle kickCircle)
-                        kickCircle.OnSpike();
+                    if (currentVisualization is Rings rings)
+                        rings.OnSpike();
+                    else if(currentVisualization is Waterfall waterfall)
+                        waterfall.OnSpike(volume);
                 };
 
                 //capture the audio
