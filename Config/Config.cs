@@ -14,7 +14,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static bool FORCE_DEFAULT_SETTINGS = true; //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
         public static bool FORCE_SETTINGS_SAFE_RANGES = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
         public static bool LOG_SETTINGS_SAFE_RANGE_ERRORS = true; //if true and FORCE_SETTING_SAFE_RANGES is true, prints all errors of values outside saferanges to the console and closes window on input
-        public static int THREAD_RATE = 16; //he higher the slower... 33 = 30fps, a CPU dependent frame rate
+        public static int THREAD_RATE = 1; //he higher the slower... approx FPS values are [1 = ~ 1000fps (max speed, max cpu usage, beware!), 8 = ~120fps, 16 = ~60fps, 33 = ~30fps, 50 = ~20fps, 100 = ~10fps] (safe range 8-100)
         public static bool DEBUG_MODE = true; //displays extra info if true
         public static int DEFAULT_MODE = 2; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
         public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
@@ -100,11 +100,11 @@ namespace TERMINAL_FREQUENCY.Config
         #endregion
 
         #region ShapeSettings
-        public static ShapeType SHAPE_TYPE = ShapeType.Circle; //which shape gets rendered, see enum
+        public static ShapeType SHAPE_TYPE = ShapeType.Square; //which shape gets rendered, see enum
         public static ShapeLayout SHAPE_LAYOUT = ShapeLayout.Single; //how the shape gets laid out (always center if shape count is 1 or shape layout is concentric)
-        public static float SHAPE_MAX_SIZE_PERCENT = 0.8f; //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99)
+        public static float SHAPE_MAX_SIZE_PERCENT = 0.3f; //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99)
         public static float SHAPE_MIN_SIZE_PERCENT = 0.02f; //size at 0 volume, must be lower than max
-        public static int SHAPE_COUNT = 3; //how many shapes get rendered, between 1 and 4
+        public static int SHAPE_COUNT = 2; //how many shapes get rendered, between 1 and 4
         public static int SHAPE_THICKNESS = 1; //thickness of the outline of the shape
         public static int SHAPE_THICKNESS_MAX = 8; //prevents thickness from dynamically exceeding this value
         public static bool SHAPE_USE_CUSTOM_COLOR = false; //if true, uses SHAPE_CUSTOM_COLORS array
@@ -120,6 +120,13 @@ namespace TERMINAL_FREQUENCY.Config
         public static float SHAPE_CIRCLE_SEGMENT_DENSITY = 0.7f; //how many points make up the circle relative to its cirumfrance. 1 is one point per radian (super dense)(safe range 0.3 to 1.5)
         public static int SHAPE_CIRCLE_MIN_SEGMENTS = 12; //how 'circular' the circle is, < 12 can result in squares or triangles (safe range 6-20)
         public static int SHAPE_CIRCLE_MAX_SEGMENTS = 120; //affects overall radius, 120 is plenty but can go higher(safe range 60-200)
+        public static float SHAPE_SQUARE_WIDTH_RATIO = 1.0f;  //1.0 = perfect square, 0.5 = half width, 2.0 = double width
+        public static float SHAPE_SQUARE_HEIGHT_RATIO = 1.0f; //1.0 = perfect square, 0.5 = half height, 2.0 = double height
+
+        public static bool SHAPE_FILL_MODE = false; //if true, fills inside the shape with character, super buggy will fix later, you can make THREAD_RATE really low but beware your CPU usage, works best in a smaller console window
+        public static char[] SHAPE_FILL_CHARACTERS = { '░', '▒', '▓', '█' }; //one per shape, if 1 shape then always index 0
+        public static ConsoleColor[] SHAPE_FILL_COLORS = { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray }; //same as above but for color
+        public static int SHAPE_FILL_SPACING = 1; //0 = solid, 1 = every other, 2 = every third
         public static float SHAPE_TRIGGER_THRESHOLD = 0.08f; //ignores volume below this
         #endregion
     }
