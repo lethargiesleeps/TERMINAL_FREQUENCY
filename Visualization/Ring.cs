@@ -8,28 +8,33 @@ namespace TERMINAL_FREQUENCY.Visualization
     {
         public float Radius { get; set; }
         public float Life { get; set; } //1 is full life, 0 is dead
+        public bool IsReversed { get; set; }
         private readonly Random rng;
         public Ring()
         {
-            Radius = Config.Config.RING_RADIUS;
+            IsReversed = Config.Config.RINGS_REVERSE_MODE;
+            Radius = IsReversed ? Config.Config.RING_RADIUS_MAX : Config.Config.RING_RADIUS;
             Life = Config.Config.RING_LIFETIME;
             rng = new Random();
         }
 
         public void Update(float speed = 0.7f, float fadeRate = 0.02f)
         {
-            Radius += speed;
+            Radius += IsReversed ? -speed : speed;
             Life -= fadeRate;
         }
 
-        public bool IsAlive => Life > 0 && Radius <= Config.Config.RING_RADIUS_MAX;
+        public bool IsAlive => IsReversed
+        ? Life > 0 && Radius >= Config.Config.RING_RADIUS_MIN //alive while above min
+        : Life > 0 && Radius <= Config.Config.RING_RADIUS_MAX; //alive while below max
 
         public ConsoleColor GetColor()
         {
             //all floats are between 0 and 1 once normalized
             float normalizedLife = Config.Config.RING_LIFETIME == 1.0f ? Life
                 : Life / Config.Config.RING_LIFETIME;
-            
+
+
             switch (Config.Config.RING_COLOR_MODE)
             {
                 case Config.ColorMode.Light:

@@ -104,9 +104,9 @@ namespace TERMINAL_FREQUENCY.Visualization
                 if (Progress < Config.Config.WATERFALL_NORMAL_FADE_WHITE)
                     return ConsoleColor.White;
                 else if (Progress < Config.Config.WATERFALL_NORMAL_FADE_GRAY)
-                    return ConsoleColor.Gray;
+                    return Config.Config.WATERFALL_COLOR;
                 else if (Progress < Config.Config.WATERFALL_NORMAL_FADE_DARKGRAY)
-                    return ConsoleColor.DarkGray;
+                    return Utility.DarkenColor(Config.Config.WATERFALL_COLOR);
                 else
                     return ConsoleColor.Black;
             }

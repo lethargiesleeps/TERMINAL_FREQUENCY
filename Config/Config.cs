@@ -40,18 +40,18 @@ namespace TERMINAL_FREQUENCY.Config
         #endregion
 
         #region RingSettings
+        public static bool RINGS_REVERSE_MODE = false; //if true rings start at max radius and shrink inwards
+        public static float RING_RADIUS_MIN = 10f; //minimum radius for reverse mode where rings disappear
         public static float RING_RADIUS = 10f; //starting radius of a ring, the lower the closer to the center of the terminal the ring starts (safe range 1-100)
         public static float RING_RADIUS_MAX = 50f; //max radius a ring reaches before being removed, has to be greater than RING_RADIUS
         public static float RING_LIFETIME = 1.0f; //lifespan of ring measured in normalized units. LIFETIME / FADE_RATE = frames before ring 'dies' (safe range 0.1 - 10ish)
-        public static float RING_SPEED = 0.7f; //how many character units the ring expands outward each update frame, higher = expands faster (safe range 0.1 - 5)
+        public static float RING_SPEED = 1f; //how many character units the ring expands outward each update frame, higher = expands faster (safe range 0.1 - 5)
         public static float RING_FADE_RATE = 0.02f; //amount of life subtracted each update frame. Higher values = rings die faster (CANNOT BE 0)
         public static ColorMode RING_COLOR_MODE = ColorMode.Light; //modes of colour of the rings, see ColorMode enum
         public static char[] RING_CHARACTERS = { 'O', 'o', '.' }; //default characters used in rings
         public static bool RING_CHAR_RANDOMIZER = false; //if true, randomly renders a character from RING_CHAR_RANDOMIZER_CHARSET instead of using RING_CHARACTERS
         public static string RING_CHAR_RANDOMIZER_CHARSET = "$!@#%^"; //see above
-        #endregion
 
-        #region RingsSettings
         public static int RINGS_MAX = 3; //number of rings that CAN appear in the console, doesn't guarantee they will all appear
         public static int RING_SEGMENTS = 24; //how many points make up each ring ( 8 to 60, the lower the blockier, the higher the more circle like)
         public static int RING_AMBIENT_SEGMENTS = 40; //how many points in ambient circle (safe range 8 - 40)
@@ -95,6 +95,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static float WATERFALL_NORMAL_FADE_WHITE = 0.30f; //white phase end (only if rainbow mode is off)
         public static float WATERFALL_NORMAL_FADE_GRAY = 0.60f; // gray phase end (only if rainbow mode is off)
         public static float WATERFALL_NORMAL_FADE_DARKGRAY = 0.85f; //dark gray phase end (after this = black) (only if rainbow mode is off)
+        public static ConsoleColor WATERFALL_COLOR = ConsoleColor.Gray; //which colour to use, default is grey, can't pass white or black.
         #endregion
     }
 }
