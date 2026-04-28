@@ -49,13 +49,36 @@ namespace TERMINAL_FREQUENCY.Visualization
         public void OnSpike(float intensity)
         {
             if (Config.Config.WATERFALL_ONLY_SPAWN_ON_THRESHOLD && intensity < Config.Config.WATERFALL_TRIGGER_THRESHOLD) return;
+
             lock (streamLock)
             {
-                if (streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
-                    streams.RemoveAt(0);
+                if (Config.Config.WATERFALL_MODE == WaterfallMode.All)
+                {
+                    VisualizationOrigin[] allOrigins =
+                    {
+                        VisualizationOrigin.Top,
+                        VisualizationOrigin.Bottom,
+                        VisualizationOrigin.Left,
+                        VisualizationOrigin.Right
+                    };
 
-                VisualizationOrigin origin = GetNextOrigin();
-                streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
+                    foreach (VisualizationOrigin o in allOrigins)
+                    {
+                        while (streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                            streams.RemoveAt(0);
+
+                        bool isReversed = Config.Config.WATERFALL_REVERSE_MODE;
+                        streams.Add(new WaterfallStream(intensity, o, isReversed));
+                    }
+                }
+                else
+                {
+                    if (streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                        streams.RemoveAt(0);
+
+                    VisualizationOrigin origin = GetNextOrigin();
+                    streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
+                }
             }
 
             // Update all streams
@@ -108,6 +131,8 @@ namespace TERMINAL_FREQUENCY.Visualization
                 case WaterfallMode.LeftRight:
                     leftRightToggle = !leftRightToggle;
                     return leftRightToggle ? VisualizationOrigin.Left : VisualizationOrigin.Right;
+                case WaterfallMode.All:
+                    return (VisualizationOrigin)(new Random().Next(4)); // 0=Top, 1=Bottom, 2=Left, 3=Right
 
                 default:
                     return Config.Config.WATERFALL_ORIGIN;

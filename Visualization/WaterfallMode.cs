@@ -12,6 +12,7 @@ namespace TERMINAL_FREQUENCY.Visualization
         Clockwise,
         AntiClockwise,
         TopBottom,
-        LeftRight
+        LeftRight,
+        All
     }
 }

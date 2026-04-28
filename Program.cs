@@ -172,8 +172,12 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.M:
-                        if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_MODE = (WaterfallMode)(((int)Config.Config.WATERFALL_MODE + 1) % 5);
+                        if (_currentVisualization is Waterfall)
+                        {
+                            int modeCount = Enum.GetValues(typeof(WaterfallMode)).Length;
+                            Config.Config.WATERFALL_MODE = (WaterfallMode)(((int)Config.Config.WATERFALL_MODE + 1) % modeCount);
+                        }
+
                         break;
 
                     case ConsoleKey.X:
