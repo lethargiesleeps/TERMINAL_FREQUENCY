@@ -7,13 +7,13 @@ namespace TERMINAL_FREQUENCY.Visualization
     public class Ring
     {
         public float Radius { get; set; }
-        public float Life { get; set; }
-        private Random random;
+        public float Life { get; set; } //1 is full life, 0 is dead
+        private readonly Random rng;
         public Ring()
         {
             Radius = Config.Config.RING_RADIUS;
             Life = Config.Config.RING_LIFETIME;
-            random = new Random();
+            rng = new Random();
         }
 
         public void Update(float speed = 0.7f, float fadeRate = 0.02f)
@@ -80,14 +80,15 @@ namespace TERMINAL_FREQUENCY.Visualization
 
         public char GetChar(int segmentIndex)
         {
-            if (Config.Config.USE_RING_CHAR_RANDOMIZER)
+            if (Config.Config.RING_CHAR_RANDOMIZER)
             {
                 string charSet = Config.Config.RING_CHAR_RANDOMIZER_CHARSET;
-                int randomIndex = random.Next(0, charSet.Length);
+                int randomIndex = rng.Next(0, charSet.Length);
                 return charSet[randomIndex];
             }
             else
             {
+                //TODO: update to allow for more characters
                 if (segmentIndex % 6 == 0) return Config.Config.RING_CHARACTERS[0];
                 if (segmentIndex % 3 == 0) return Config.Config.RING_CHARACTERS[1];
                 return Config.Config.RING_CHARACTERS[2];

@@ -6,10 +6,10 @@ namespace TERMINAL_FREQUENCY.Core
 {
     public class AudioCapture
     {
-        public event Action<float> OnVolumeUpdated;
-        public event Action<float> OnVolumeSpike;
+        public event Action<float>? OnVolumeUpdated;
+        public event Action<float>? OnVolumeSpike;
 
-        private WasapiLoopbackCapture capture;
+        private WasapiLoopbackCapture? capture;
         private int _deviceIndex = -1; //fallback audio device
 
         public float SmoothedVolume { get; private set; } = 0;
@@ -47,14 +47,14 @@ namespace TERMINAL_FREQUENCY.Core
 
         private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            int sampleCount = e.BytesRecorded / Config.Config.BYTE_4;
+            int sampleCount = e.BytesRecorded / Config.Config.AUDIO_SAMPLE_RESOLUTION;
             if (sampleCount == 0) return;
 
             double sumSquares = 0;
 
             for (int i = 0; i < sampleCount; i++)
             {
-                float sample = BitConverter.ToSingle(e.Buffer, i * Config.Config.BYTE_4);
+                float sample = BitConverter.ToSingle(e.Buffer, i * Config.Config.AUDIO_SAMPLE_RESOLUTION);
                 sumSquares += (double)sample * (double)sample;
             }
 
@@ -63,26 +63,25 @@ namespace TERMINAL_FREQUENCY.Core
             if (double.IsNaN(rms) || double.IsInfinity(rms))
                 return;
 
-            float volumeNow = (float)rms * Config.Config.RMS_CEILING;
+            float volumeNow = (float)rms * Config.Config.RMS_MULTIPLIER;
 
             //noise gate
-            if (volumeNow < Config.Config.VOL_FLOOR)
+            if (volumeNow < Config.Config.NOISE_GATE_THRESHHOLD)
                 volumeNow = 0;
 
             //smooth out volume
-            SmoothedVolume = SmoothedVolume * Config.Config.VOL_CORRECTOR_CEILING + volumeNow * Config.Config.VOL_CORRECTOR_FLOOR;
+            SmoothedVolume = SmoothedVolume * Config.Config.SMOOTHING_FACTOR_EXISTING + volumeNow * Config.Config.SMOOTHING_FACTOR_INCOMING;
 
             //track peak
-            if (volumeNow > PeakVolume && volumeNow > Config.Config.CLIPPING_THRESHOLD)
+            if (volumeNow > PeakVolume && volumeNow > Config.Config.PEAK_TRACKING_MINIMUM)
                 PeakVolume = volumeNow;
-            PeakVolume *= Config.Config.CLIPPING_PREVENTION;
+            PeakVolume *= Config.Config.PEAK_DECAY_FACTOR;
 
             //notif event listeners
             OnVolumeUpdated?.Invoke(SmoothedVolume);
 
             //Check for spikes
-            //TODO: FIND NAMES FOR THESE MAGIC NUMBERS
-            if (volumeNow > 0.15f && volumeNow > SmoothedVolume * 1.4f)
+            if (volumeNow > Config.Config.SPIKE_VOLUME_MINIMUM && volumeNow > SmoothedVolume * Config.Config.SPIKE_RATIO)
             {
                 OnVolumeSpike?.Invoke(volumeNow);
                 SmoothedVolume = volumeNow;

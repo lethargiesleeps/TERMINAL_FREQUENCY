@@ -11,9 +11,29 @@ namespace TERMINAL_FREQUENCY
         private static bool _isPaused = false;
         private static int _currentMode = Config.Config.DEFAULT_MODE;
         private static List<IVisualization> _visualizations;
+        private static IVisualization _currentVisualization;
+
         static void Main(string[] args)
         {
-            Console.Title = "TERMINAL FREQUENCY";
+            bool isChild = args.Length > 0 && args[0] == "--child";
+
+            if (!isChild)
+            {
+                for (int i = 1; i < Config.Config.INSTANCES; i++)
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = Environment.ProcessPath,
+                        Arguments = "--child",
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    });
+                    Thread.Sleep(300);
+                }
+            }
+
+            // Rest of your code...
+            Console.Title = isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
             Console.CursorVisible = false;
 
             Utility.PrintStartup();
@@ -22,7 +42,8 @@ namespace TERMINAL_FREQUENCY
             {
                 _visualizations = new List<IVisualization>()
                 {
-                    new KickCircle()
+                    new Rings(),
+                    new Waterfall()
                 };
 
                 AudioCapture audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
@@ -36,20 +57,22 @@ namespace TERMINAL_FREQUENCY
 
 
                 ScreenBuffer buffer = new ScreenBuffer();
-                IVisualization currentVisualization = _visualizations[_currentMode];
+                _currentVisualization = _visualizations[_currentMode];
 
                 //register audio events
                 audioCapture.OnVolumeUpdated += (volume) =>
                 {
-                    if (!_isPaused) currentVisualization.Update(volume);
+                    if (!_isPaused) _currentVisualization.Update(volume);
                 };
 
                 audioCapture.OnVolumeSpike += (volume) =>
                 {
                     if (_isPaused) return;
 
-                    if (currentVisualization is KickCircle kickCircle)
-                        kickCircle.OnSpike();
+                    if (_currentVisualization is Rings rings)
+                        rings.OnSpike();
+                    else if(_currentVisualization is Waterfall waterfall)
+                        waterfall.OnSpike(volume);
                 };
 
                 //capture the audio
@@ -61,23 +84,28 @@ namespace TERMINAL_FREQUENCY
                     HandleInput(audioCapture);
                     if(!_isPaused)
                     {
-                        currentVisualization = _visualizations[_currentMode];
+                        _currentVisualization = _visualizations[_currentMode];
 
                         //redraw
                         buffer.Clear();
-                        currentVisualization.Draw(buffer);
+                        _currentVisualization.Draw(buffer);
 
                         //debug bar
                         if(Config.Config.DEBUG_MODE)
                         {
                             string modeName = Utility.GetModeName(_currentMode);
                             string status = $"MODE:{modeName} | VOL:{audioCapture.SmoothedVolume:F2} | PEAK:{audioCapture.PeakVolume:F2} | {(_isPaused ? "PAUSED" : "RUNNING")} | [TAB] Switch Mode | [SPACE] Pause | [ESC] Exit ";
+
+                            if (_currentVisualization is Waterfall)
+                                status += $"| [R] Rainbow:{(Config.Config.WATERFALL_RAINBOW_MODE ? "ON" : "OFF")} | [M] Mode:{Config.Config.WATERFALL_MODE} | [X] Reverse:{(Config.Config.WATERFALL_REVERSE_MODE ? "ON" : "OFF")} ";
+
+
                             buffer.DrawStatusBar(status, audioCapture.SmoothedVolume);
                         }
 
 
                         buffer.Render();
-                        Thread.Sleep(Config.Config.FRAME_RATE);
+                        Thread.Sleep(Config.Config.THREAD_RATE);
                     }
                     else
                     {
@@ -135,9 +163,22 @@ namespace TERMINAL_FREQUENCY
                         if (!_isPaused)
                         {
                             _currentMode = (_currentMode + 1) % _visualizations.Count;
-                            if(Config.Config.DEBUG_MODE)
-                                Console.Beep(1000, 50); //TODO: Convert to use NAudio
                         }
+                        break;
+
+                    case ConsoleKey.R:
+                        if (_currentVisualization is Waterfall)
+                            Config.Config.WATERFALL_RAINBOW_MODE = !Config.Config.WATERFALL_RAINBOW_MODE;
+                        break;
+
+                    case ConsoleKey.M:
+                        if(_currentVisualization is Waterfall)
+                            Config.Config.WATERFALL_MODE = (WaterfallMode)(((int)Config.Config.WATERFALL_MODE + 1) % 5);
+                        break;
+
+                    case ConsoleKey.X:
+                        if(_currentVisualization is Waterfall)
+                            Config.Config.WATERFALL_REVERSE_MODE = !Config.Config.WATERFALL_REVERSE_MODE;
                         break;
                 }
             }
