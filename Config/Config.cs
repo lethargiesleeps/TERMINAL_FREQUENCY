@@ -10,16 +10,16 @@ namespace TERMINAL_FREQUENCY.Config
     public static class Config
     {
         #region GlobalSettings
-        public static bool FORCE_DEFAULT_SETTINGS = true; //if true, and a settings.json file is read, it ignores any updates and uses default settings
-        public static int FRAME_RATE = 16; //kind of a lie, the higher the slower... 33 = 30fps, a CPU dependent frame rate
-        public static bool DEBUG_MODE = true;
-        public static int DEFAULT_MODE = 0;
-        public static bool SPECIFY_AUDIO_DEVICE = false;
-        public static bool DARK_MODE = true;
-        public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black;
-        public static int INSTANCES = 1;
-        public static bool FORCE_SETTINGS_SAFE_RANGES = true;
-        public static bool LOG_SETTINGS_SAFE_RANGE_ERRORS = true;
+        public static bool FORCE_DEFAULT_SETTINGS = true; //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
+        public static int THREAD_RATE = 16; //he higher the slower... 33 = 30fps, a CPU dependent frame rate
+        public static bool DEBUG_MODE = true; //displays extra info if true
+        public static int DEFAULT_MODE = 1; //which visualization to start with [0 = Rings, 1 = Waterfall, ...]
+        public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
+        public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
+        public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
+        public static int INSTANCES = 1; //how many independent window processes to launch
+        public static bool FORCE_SETTINGS_SAFE_RANGES = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
+        public static bool LOG_SETTINGS_SAFE_RANGE_ERRORS = true; //if true and FORCE_SETTING_SAFE_RANGES is true, prints all errors of values outside saferanges to the console and closes window on input
         #endregion
 
         #region AudioCaptureSettings
@@ -70,6 +70,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         #region WaterfallSettings
         public static VisualizationOrigin WATERFALL_ORIGIN = VisualizationOrigin.Top; //where the stream starts from (top, bottom, left, right, center = top since it cant start from the center) see VisualizationOrigin enum
+        public static bool WATERFALL_REVERSE_MODE = false; //if true, waterfall always starts at center and expands towards WATERFALL_ORIGIN
         public static WaterfallMode WATERFALL_MODE = WaterfallMode.Normal; //see WaterfallMode enum, normal is just from origin point
         public static float WATERFALL_START_WIDTH_PERCENT = 0.05f; //width of waterfall at origin in percent of console width (safe range 1%-50%)
         public static float WATERFALL_END_WIDTH_PERCENT = 0.8f; //width of waterfall at end of its life in percent of console width, has to be higher than start width (safe range 40%-95%)

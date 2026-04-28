@@ -13,6 +13,7 @@ namespace TERMINAL_FREQUENCY.Visualization
         public float Progress; //0 is origin, 1 is furthest edge
         public float Life; //1 is full life, 0 is dead
         public float Intensity;
+        public bool IsReversed;
         public VisualizationOrigin Origin;
         private ConsoleColor streamColor;
         private static ConsoleColor lastColor = ConsoleColor.White;
@@ -28,12 +29,13 @@ namespace TERMINAL_FREQUENCY.Visualization
             ConsoleColor.Magenta, ConsoleColor.DarkMagenta
         };
 
-        public WaterfallStream(float intensity, VisualizationOrigin origin)
+        public WaterfallStream(float intensity, VisualizationOrigin origin, bool isReversed = false)
         {
             Progress = 0;
             Life = 1.0f;
             Intensity = Math.Min(1.0f, intensity);
             Origin = origin == VisualizationOrigin.Center ? VisualizationOrigin.Top : origin;
+            IsReversed = isReversed;
 
             if (Config.Config.WATERFALL_RAINBOW_MODE)
             {
@@ -46,6 +48,8 @@ namespace TERMINAL_FREQUENCY.Visualization
                 streamColor = newColor;
                 lastColor = newColor;
             }
+
+            IsReversed = isReversed;
         }
 
         public void Update()

@@ -48,14 +48,14 @@ namespace TERMINAL_FREQUENCY.Visualization
 
         public void OnSpike(float intensity)
         {
-            if(Config.Config.WATERFALL_ONLY_SPAWN_ON_THRESHOLD && intensity < Config.Config.WATERFALL_TRIGGER_THRESHOLD)
+            if (Config.Config.WATERFALL_ONLY_SPAWN_ON_THRESHOLD && intensity < Config.Config.WATERFALL_TRIGGER_THRESHOLD) return;
             lock (streamLock)
             {
                 if (streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
                     streams.RemoveAt(0);
 
                 VisualizationOrigin origin = GetNextOrigin();
-                streams.Add(new WaterfallStream(intensity, origin));
+                streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
             }
 
             // Update all streams
@@ -139,10 +139,23 @@ namespace TERMINAL_FREQUENCY.Visualization
 
             //calcY
             int streamY;
-            if (fromTop)
-                streamY = (int)(stream.Progress * consoleHeight);
+
+            if(stream.IsReversed)
+            {
+                //start from middle, move toward origin edge
+                int centerY = consoleHeight / 2;
+                if (fromTop)
+                    streamY = centerY - (int)(stream.Progress * centerY);
+                else
+                    streamY = centerY + (int)(stream.Progress * (consoleHeight - centerY));
+            }
             else
-                streamY = consoleHeight - 1 - (int)(stream.Progress * consoleHeight);
+            {
+                if (fromTop)
+                    streamY = (int)(stream.Progress * consoleHeight);
+                else
+                    streamY = consoleHeight - 1 - (int)(stream.Progress * consoleHeight);
+            }
 
             //calculate width
             int halfWidth = (int)(stream.GetWidth(consoleWidth) / 2);
@@ -192,10 +205,21 @@ namespace TERMINAL_FREQUENCY.Visualization
 
             //calcX
             int streamX;
-            if (fromLeft)
-                streamX = (int)(stream.Progress * consoleWidth);
+            if (stream.IsReversed)
+            {
+                int centerX = consoleWidth / 2;
+                if (fromLeft)
+                    streamX = centerX - (int)(stream.Progress * centerX);
+                else
+                    streamX = centerX + (int)(stream.Progress * (consoleWidth - centerX));
+            }
             else
-                streamX = consoleWidth - 1 - (int)(stream.Progress * consoleWidth);
+            {
+                if (fromLeft)
+                    streamX = (int)(stream.Progress * consoleWidth);
+                else
+                    streamX = consoleWidth - 1 - (int)(stream.Progress * consoleWidth);
+            }
 
             //calc width
             int halfHeight = (int)(stream.GetWidth(consoleHeight) / 2);
