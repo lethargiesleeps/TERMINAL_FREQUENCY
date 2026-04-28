@@ -100,8 +100,8 @@ namespace TERMINAL_FREQUENCY.Core
         {
             return modeIndex switch
             {
-                0 => "KICK_CIRCLE",
-                // 1 => "SPECTRUM",
+                0 => "RINGS",
+                1 => "WATERFALL",
                 // 2 => "WAVEFORM",
                 // 3 => "EQUALIZER",
                 _ => "UNKNOWN"
@@ -122,6 +122,26 @@ namespace TERMINAL_FREQUENCY.Core
             }
 
             return devices;
+        }
+
+        public static ConsoleColor DarkenColor(ConsoleColor color)
+        {
+            return color switch
+            {
+                ConsoleColor.Red => ConsoleColor.DarkRed,
+                ConsoleColor.Yellow => ConsoleColor.DarkYellow,
+                ConsoleColor.Green => ConsoleColor.DarkGreen,
+                ConsoleColor.Cyan => ConsoleColor.DarkCyan,
+                ConsoleColor.Blue => ConsoleColor.DarkBlue,
+                ConsoleColor.Magenta => ConsoleColor.DarkMagenta,
+                ConsoleColor.DarkRed => ConsoleColor.DarkRed,
+                ConsoleColor.DarkYellow => ConsoleColor.DarkYellow,
+                ConsoleColor.DarkGreen => ConsoleColor.DarkGreen,
+                ConsoleColor.DarkCyan => ConsoleColor.DarkCyan,
+                ConsoleColor.DarkBlue => ConsoleColor.DarkBlue,
+                ConsoleColor.DarkMagenta => ConsoleColor.DarkMagenta,
+                _ => ConsoleColor.DarkGray
+            };
         }
     }
 }

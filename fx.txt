@@ -1,0 +1,9 @@
+FX:
+Waterfall
+Sphere = ascii sphere that gets bigger then shrinks back when volume peaks
+Cube = Rotating Ascii Cube, can be static or get bigger with volume
+Spectrum = freq spectrum
+Rain = Matrix rain
+SoundWave = like a normal sound wave playing in real time, dont know the name
+Window = Start with a small square, expand outwards at Peaks and start new square in the center
+
