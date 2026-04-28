@@ -3,6 +3,7 @@ using System.Threading;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Shape;
 
 namespace TERMINAL_FREQUENCY
 {
@@ -43,7 +44,8 @@ namespace TERMINAL_FREQUENCY
                 _visualizations = new List<IVisualization>()
                 {
                     new Rings(),
-                    new Waterfall()
+                    new Waterfall(),
+                    new Shape()
                 };
 
                 AudioCapture audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
@@ -73,6 +75,8 @@ namespace TERMINAL_FREQUENCY
                         rings.OnSpike();
                     else if(_currentVisualization is Waterfall waterfall)
                         waterfall.OnSpike(volume);
+                    else if(_currentVisualization is Shape shape)
+                        shape.OnSpike();
                 };
 
                 //capture the audio

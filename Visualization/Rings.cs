@@ -62,7 +62,7 @@ namespace TERMINAL_FREQUENCY.Visualization
                 int y = centerY + (int)(Math.Sin(angle) * ambientRadius * Config.Config.RING_Y_STRETCH);
 
                 //TODO: determine if this should be in crosshair mode, make the . configurable
-                if (segmentIndex % Config.Config.RING_AMBIENT_DOT_INTRVAL == 0)
+                if (Config.Config.RINGS_DRAW_CROSSHAIR && segmentIndex % Config.Config.RING_AMBIENT_DOT_INTRVAL == 0)
                     buffer.SetPixel(x, y, '·', Config.Config.RING_AMBIENT_COLOR);
             }
 

@@ -102,7 +102,7 @@ namespace TERMINAL_FREQUENCY.Core
             {
                 0 => "RINGS",
                 1 => "WATERFALL",
-                // 2 => "WAVEFORM",
+                2 => "SHAPE",
                 // 3 => "EQUALIZER",
                 _ => "UNKNOWN"
             };

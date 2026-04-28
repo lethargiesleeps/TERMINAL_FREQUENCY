@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Shape;
 
 namespace TERMINAL_FREQUENCY.Config
 {
@@ -15,7 +16,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static bool LOG_SETTINGS_SAFE_RANGE_ERRORS = true; //if true and FORCE_SETTING_SAFE_RANGES is true, prints all errors of values outside saferanges to the console and closes window on input
         public static int THREAD_RATE = 16; //he higher the slower... 33 = 30fps, a CPU dependent frame rate
         public static bool DEBUG_MODE = true; //displays extra info if true
-        public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, ...]
+        public static int DEFAULT_MODE = 2; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
         public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
         public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
         public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
@@ -96,6 +97,30 @@ namespace TERMINAL_FREQUENCY.Config
         public static float WATERFALL_NORMAL_FADE_GRAY = 0.60f; // gray phase end (only if rainbow mode is off)
         public static float WATERFALL_NORMAL_FADE_DARKGRAY = 0.85f; //dark gray phase end (after this = black) (only if rainbow mode is off)
         public static ConsoleColor WATERFALL_COLOR = ConsoleColor.Gray; //which colour to use, default is grey, can't pass white or black.
+        #endregion
+
+        #region ShapeSettings
+        public static ShapeType SHAPE_TYPE = ShapeType.Circle; //which shape gets rendered, see enum
+        public static ShapeLayout SHAPE_LAYOUT = ShapeLayout.Single; //how the shape gets laid out (always center if shape count is 1 or shape layout is concentric)
+        public static float SHAPE_MAX_SIZE_PERCENT = 0.8f; //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99)
+        public static float SHAPE_MIN_SIZE_PERCENT = 0.02f; //size at 0 volume, must be lower than max
+        public static int SHAPE_COUNT = 3; //how many shapes get rendered, between 1 and 4
+        public static int SHAPE_THICKNESS = 1; //thickness of the outline of the shape
+        public static int SHAPE_THICKNESS_MAX = 8; //prevents thickness from dynamically exceeding this value
+        public static bool SHAPE_USE_CUSTOM_COLOR = false; //if true, uses SHAPE_CUSTOM_COLORS array
+        public static ConsoleColor SHAPE_UNIFORM_COLOR = ConsoleColor.White; //change color here, use custom color if each shape should be different
+        public static ConsoleColor[] SHAPE_CUSTOM_COLORS = { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }; //used if mode is toggled on, macx of 4
+        public static bool SHAPE_REVERSE_MODE = false; //if true, start at max and go inwards for each shape
+        public static bool SHAPE_SMOOTH_MODE = true; //if true, attemps to smooth out the shape on motion
+        public static float SHAPE_LERP_FACTOR = 0.4f; //smoothing speed for smooth mode
+        public static int SHAPE_PADDING = 2; //Chars between concentric shapes
+        public static char SHAPE_CHARACTER = '█'; //what prints as the shape
+        public static bool SHAPE_VERTICAL_STACK = true; //for count=2: true=vertical, false=horizontal
+        public static bool SHAPE_PYRAMID_INVERTED = false; //for pyramid layout, count = 3
+        public static float SHAPE_CIRCLE_SEGMENT_DENSITY = 0.7f; //how many points make up the circle relative to its cirumfrance. 1 is one point per radian (super dense)(safe range 0.3 to 1.5)
+        public static int SHAPE_CIRCLE_MIN_SEGMENTS = 12; //how 'circular' the circle is, < 12 can result in squares or triangles (safe range 6-20)
+        public static int SHAPE_CIRCLE_MAX_SEGMENTS = 120; //affects overall radius, 120 is plenty but can go higher(safe range 60-200)
+        public static float SHAPE_TRIGGER_THRESHOLD = 0.08f; //ignores volume below this
         #endregion
     }
 }
