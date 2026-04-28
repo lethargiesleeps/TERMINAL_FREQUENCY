@@ -126,7 +126,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     DrawSquare(buffer, centerX, centerY, radius, thickness, color);
                     break;
                 case ShapeType.Diamond:
-                    DrawCircle(buffer, centerX, centerY, radius, thickness, color); // Placeholder
+                    DrawDiamond(buffer, centerX, centerY, radius, thickness, color);
                     break;
                 case ShapeType.Hexagon:
                     DrawCircle(buffer, centerX, centerY, radius, thickness, color); // Placeholder
@@ -239,6 +239,66 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        private void DrawDiamond(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
+        {
+            int halfWidth = radius;
+            int halfHeight = (int)(radius * 0.45f); //correct based on aspect ratio
+
+            for(int t = 0; t < thickness;  t++)
+            {
+                int hw = halfWidth - t; //calculated half width
+                int hh = halfHeight - t; //calculated half height
+
+                int topX = centerX;
+                int topY = centerY - hh;
+
+                int rightX = centerX + hw;
+                int rightY = centerY;
+
+                int bottomX = centerX;
+                int bottomY = centerY + hh;
+
+                int leftX = centerX - hw;
+                int leftY = centerY;
+
+                //draw the diamond edges
+                DrawLine(buffer, topX, topY, rightX, rightY, color);    //top to right
+                DrawLine(buffer, rightX, rightY, bottomX, bottomY, color); //right to bottom
+                DrawLine(buffer, bottomX, bottomY, leftX, leftY, color);   //bottom to left
+                DrawLine(buffer, leftX, leftY, topX, topY, color);         //left to top
+            }
+        }
+
+        private void DrawLine(ScreenBuffer buffer, int x0, int y0, int x1, int y1, ConsoleColor color)
+        {
+            //draw the line from x0/y0 to x1/y1 using bresenham algo
+            int deltaX = Math.Abs(x1 - x0);
+            int deltaY = Math.Abs(y1 - y0);
+            int stepX = x0 < x1 ? 1 : -1;
+            int stepY = y0 < y1 ? 1 : -1;
+            int error = deltaX - deltaY;
+
+            while(true)
+            {
+                buffer.SetPixel(x0, y0, Config.Config.SHAPE_CHARACTER, color);
+
+                if (x0 == x1 && y0 == y1) break;
+
+                int doubleError = 2 * error;
+                if(doubleError > -deltaY)
+                {
+                    error -= deltaY;
+                    x0 += stepX;
+                }
+
+                if(doubleError < deltaX)
+                {
+                    error += deltaX;
+                    y0 += stepY;
+                }
+            }
+        }
+
         private void FillShape(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, int shapeIndex)
         {
             if (!Config.Config.SHAPE_FILL_MODE) return;
@@ -257,7 +317,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 case ShapeType.Square:
                     FillSquare(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
                     break;
+                case ShapeType.Diamond:
+                    FillDiamond(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
+                    break;
             }
+
         }
 
         private void FillCircle(ScreenBuffer buffer, int centerX, int centerY, int maxRadius, char fillChar, ConsoleColor fillColor, int spacing)
@@ -289,6 +353,34 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 {
                     buffer.SetPixel(x, y, fillChar, fillColor);
                 }
+            }
+        }
+
+        private void FillDiamond(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
+        {
+            int minRadius = 3; //mybe let user adjust this, but should not go below 3
+            if (radius < minRadius) return;
+
+            int halfWidth = radius;
+            int halfHeight = (int)(radius * 0.45f);
+
+            //increase for biger diamonds
+            int effectiveSpacing = spacing;
+            if (radius > 25) effectiveSpacing += 1;
+            if (radius > 40) effectiveSpacing += 1;
+
+            for (int y = centerY - halfHeight; y <= centerY + halfHeight; y += effectiveSpacing)
+            {
+                //calculate how far from center this row is (0 to 1)
+                float rowProgress = Math.Abs(y - centerY) / (float)halfHeight;
+
+                //width at this row (diamond gets narrower toward top/bottom)
+                int rowHalfWidth = (int)(halfWidth * (1 - rowProgress));
+
+                //fill this row from left to right edge
+                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
+                    buffer.SetPixel(x, y, fillChar, fillColor);
+
             }
         }
     }

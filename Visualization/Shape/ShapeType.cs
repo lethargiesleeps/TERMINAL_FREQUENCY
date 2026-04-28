@@ -11,6 +11,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         Circle,
         Square,
         Diamond,
-        Hexagon
+        Polygon,
+        TriangleUp,
+        TriangleDown
     }
 }
