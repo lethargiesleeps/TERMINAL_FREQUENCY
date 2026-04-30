@@ -30,13 +30,14 @@ namespace TERMINAL_FREQUENCY.Core
                     currentChar[y, x] = '\0';
         }
 
-        public void Clear(ConsoleColor backgroundColor = ConsoleColor.Black)
+        public void Clear()
         {
+            ConsoleColor bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++)
                 {
                     nextChar[y, x] = ' ';
-                    nextColor[y, x] = backgroundColor;
+                    nextColor[y, x] = bgColor;
                 }
         }
 
@@ -72,6 +73,8 @@ namespace TERMINAL_FREQUENCY.Core
 
         public void Render()
         {
+            ConsoleColor bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
+
             //handle console resize
             if (Width != Console.WindowWidth || Height != Console.WindowHeight)
             {
@@ -86,12 +89,13 @@ namespace TERMINAL_FREQUENCY.Core
                 for (int y = 0; y < Height; y++)
                     for (int x = 0; x < Width; x++)
                         currentChar[y, x] = '\0';
-
+                Console.BackgroundColor = bgColor;
                 Console.Clear();
                 return;
             }
 
-            // Render only changed pixels
+
+            //render only changed pixels
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
@@ -101,6 +105,7 @@ namespace TERMINAL_FREQUENCY.Core
                         if (y < Console.WindowHeight && x < Console.WindowWidth)
                         {
                             Console.SetCursorPosition(x, y);
+                            Console.BackgroundColor = bgColor;
                             Console.ForegroundColor = nextColor[y, x];
                             Console.Write(nextChar[y, x]);
                         }

@@ -13,38 +13,61 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         private int modeIndex = 2;
         private float currentSize = 0f;
         private float targetSize = 0f;
-        private float smoothedVolume = 0f;
-        private readonly object shapeLock = new object();
-
+        private float sizeBoost = 2.0f;
         string IVisualization.Name => name;
         int IVisualization.ModeIndex => modeIndex;
         public bool IsReversed { get; set; }
         public bool IsSmoothingEnabled { get; set; }
         public bool IsCustomColorEnabled { get; set; }
-
-        public Shape() 
+        public bool IsCyclingEnabled { get; set; }
+        private float peakVolume = 0.1f;
+        public Shape()
         {
             IsReversed = Config.Config.SHAPE_REVERSE_MODE;
             IsSmoothingEnabled = Config.Config.SHAPE_SMOOTH_MODE;
             IsCustomColorEnabled = Config.Config.SHAPE_USE_CUSTOM_COLOR;
-        }
 
+
+        }
+        #region IVisualization
         public void Update(float volume)
         {
             IsReversed = Config.Config.SHAPE_REVERSE_MODE;
             IsSmoothingEnabled = Config.Config.SHAPE_SMOOTH_MODE;
             IsCustomColorEnabled = Config.Config.SHAPE_USE_CUSTOM_COLOR;
 
-            if (volume < Config.Config.SHAPE_TRIGGER_THRESHOLD)
-                volume = 0;
-
-            smoothedVolume = volume;
             float maxSize = GetEffectiveMaxSize();
             float minSize = GetMinSize();
+            float scaledVolume;
 
-            targetSize = IsReversed
-                ? maxSize - (volume * (maxSize - minSize))
-                : minSize + (volume * (maxSize - minSize));
+            if (IsReversed)
+            {
+                //track peak and normalize for reverse
+                if (volume > peakVolume)
+                    peakVolume = volume;
+                peakVolume *= 0.995f;
+
+                float normalizedVolume = peakVolume > 0.01f ? Math.Clamp(volume / peakVolume, 0f, 1f) : 0f;
+
+                if (normalizedVolume < Config.Config.SHAPE_TRIGGER_THRESHOLD * Config.Config.SHAPE_REVERSE_VOLUME_SENSITIVITY)
+                    normalizedVolume = 0;
+
+
+                //boost maxSize artificially to look more like raw volume
+                maxSize *= 5;
+
+                targetSize = maxSize - (normalizedVolume * (maxSize - minSize));
+            }
+            else
+            {
+                //raw audio volume
+                if (volume < Config.Config.SHAPE_TRIGGER_THRESHOLD)
+                    volume = 0;
+
+                scaledVolume = volume * Config.Config.SHAPE_VOLUME_SENSITIVITY;
+
+                targetSize = minSize + (scaledVolume * (maxSize - minSize));
+            }
 
             currentSize = IsSmoothingEnabled
                 ? currentSize + (targetSize - currentSize) * Config.Config.SHAPE_LERP_FACTOR
@@ -54,14 +77,20 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         public void OnSpike()
         {
             targetSize = IsReversed ? GetMinSize() : GetEffectiveMaxSize();
-            if(!IsSmoothingEnabled) currentSize = targetSize;
+            if (!IsSmoothingEnabled) currentSize = targetSize;
         }
+        #endregion
 
+        #region LayoutMethods
         public void Draw(ScreenBuffer buffer)
         {
-            switch(Config.Config.SHAPE_LAYOUT)
+            switch (Config.Config.SHAPE_LAYOUT)
             {
                 case ShapeLayout.Concentric: DrawConcentric(buffer); break;
+                case ShapeLayout.Vertical: DrawVertical(buffer); break;
+                case ShapeLayout.Horizontal: DrawHorizontal(buffer); break;
+                case ShapeLayout.Pyramid: DrawPyramid(buffer); break;
+                case ShapeLayout.Quadrant: DrawQuadrant(buffer); break;
                 case ShapeLayout.Single:
                 default:
                     DrawSingle(buffer);
@@ -75,17 +104,172 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int centerY = buffer.Height / 2;
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
             int radius = (int)(maxDimension * currentSize / 2);
+
             int thickness = GetEffectiveThickness(1);
 
             FillShape(buffer, centerX, centerY, radius, thickness, 0); //fill first
             DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(0));
         }
 
+        private void DrawVertical(ScreenBuffer buffer)
+        {
+            int count = Config.Config.SHAPE_COUNT;
+
+            if (count == 1)
+            {
+                DrawSingle(buffer);
+                return;
+            }
+
+
+            int thickness = GetEffectiveThickness(count);
+            int spacing = 2; //pixel between shapes
+
+            for (int i = 0; i < count; i++)
+            {
+                int centerX = buffer.Width / 2;
+                int centerY = GetVerticalPosition(buffer.Height, count, i, spacing);
+                int maxDimension = Math.Min(buffer.Width, buffer.Height / Math.Max(1, count));
+                maxDimension = (int)(maxDimension * sizeBoost);
+                int radius = (int)(maxDimension * currentSize / 2);
+
+                FillShape(buffer, centerX, centerY, radius, thickness, i);
+                DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
+
+            }
+
+        }
+
+        private void DrawHorizontal(ScreenBuffer buffer)
+        {
+            int count = Config.Config.SHAPE_COUNT;
+
+            if (count == 1)
+            {
+                DrawSingle(buffer);
+                return;
+            }
+
+
+            int thickness = GetEffectiveThickness(count);
+            int spacing = 2;
+
+            for (int i = 0; i < count; i++)
+            {
+                int centerX = GetHorizontalPosition(buffer.Width, count, i, spacing);
+                int centerY = buffer.Height / 2;
+                int maxDimension = Math.Min(buffer.Width / Math.Max(1, count), buffer.Height);
+                int radius = (int)(maxDimension * currentSize / 2);
+
+                FillShape(buffer, centerX, centerY, radius, thickness, i);
+                DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
+            }
+        }
+
+        private void DrawPyramid(ScreenBuffer buffer)
+        {
+            int count = Config.Config.SHAPE_COUNT;
+            int thickness = GetEffectiveThickness(count);
+
+            //do normal if under 3
+            if (count < 3)
+            {
+                DrawSingle(buffer);
+                return;
+            }
+
+            bool inverted = count >= 4; //if shape count is 4 we flip the pyramid
+            int rows = count <= 2 ? 1 : 2;
+            int shapeIndex = 0;
+
+            for (int row = 0; row < rows; row++)
+            {
+                int shapesInRow;
+                if (!inverted)
+                    shapesInRow = row == 0 ? 1 : count - 1;  //normal
+                else
+                    shapesInRow = row == 0 ? count - 1 : 1;  //inverted
+
+                int rowSpacing = (int)(buffer.Height * Config.Config.SHAPE_PYRAMID_ROW_SPACING);
+
+                int rowY = !inverted
+                    ? buffer.Height / 2 - ((rows - 1 - row) * rowSpacing)
+                    : buffer.Height / 2 + (row * rowSpacing);
+
+                for (int s = 0; s < shapesInRow; s++)
+                {
+                    int centerX = buffer.Width / 2;
+                    if (shapesInRow > 1)
+                        centerX = buffer.Width / 2 + (s == 0 ? -buffer.Width / 6 : buffer.Width / 6);
+
+                    int maxDim = Math.Min(buffer.Width / 3, buffer.Height / 3);
+                    int radius = (int)(maxDim * currentSize / 2);
+
+                    FillShape(buffer, centerX, rowY, radius, thickness, shapeIndex);
+                    DrawShapeAt(buffer, centerX, rowY, radius, thickness, GetColor(shapeIndex));
+                    shapeIndex++;
+                }
+            }
+        }
+
+        private void DrawQuadrant(ScreenBuffer buffer)
+        {
+            int count = Config.Config.SHAPE_COUNT;
+            int thickness = GetEffectiveThickness(count);
+            int[] indices = GetQuadrantIndices(count);
+            int actualShapes = indices.Length;
+            int maxDimension = Math.Min(buffer.Width, buffer.Height) / (actualShapes == 1 ? 2 : actualShapes);
+            int radius = (int)(maxDimension * currentSize / 2);
+            (int x, int y)[] quads;
+
+            if(count == 4) maxDimension = (int)(maxDimension * sizeBoost);
+            if (Config.Config.SHAPE_QUADRANT_CENTERED && actualShapes == 4)
+            {
+                //cluster to middle
+                int gap = Math.Min(buffer.Width, buffer.Height) / Config.Config.SHAPE_QUADRANT_GAP_DIVISOR;
+                quads = new (int, int)[]
+                {
+                    (buffer.Width / 2 - gap, buffer.Height / 2 - gap), //top-left of center
+                    (buffer.Width / 2 + gap, buffer.Height / 2 - gap), //top-right of center
+                    (buffer.Width / 2 - gap, buffer.Height / 2 + gap), //bottom-left of center
+                    (buffer.Width / 2 + gap, buffer.Height / 2 + gap) //bottom-right of center
+                };
+            }
+            else
+            {
+                //center of quadrants
+                quads = new (int, int)[]
+                {
+                    (buffer.Width / 4, buffer.Height / 4),         //0: top left
+                    (buffer.Width * 3 / 4, buffer.Height / 4),     //1: top-right
+                    (buffer.Width / 4, buffer.Height * 3 / 4),     //2: bottom-left
+                    (buffer.Width * 3 / 4, buffer.Height * 3 / 4)  //3: bottom-right
+                };
+            }
+
+
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                int index = indices[i];
+                FillShape(buffer, quads[index].x, quads[index].y, radius, thickness, i);
+                DrawShapeAt(buffer, quads[index].x, quads[index].y, radius, thickness, GetColor(i));
+            }
+        }
+
         private void DrawConcentric(ScreenBuffer buffer)
         {
+            int count = Config.Config.SHAPE_COUNT;
+
+            if(count == 1)
+            {
+                DrawSingle(buffer);
+                return;
+            }
+
             int centerX = buffer.Width / 2;
             int centerY = buffer.Height / 2;
-            int count = Config.Config.SHAPE_COUNT;
+            
             int padding = Config.Config.SHAPE_PADDING;
             int thickness = GetEffectiveThickness(count);
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
@@ -112,7 +296,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
             }
         }
-
+        #endregion
+        #region ShapeDrawingMethods
         private void DrawShapeAt(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             if (radius <= 0) return;
@@ -128,59 +313,31 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 case ShapeType.Diamond:
                     DrawDiamond(buffer, centerX, centerY, radius, thickness, color);
                     break;
-                case ShapeType.Hexagon:
-                    DrawCircle(buffer, centerX, centerY, radius, thickness, color); // Placeholder
+                case ShapeType.Polygon:
+                    DrawPolygon(buffer, centerX, centerY, radius, thickness, color);
+                    break;
+                case ShapeType.TriangleUp:
+                    DrawTriangleUp(buffer, centerX, centerY, radius, thickness, color);
+                    break;
+                case ShapeType.TriangleDown:
+                    DrawTriangleDown(buffer, centerX, centerY, radius, thickness, color);
                     break;
             }
-        }
-        
-        private float GetEffectiveMaxSize()
-        {
-            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
-                return Config.Config.SHAPE_MAX_SIZE_PERCENT;
-            else
-            {
-                int count = Math.Max(1, Config.Config.SHAPE_COUNT);
-                return Config.Config.SHAPE_MAX_SIZE_PERCENT / count;
-            }
-        }
-
-        private float GetMinSize() => Config.Config.SHAPE_MIN_SIZE_PERCENT;
-
-        private int GetEffectiveThickness(int shapeCount)
-        {
-            int thickness = Config.Config.SHAPE_THICKNESS;
-            int maxThickness = Config.Config.SHAPE_THICKNESS_MAX;
-
-            thickness = Math.Max(1, thickness / shapeCount);
-            return Math.Min(thickness, maxThickness);
-        }
-
-        private ConsoleColor GetColor(int shapeIndex)
-        {
-            if(IsCustomColorEnabled)
-            {
-                ConsoleColor[] colors = Config.Config.SHAPE_CUSTOM_COLORS;
-                if (colors != null && colors.Length > 0)
-                    return colors[shapeIndex % colors.Length];
-            }
-
-            return Config.Config.SHAPE_UNIFORM_COLOR;
         }
 
         private void DrawCircle(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int innerRadius = Math.Max(0, radius - thickness);
 
-            for(int r = innerRadius; r <= radius; r++)
+            for (int r = innerRadius; r <= radius; r++)
             {
                 if (r == 0) continue;
 
                 int segments = (int)(2 * Math.PI * r * Config.Config.SHAPE_CIRCLE_SEGMENT_DENSITY);
-                if(segments < Config.Config.SHAPE_CIRCLE_MIN_SEGMENTS) segments = Config.Config.SHAPE_CIRCLE_MIN_SEGMENTS;
+                if (segments < Config.Config.SHAPE_CIRCLE_MIN_SEGMENTS) segments = Config.Config.SHAPE_CIRCLE_MIN_SEGMENTS;
                 if (segments > Config.Config.SHAPE_CIRCLE_MAX_SEGMENTS) segments = Config.Config.SHAPE_CIRCLE_MAX_SEGMENTS;
 
-                for(int i = 0; i < segments; i++)
+                for (int i = 0; i < segments; i++)
                 {
                     double angle = (i * 2 * Math.PI) / segments;
                     int x = centerX + (int)(Math.Cos(angle) * r);
@@ -206,7 +363,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int halfWidth = (int)(radius * Config.Config.SHAPE_SQUARE_WIDTH_RATIO);
             int halfHeight = (int)(radius * Config.Config.SHAPE_SQUARE_HEIGHT_RATIO * 0.45f); //aspect ratio correction
 
-            for(int t = 0; t < thickness; t++)
+            for (int t = 0; t < thickness; t++)
             {
                 int top = centerY - halfHeight + t;
                 int bottom = centerY + halfHeight - t;
@@ -244,7 +401,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int halfWidth = radius;
             int halfHeight = (int)(radius * 0.45f); //correct based on aspect ratio
 
-            for(int t = 0; t < thickness;  t++)
+            for (int t = 0; t < thickness; t++)
             {
                 int hw = halfWidth - t; //calculated half width
                 int hh = halfHeight - t; //calculated half height
@@ -278,20 +435,20 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int stepY = y0 < y1 ? 1 : -1;
             int error = deltaX - deltaY;
 
-            while(true)
+            while (true)
             {
                 buffer.SetPixel(x0, y0, Config.Config.SHAPE_CHARACTER, color);
 
                 if (x0 == x1 && y0 == y1) break;
 
                 int doubleError = 2 * error;
-                if(doubleError > -deltaY)
+                if (doubleError > -deltaY)
                 {
                     error -= deltaY;
                     x0 += stepX;
                 }
 
-                if(doubleError < deltaX)
+                if (doubleError < deltaX)
                 {
                     error += deltaX;
                     y0 += stepY;
@@ -299,6 +456,89 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        private void DrawPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
+        {
+            int sides = Config.Config.SHAPE_POLYGON_SIDES;
+
+            //pre-calcuating vertices
+            (int x, int y)[] vertices = new (int, int)[sides];
+            for (int i = 0; i < sides; i++)
+            {
+                double angle = (i * 2 * Math.PI) / sides - Math.PI / 2; //start from top
+                vertices[i].x = centerX + (int)(Math.Cos(angle) * radius);
+                vertices[i].y = centerY + (int)(Math.Sin(angle) * radius * 0.45f);
+            }
+
+            //draw each thickness layer
+            for (int t = 0; t < thickness; t++)
+            {
+                float scale = 1f - ((float)t / radius);
+                if (scale < 0) scale = 0;
+
+                for (int i = 0; i < sides; i++)
+                {
+                    int next = (i + 1) % sides;
+
+                    int x0 = centerX + (int)((vertices[i].x - centerX) * scale);
+                    int y0 = centerY + (int)((vertices[i].y - centerY) * scale);
+                    int x1 = centerX + (int)((vertices[next].x - centerX) * scale);
+                    int y1 = centerY + (int)((vertices[next].y - centerY) * scale);
+
+                    DrawLine(buffer, x0, y0, x1, y1, color);
+                }
+
+                //solid center if very small
+                if (radius <= thickness + 1)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                            buffer.SetPixel(centerX + dx, centerY + dy, Config.Config.SHAPE_CHARACTER, color);
+                }
+            }
+        }
+
+        private void DrawTriangleUp(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
+        {
+            int sideLength = (int)(radius * Config.Config.SHAPE_TRIANGLE_SIDE_MULTIPLIER);
+            int triangleHeight = (int)(sideLength * Config.Config.SHAPE_TRIANGLE_HEIGHT_MULTIPLIER * Config.Config.SHAPE_TRIANGLE_ASPECT_CORRECTION);
+
+            for (int t = 0; t < thickness; t++)
+            {
+                int topX = centerX;
+                int topY = centerY - triangleHeight + t;
+                int leftX = centerX - sideLength / 2 + t;
+                int leftY = centerY + triangleHeight - t;
+                int rightX = centerX + sideLength / 2 - t;
+                int rightY = centerY + triangleHeight - t;
+
+                DrawLine(buffer, topX, topY, leftX, leftY, color);
+                DrawLine(buffer, topX, topY, rightX, rightY, color);
+                DrawLine(buffer, leftX, leftY, rightX, rightY, color);
+            }
+        }
+
+        private void DrawTriangleDown(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
+        {
+            int sideLength = (int)(radius * Config.Config.SHAPE_TRIANGLE_SIDE_MULTIPLIER);
+            int triangleHeight = (int)(sideLength * Config.Config.SHAPE_TRIANGLE_HEIGHT_MULTIPLIER * Config.Config.SHAPE_TRIANGLE_ASPECT_CORRECTION);
+
+            for (int t = 0; t < thickness; t++)
+            {
+                int bottomX = centerX;
+                int bottomY = centerY + triangleHeight - t;
+                int leftX = centerX - sideLength / 2 + t;
+                int leftY = centerY - triangleHeight + t;
+                int rightX = centerX + sideLength / 2 - t;
+                int rightY = centerY - triangleHeight + t;
+
+                DrawLine(buffer, bottomX, bottomY, leftX, leftY, color);
+                DrawLine(buffer, bottomX, bottomY, rightX, rightY, color);
+                DrawLine(buffer, leftX, leftY, rightX, rightY, color);
+            }
+        }
+        #endregion
+
+        #region ShapeFillMethods
         private void FillShape(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, int shapeIndex)
         {
             if (!Config.Config.SHAPE_FILL_MODE) return;
@@ -319,6 +559,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     break;
                 case ShapeType.Diamond:
                     FillDiamond(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
+                    break;
+                case ShapeType.Polygon:
+                    FillPolygon(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
+                    break;
+                case ShapeType.TriangleUp:
+                    FillTriangleUp(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
+                    break;
+                case ShapeType.TriangleDown:
+                    FillTriangleDown(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
                     break;
             }
 
@@ -383,5 +632,176 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
             }
         }
+
+        private void FillPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
+        {
+            if (radius < 3) return;
+
+            int sides = Config.Config.SHAPE_POLYGON_SIDES;
+            int halfHeight = (int)(radius * 0.45f);
+
+            int effectiveSpacing = spacing;
+            if (radius > 25) effectiveSpacing += 1;
+            if (radius > 40) effectiveSpacing += 1;
+
+            //scan rows top to bottom
+            for (int y = centerY - halfHeight; y <= centerY + halfHeight; y += effectiveSpacing)
+            {
+                float rowProgress = (float)(y - centerY + halfHeight) / (halfHeight * 2);
+
+                //calculate horizontal bounds for this row
+                int rowHalfWidth = CalculatePolygonHalfWidth(radius, sides, rowProgress);
+
+                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
+                    buffer.SetPixel(x, y, fillChar, fillColor);
+            }
+        }
+
+        private void FillTriangleUp(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
+        {
+            if (radius < 3) return;
+
+            int sideLength = (int)(radius * Config.Config.SHAPE_TRIANGLE_SIDE_MULTIPLIER);
+            int triangleHeight = (int)(sideLength * Config.Config.SHAPE_TRIANGLE_HEIGHT_MULTIPLIER * Config.Config.SHAPE_TRIANGLE_ASPECT_CORRECTION);
+            int halfWidth = sideLength / 2;
+
+            int effectiveSpacing = spacing;
+            if (radius > 25) effectiveSpacing += 1;
+            if (radius > 40) effectiveSpacing += 1;
+
+            for (int y = centerY - triangleHeight; y <= centerY + triangleHeight; y += effectiveSpacing)
+            {
+                float rowProgress = (float)(y - (centerY - triangleHeight)) / (triangleHeight * 2);
+                int rowHalfWidth = (int)(halfWidth * rowProgress);
+
+                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
+                {
+                    buffer.SetPixel(x, y, fillChar, fillColor);
+                }
+            }
+        }
+
+        private void FillTriangleDown(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
+        {
+            if (radius < 3) return;
+
+            int sideLength = (int)(radius * Config.Config.SHAPE_TRIANGLE_SIDE_MULTIPLIER);
+            int triangleHeight = (int)(sideLength * Config.Config.SHAPE_TRIANGLE_HEIGHT_MULTIPLIER * Config.Config.SHAPE_TRIANGLE_ASPECT_CORRECTION);
+            int halfWidth = sideLength / 2;
+
+            int effectiveSpacing = spacing;
+            if (radius > 25) effectiveSpacing += 1;
+            if (radius > 40) effectiveSpacing += 1;
+
+            for (int y = centerY - triangleHeight; y <= centerY + triangleHeight; y += effectiveSpacing)
+            {
+                float rowProgress = 1f - (float)(y - (centerY - triangleHeight)) / (triangleHeight * 2);
+                int rowHalfWidth = (int)(halfWidth * rowProgress);
+
+                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
+                {
+                    buffer.SetPixel(x, y, fillChar, fillColor);
+                }
+            }
+        }
+        #endregion
+
+        #region HelperMethods
+        private float GetEffectiveMaxSize()
+        {
+            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                return Config.Config.SHAPE_MAX_SIZE_PERCENT;
+
+            int count = Config.Config.SHAPE_COUNT;
+
+            //layouts that center a single shape use full size
+            if (count == 1)
+                return Config.Config.SHAPE_MAX_SIZE_PERCENT;
+
+            //pyramid with 2 shapes uses full size (falls back to single)
+            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Pyramid && count < 3)
+                return Config.Config.SHAPE_MAX_SIZE_PERCENT;
+
+            return Config.Config.SHAPE_MAX_SIZE_PERCENT / count;
+        }
+
+        private float GetMinSize() => Config.Config.SHAPE_MIN_SIZE_PERCENT;
+
+        private int GetEffectiveThickness(int shapeCount)
+        {
+            int thickness = Config.Config.SHAPE_THICKNESS;
+            int maxThickness = Config.Config.SHAPE_THICKNESS_MAX;
+
+            thickness = Math.Max(1, thickness / shapeCount);
+            return Math.Min(thickness, maxThickness);
+        }
+
+        private ConsoleColor GetColor(int shapeIndex)
+        {
+            if (IsCustomColorEnabled)
+            {
+                ConsoleColor[] colors = Config.Config.SHAPE_CUSTOM_COLORS;
+                if (colors != null && colors.Length > 0)
+                    return colors[shapeIndex % colors.Length];
+            }
+
+            return Config.Config.SHAPE_UNIFORM_COLOR;
+        }
+
+        private int CalculatePolygonHalfWidth(int radius, int sides, float rowProgress)
+        {
+            //polygon width varies with row...widest at center, narrows toward top/bottom
+            //for regular polygons, the width at a given row is proportional to cos(angle)
+            double angleFromTop = rowProgress * Math.PI;
+            double normalizedWidth = Math.Sin(angleFromTop);
+
+            return (int)(radius * normalizedWidth);
+        }
+
+        private int GetVerticalPosition(int height, int count, int index, int spacing)
+        {
+            if (count == 1) return height / 2;
+
+            int totalSpace = height / count;
+            return totalSpace * index + totalSpace / 2;
+        }
+
+        private int GetHorizontalPosition(int width, int count, int index, int spacing)
+        {
+            if (count == 1) return width / 2;
+
+            int totalSpace = width / count;
+            return totalSpace * index + totalSpace / 2;
+        }
+
+        private int[] GetQuadrantIndices(int count)
+        {
+            //user defined positions
+            if (Config.Config.SHAPE_QUADRANT_INDICES != null && Config.Config.SHAPE_QUADRANT_INDICES.Length > 0)
+            {
+                int[] result = new int[Math.Min(count, Config.Config.SHAPE_QUADRANT_INDICES.Length)];
+                Array.Copy(Config.Config.SHAPE_QUADRANT_INDICES, result, result.Length);
+                return result;
+            }
+
+            //auto, where no custom coordinates are passed in config
+            switch (count)
+            {
+                case 1:
+                    Config.Config.SHAPE_QUADRANT_CENTERED = true; //do centered mode
+                    return new int[] { 0, 1, 2, 3 };
+                case 2:
+                    Config.Config.SHAPE_QUADRANT_CENTERED = false;
+                    return new int[] { 0, 3 }; //diagonal
+                case 3:
+                    Config.Config.SHAPE_QUADRANT_CENTERED = false;
+                    return new int[] { 1, 2 }; //reverse diagonal
+                case 4:
+                default:
+                    Config.Config.SHAPE_QUADRANT_CENTERED = false;
+                    return new int[] { 0, 1, 2, 3 };
+            }
+        }
+        #endregion
     }
 }
