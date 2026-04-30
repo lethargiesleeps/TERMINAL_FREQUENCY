@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Shape;
 
 namespace TERMINAL_FREQUENCY.Config
 {
@@ -11,15 +12,25 @@ namespace TERMINAL_FREQUENCY.Config
     {
         #region GlobalSettings
         public static bool FORCE_DEFAULT_SETTINGS = true; //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
-        public static bool FORCE_SETTINGS_SAFE_RANGES = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
-        public static bool LOG_SETTINGS_SAFE_RANGE_ERRORS = true; //if true and FORCE_SETTING_SAFE_RANGES is true, prints all errors of values outside saferanges to the console and closes window on input
-        public static int THREAD_RATE = 16; //he higher the slower... 33 = 30fps, a CPU dependent frame rate
+        public static bool SAFE_MODE = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
+        public static bool ERROR_MODE = true; //if true prints all errors of values outside saferanges to the console and closes window on input
+        public static bool LOCK_CONTROLS = false; //if true, all controls except debug mode, exit, and unlock are ignored
+        public static bool SHOW_GLOBAL_CONTROLS = true; //shows global controls in debug mode
+        public static int THREAD_RATE = 8; //he higher the slower... approx FPS values are [1 = ~ 1000fps (max speed, max cpu usage, beware!), 8 = ~120fps, 16 = ~60fps, 33 = ~30fps, 50 = ~20fps, 100 = ~10fps] (safe range 8-100)
         public static bool DEBUG_MODE = true; //displays extra info if true
-        public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, ...]
+        public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
         public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
         public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
         public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
         public static int INSTANCES = 1; //how many independent window processes to launch
+        public static ConsoleColor[] DEFAULT_COLORS =        
+        {
+            ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green,
+            ConsoleColor.Blue, ConsoleColor.Yellow, ConsoleColor.Cyan,
+            ConsoleColor.Magenta, ConsoleColor.Gray, ConsoleColor.DarkRed,
+            ConsoleColor.DarkGreen, ConsoleColor.DarkBlue, ConsoleColor.DarkYellow,
+            ConsoleColor.DarkCyan, ConsoleColor.DarkMagenta, ConsoleColor.DarkGray
+        };
 
         #endregion
 
@@ -50,7 +61,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static ColorMode RING_COLOR_MODE = ColorMode.Light; //modes of colour of the rings, see ColorMode enum
         public static char[] RING_CHARACTERS = { 'O', 'o', '.' }; //default characters used in rings
         public static bool RING_CHAR_RANDOMIZER = false; //if true, randomly renders a character from RING_CHAR_RANDOMIZER_CHARSET instead of using RING_CHARACTERS
-        public static string RING_CHAR_RANDOMIZER_CHARSET = "$!@#%^"; //see above
+        public static string RING_CHAR_RANDOMIZER_CHARSET = "1234567890"; //see above
 
         public static int RINGS_MAX = 3; //number of rings that CAN appear in the console, doesn't guarantee they will all appear
         public static int RING_SEGMENTS = 24; //how many points make up each ring ( 8 to 60, the lower the blockier, the higher the more circle like)
@@ -60,10 +71,11 @@ namespace TERMINAL_FREQUENCY.Config
         public static float RING_AMBIENT_VOLUME_MULTIPLIER = 3f; //normalized volume affects radius by this much (safe range 1-30)
         public static float RING_AMBIENT_RADIUS_MAX = 20f; //how far the ambient ring goes
         public static float RING_Y_STRETCH = 0.45f; //vertical compression to have better circle in console. messing with this value can result in more Oval or Oblong shapes (safe range 0.2 - 0.8 ish)
-        public static bool RINGS_DRAW_CROSSHAIR = true; //if true, draws a crosshair in the center of the console
+        public static bool RINGS_DRAW_CROSSHAIR = false; //if true, draws a crosshair in the center of the console
         public static ConsoleColor RINGS_CROSSHAIR_COLOR = ConsoleColor.Gray; //see above
         public static ConsoleColor RING_AMBIENT_COLOR = ConsoleColor.Gray; //ambient color
         public static char RINGS_CROSSHAIR_CHAR = '+';
+        public static char RINGS_CROSSHAIR_CHAR_AMBIENT = '0';
         public static int RING_OFFSET = 2; //where in the console is deemed the 'center' for the ring to originate from, 2 is always the true center.
         public static bool RINGS_FIREWORKS_MODE = false; //TODO: if true changes origin point of ring randomly, not yet implemented
     
@@ -96,6 +108,53 @@ namespace TERMINAL_FREQUENCY.Config
         public static float WATERFALL_NORMAL_FADE_GRAY = 0.60f; // gray phase end (only if rainbow mode is off)
         public static float WATERFALL_NORMAL_FADE_DARKGRAY = 0.85f; //dark gray phase end (after this = black) (only if rainbow mode is off)
         public static ConsoleColor WATERFALL_COLOR = ConsoleColor.Gray; //which colour to use, default is grey, can't pass white or black.
+        #endregion
+
+        #region ShapeSettings
+        public static ShapeType SHAPE_TYPE = ShapeType.Circle; //which shape gets rendered, see enum
+        public static ShapeLayout SHAPE_LAYOUT = ShapeLayout.Single; //how the shape gets laid out (always center if shape count is 1 or shape layout is concentric)
+
+        public static float SHAPE_VOLUME_SENSITIVITY = 0.3f; //use in tandem with TRIGGER_THRESHOLD to effectively clamp the visual and make it less sensitive to louder peaks 1.0 = full, 0.5 = half, 0.1 = barely moves (0.1 - 1)
+        public static float SHAPE_TRIGGER_THRESHOLD = 0.15f; //ignores volume below this
+        public static float SHAPE_MAX_SIZE_PERCENT = 0.3f; //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99), keep in mind though that the louder the audio might still exceed window bounds on peak
+        public static float SHAPE_MIN_SIZE_PERCENT = 0.02f; //size at 0 volume, must be lower than max
+        public static int SHAPE_COUNT = 1; //how many shapes get rendered, between 1 and 4
+        public static int SHAPE_THICKNESS = 1; //thickness of the outline of the shape
+        public static int SHAPE_THICKNESS_MAX = 8; //prevents thickness from dynamically exceeding this value
+
+        public static bool SHAPE_QUADRANT_CENTERED = false; //if true, shapes cluster around center of window, only configured to work if shapes is 4
+        public static int[] SHAPE_QUADRANT_INDICES = { }; //empty = auto, else manual quadrants from 0 to 3
+        public static int SHAPE_QUADRANT_GAP_DIVISOR = 8; //smaller = wider gap between shapes (safe range 5-20)
+        public static bool SHAPE_USE_CUSTOM_COLOR = false; //if true, uses SHAPE_CUSTOM_COLORS array
+        public static ConsoleColor SHAPE_UNIFORM_COLOR = ConsoleColor.White; //change color here, use custom color if each shape should be different
+        public static ConsoleColor[] SHAPE_CUSTOM_COLORS = { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }; //used if mode is toggled on, macx of 4
+        
+        public static bool SHAPE_REVERSE_MODE = false; //if true, start at max and go inwards for each shape
+        public static float SHAPE_REVERSE_VOLUME_SENSITIVITY = 0.05f; //normalizes the threshold so shape get closer to center, the closer to 0 the closer to center the shape will get at max volume (safe range: 0.01 to 0.05ish) 
+        public static bool SHAPE_SMOOTH_MODE = true; //if true, attemps to smooth out the shape on motion
+        public static float SHAPE_LERP_FACTOR = 0.4f; //smoothing speed for smooth mode
+        public static int SHAPE_PADDING = 2; //Chars between concentric shapes
+        public static char SHAPE_CHARACTER = 'O'; //what prints as the shape
+        public static bool SHAPE_VERTICAL_STACK = true; //for count=2: true=vertical, false=horizontal
+        
+        public static float SHAPE_CIRCLE_SEGMENT_DENSITY = 0.7f; //how many points make up the circle relative to its cirumfrance. 1 is one point per radian (super dense)(safe range 0.3 to 1.5)
+        public static int SHAPE_CIRCLE_MIN_SEGMENTS = 12; //how 'circular' the circle is, < 12 can result in squares or triangles (safe range 6-20)
+        public static int SHAPE_CIRCLE_MAX_SEGMENTS = 120; //affects overall radius, 120 is plenty but can go higher(safe range 60-200)
+        
+        public static float SHAPE_SQUARE_WIDTH_RATIO = 1.0f;  //1.0 = perfect square, 0.5 = half width, 2.0 = double width
+        public static float SHAPE_SQUARE_HEIGHT_RATIO = 1.0f; //1.0 = perfect square, 0.5 = half height, 2.0 = double height
+
+
+        public static float SHAPE_TRIANGLE_SIDE_MULTIPLIER = 1.8f;  // Side length relative to radius
+        public static float SHAPE_TRIANGLE_HEIGHT_MULTIPLIER = 0.87f; // sqrt(3)/2 for equilateral, adjust for different proportions
+        public static float SHAPE_TRIANGLE_ASPECT_CORRECTION = 0.45f; // Console char aspect ratio
+        public static float SHAPE_PYRAMID_ROW_SPACING = 0.25f; //space between rows in pyramid layout, higher = more space, lower = less space (safe range 0.08 to 0.3)
+        public static int SHAPE_POLYGON_SIDES = 5;//can accept 5, 6, 8, 10, 12 anything higher might as well use circle        
+        public static bool SHAPE_FILL_MODE = false; //if true, fills inside the shape with character, super buggy will fix later, you can make THREAD_RATE really low but beware your CPU usage, works best in a smaller console window
+        public static char[] SHAPE_FILL_CHARACTERS = { 'O', '▒', '▓', '█' }; //one per shape, if 1 shape then always index 0
+        public static ConsoleColor[] SHAPE_FILL_COLORS = { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray }; //same as above but for color
+        public static int SHAPE_FILL_SPACING = 0; //0 = solid, 1 = every other, 2 = every third
+
         #endregion
     }
 }

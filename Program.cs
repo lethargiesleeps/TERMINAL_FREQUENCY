@@ -3,6 +3,7 @@ using System.Threading;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Shape;
 
 namespace TERMINAL_FREQUENCY
 {
@@ -13,10 +14,19 @@ namespace TERMINAL_FREQUENCY
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
 
+        private static ConsoleColor[] _colors = Config.Config.DEFAULT_COLORS;
+
+
         static void Main(string[] args)
         {
             bool isChild = args.Length > 0 && args[0] == "--child";
 
+            if(!Config.Config.DARK_MODE)
+            {
+                Console.BackgroundColor = ConsoleColor.White;
+                Config.Config.SHAPE_UNIFORM_COLOR = ConsoleColor.Black;
+                Config.Config.RING_COLOR_MODE = ColorMode.Dark;
+            }
             if (!isChild)
             {
                 for (int i = 1; i < Config.Config.INSTANCES; i++)
@@ -32,7 +42,7 @@ namespace TERMINAL_FREQUENCY
                 }
             }
 
-            // Rest of your code...
+
             Console.Title = isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
             Console.CursorVisible = false;
 
@@ -43,7 +53,8 @@ namespace TERMINAL_FREQUENCY
                 _visualizations = new List<IVisualization>()
                 {
                     new Rings(),
-                    new Waterfall()
+                    new Waterfall(),
+                    new Shape()
                 };
 
                 AudioCapture audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
@@ -73,6 +84,8 @@ namespace TERMINAL_FREQUENCY
                         rings.OnSpike();
                     else if(_currentVisualization is Waterfall waterfall)
                         waterfall.OnSpike(volume);
+                    else if(_currentVisualization is Shape shape)
+                        shape.OnSpike();
                 };
 
                 //capture the audio
@@ -93,27 +106,45 @@ namespace TERMINAL_FREQUENCY
                         //debug bar
                         if(Config.Config.DEBUG_MODE)
                         {
-                            string modeName = Utility.GetModeName(_currentMode);
-                            string status = $"MODE:{modeName} | VOL:{audioCapture.SmoothedVolume:F2} | PEAK:{audioCapture.PeakVolume:F2} | {(_isPaused ? "PAUSED" : "RUNNING")} | [TAB] Switch | [SPACE] Pause | [ESC] Exit ";
-                            buffer.DrawString(0, buffer.Height - 2, status, ConsoleColor.Gray);
 
                             if (_currentVisualization is Rings)
                             {
-                                string ringsStatus = $"RINGS: Re[V]erse:{(Config.Config.RINGS_REVERSE_MODE ? "ON" : "OFF")} | [C]olor:{Config.Config.RING_COLOR_MODE} | Rando[M] Chars:{(Config.Config.RING_CHAR_RANDOMIZER ? "ON" : "OFF")} | [- or =] -/+ MaxR:{Config.Config.RING_RADIUS_MAX} | [O or P] -/+ Segments:{Config.Config.RING_SEGMENTS}";
-                                buffer.DrawString(0, buffer.Height - 1, ringsStatus, ConsoleColor.Gray);
+                                string ringsStatus = $"RE[V]ERSE:{(Config.Config.RINGS_REVERSE_MODE ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(Config.Config.RING_COLOR_MODE)} | RANDO[M] CHARS:{(Config.Config.RING_CHAR_RANDOMIZER ? "ON" : "OFF")} | [-/=] RADIUS:{Config.Config.RING_RADIUS_MAX} | [O/P] SEGMENTS:{Config.Config.RING_SEGMENTS}";
+                                buffer.DrawString(0, buffer.Height - 3, ringsStatus, ConsoleColor.Gray);
                             }
 
                             if (_currentVisualization is Waterfall)
                             {
-                                string waterfallStatus = $"WTRFALL: [R]ainbow:{(Config.Config.WATERFALL_RAINBOW_MODE ? "ON" : "OFF")} | [M]ode:{Config.Config.WATERFALL_MODE} | Re[V]erse:{(Config.Config.WATERFALL_REVERSE_MODE ? "ON" : "OFF")}";
+                                string waterfallStatus = $"[R]AINBOW:{(Config.Config.WATERFALL_RAINBOW_MODE ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(Config.Config.WATERFALL_MODE)} | RE[V]ERSE:{(Config.Config.WATERFALL_REVERSE_MODE ? "ON" : "OFF")}";
 
                                 if (!Config.Config.WATERFALL_RAINBOW_MODE)
-                                    waterfallStatus += $" | [C]olor:{Config.Config.WATERFALL_COLOR}";
+                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(Config.Config.WATERFALL_COLOR)}";
 
                                 if (Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
-                                    waterfallStatus += $" | [O]rigin:{Config.Config.WATERFALL_ORIGIN}";
+                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(Config.Config.WATERFALL_ORIGIN)}";
 
-                                buffer.DrawString(0, buffer.Height - 1, waterfallStatus, ConsoleColor.Gray);
+                                buffer.DrawString(0, buffer.Height - 3, waterfallStatus, ConsoleColor.Gray);
+                            }
+
+                            if(_currentVisualization is Shape)
+                            {
+                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(Config.Config.SHAPE_TYPE)} | LA[Y]OUT:{Utility.FormatEnum(Config.Config.SHAPE_LAYOUT)} | [C]OLOR:{Utility.FormatEnum(Config.Config.SHAPE_UNIFORM_COLOR)} | [F]ILL:{(Config.Config.SHAPE_FILL_MODE ? "ON" : "OFF")} | RE[V]ERSE:{(Config.Config.SHAPE_REVERSE_MODE ? "ON" : "OFF")} | SMOO[T]H:{(Config.Config.SHAPE_SMOOTH_MODE ? "ON" : "OFF")} | [-/=] SIZE:{Config.Config.SHAPE_MAX_SIZE_PERCENT:F2}";
+
+                                if (Config.Config.SHAPE_TYPE == ShapeType.Polygon)
+                                    shapeStatus += $" | [9/0] VERT:{Config.Config.SHAPE_POLYGON_SIDES}";
+                                if(Config.Config.SHAPE_LAYOUT != ShapeLayout.Single)
+                                    shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_COUNT}";
+                                buffer.DrawString(0, buffer.Height - 3, shapeStatus, ConsoleColor.Gray);
+                            }
+
+                            string modeName = Utility.GetModeName(_currentMode);
+                            string status = $"MODE: {modeName} | VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | LOCK: {(Config.Config.LOCK_CONTROLS ? "ON" : "OFF")}";
+                            buffer.DrawString(0, buffer.Height - 2, status, ConsoleColor.Gray);
+
+                            if (Config.Config.SHOW_GLOBAL_CONTROLS)
+                            {
+                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [1-6] FPS | [ESC] EXIT";
+                                buffer.DrawString(0, buffer.Height - 1, controls, ConsoleColor.DarkGray);
                             }
                         }
 
@@ -124,13 +155,7 @@ namespace TERMINAL_FREQUENCY
                     else
                     {
                         buffer.Clear();
-
-                        //debug bar
-                        if(Config.Config.DEBUG_MODE)
-                        {
-                            string pausedStatus = $"PAUSED | MODE:{Utility.GetModeName(_currentMode)} | [SPACE] Resume | [ESC] Exit ";
-                            buffer.DrawStatusBar(pausedStatus, 0);
-                        }
+                        Utility.PrintPause(buffer, Utility.GetModeName(_currentMode));
                         buffer.Render();
                     }
 
@@ -164,29 +189,44 @@ namespace TERMINAL_FREQUENCY
 
                 switch (key)
                 {
+                    #region GlobalControls
                     case ConsoleKey.Escape:
                         audioCapture?.Stop();
                         Environment.Exit(0);
                         break;
 
                     case ConsoleKey.Spacebar:
+                        if (Config.Config.LOCK_CONTROLS) return;
                         _isPaused = !_isPaused;
                         break;
 
                     case ConsoleKey.Tab:
+                        if (Config.Config.LOCK_CONTROLS) return;
                         if(!_isPaused)
                             _currentMode = (_currentMode + 1) % _visualizations.Count;
                         break;
 
+                    case ConsoleKey.D:
+                        if(!_isPaused)
+                            Config.Config.DEBUG_MODE = !Config.Config.DEBUG_MODE;
+                        break;
+
+                    case ConsoleKey.L:
+                        if (!_isPaused)
+                            Config.Config.LOCK_CONTROLS = !Config.Config.LOCK_CONTROLS;
+                        break;
+                    #endregion
+
+                    #region VisualizationControls
                     case ConsoleKey.R:
-                        if(_isPaused) return;
+                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
 
                         if(_currentVisualization is Waterfall)
                             Config.Config.WATERFALL_RAINBOW_MODE = !Config.Config.WATERFALL_RAINBOW_MODE;
                         break;
 
                     case ConsoleKey.M:
-                        if(_isPaused) return;
+                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
 
                         if(_currentVisualization is Rings)
                             Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
@@ -199,19 +239,21 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.V:
-                        if(_isPaused) return;
+                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
 
                         if(_currentVisualization is Rings)
                             Config.Config.RINGS_REVERSE_MODE = !Config.Config.RINGS_REVERSE_MODE;
 
                         if(_currentVisualization is Waterfall)
                             Config.Config.WATERFALL_REVERSE_MODE = !Config.Config.WATERFALL_REVERSE_MODE;
+                        if (_currentVisualization is Shape)
+                            Config.Config.SHAPE_REVERSE_MODE = !Config.Config.SHAPE_REVERSE_MODE;
                         break;
 
                     case ConsoleKey.C:
-                        if(_isPaused) return;
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
 
-                        if(_currentVisualization is Rings)
+                        if (_currentVisualization is Rings)
                         {
                             ColorMode[] cycle = { ColorMode.Light, ColorMode.Red, ColorMode.Green, ColorMode.Blue, ColorMode.Yellow, ColorMode.RainbowLight, ColorMode.RainbowDark };
                             int index = Array.IndexOf(cycle, Config.Config.RING_COLOR_MODE);
@@ -222,15 +264,63 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Waterfall && !Config.Config.WATERFALL_RAINBOW_MODE)
                         {
-                            ConsoleColor[] cycle = { ConsoleColor.Gray, ConsoleColor.Red, ConsoleColor.Magenta, ConsoleColor.Blue, ConsoleColor.Yellow, ConsoleColor.Cyan, ConsoleColor.Green };
-                            int index = Array.IndexOf(cycle, Config.Config.WATERFALL_COLOR);
+                            //TODO: make this a utility function
+                            int index = Array.IndexOf(_colors, Config.Config.WATERFALL_COLOR);
                             if (index < 0) index = 0;
-                            index = (index + 1) % cycle.Length;
-                            Config.Config.WATERFALL_COLOR = cycle[index];
+                            index = (index + 1) % _colors.Length;
+                            Config.Config.WATERFALL_COLOR = _colors[index];
+                        }
+
+                        if(_currentVisualization is Shape)
+                        {
+                            int index = Array.IndexOf(_colors, Config.Config.SHAPE_UNIFORM_COLOR);
+                            if (index < 0) index = 0;
+                            index = (index + 1) % _colors.Length;
+                            Config.Config.SHAPE_UNIFORM_COLOR = _colors[index];
                         }
                         break;
 
-                    case ConsoleKey.O:
+                    case ConsoleKey.F:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
+                        if (_currentVisualization is Shape)
+                            Config.Config.SHAPE_FILL_MODE = !Config.Config.SHAPE_FILL_MODE;
+                        break;
+
+                    case ConsoleKey.S:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
+                        if(_currentVisualization is Shape)
+                        {
+                            ShapeType[] types = (ShapeType[])Enum.GetValues(typeof(ShapeType));
+                            int index = Array.IndexOf(types, Config.Config.SHAPE_TYPE);
+                            if (index < 0) index = 0;
+                            index = (index + 1) % types.Length;
+                            Config.Config.SHAPE_TYPE = types[index];
+                        }
+                        break;
+
+                    case ConsoleKey.Y:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_currentVisualization is Shape)
+                        {
+                            ShapeLayout[] layouts = (ShapeLayout[])Enum.GetValues(typeof(ShapeLayout));
+                            int index = Array.IndexOf(layouts, Config.Config.SHAPE_LAYOUT);
+                            if (index < 0) index = 0;
+                            index = (index + 1) % layouts.Length;
+                            Config.Config.SHAPE_LAYOUT = layouts[index];
+                        }
+                        break;
+
+                    case ConsoleKey.T:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
+                        if (_currentVisualization is Shape)
+                            Config.Config.SHAPE_SMOOTH_MODE = !Config.Config.SHAPE_SMOOTH_MODE;
+
+                        break;
+                    case ConsoleKey.O: //decrement param 2, except Waterfall Normal mode
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
                         if (_currentVisualization is Rings)
                         {
                             Config.Config.RING_SEGMENTS = Math.Max(8, Config.Config.RING_SEGMENTS - 2);
@@ -245,24 +335,75 @@ namespace TERMINAL_FREQUENCY
                             index = (index + 1) % cycle.Length;
                             Config.Config.WATERFALL_ORIGIN = cycle[index];
                         }
+
+                        if (_currentVisualization is Shape)
+                        {
+                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            int shapeCount = Math.Max(1, Config.Config.SHAPE_COUNT - 1);
+                            Config.Config.SHAPE_COUNT = shapeCount;
+                        }
                         break;
 
-                    case ConsoleKey.P:
+                    case ConsoleKey.P: //increment param 2
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
                         if (_currentVisualization is Rings)
                         {
                             Config.Config.RING_SEGMENTS = Math.Min(60, Config.Config.RING_SEGMENTS + 2);
                             Config.Config.RING_AMBIENT_SEGMENTS = Math.Min(40, Config.Config.RING_AMBIENT_SEGMENTS + 2);
                         }
+
+                        if (_currentVisualization is Shape)
+                        {
+                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            int shapeCount = Math.Min(4, Config.Config.SHAPE_COUNT + 1);
+                            Config.Config.SHAPE_COUNT = shapeCount;
+                        }
                         break;
 
-                    case ConsoleKey.OemMinus:
+                    case ConsoleKey.OemMinus: //decrement param 1
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Max(Config.Config.RING_RADIUS_MIN + 5, Config.Config.RING_RADIUS_MAX - 5);
+
+                        if (_currentVisualization is Shape)
+                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Max(0.05f, Config.Config.SHAPE_MAX_SIZE_PERCENT - 0.02f);
+
                         break;
 
-                    case ConsoleKey.OemPlus:
+                    case ConsoleKey.OemPlus: //increment param 1
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Min(200, Config.Config.RING_RADIUS_MAX + 5);
+
+                        if (_currentVisualization is Shape)
+                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Min(1.0f, Config.Config.SHAPE_MAX_SIZE_PERCENT + 0.02f);
+                        break;
+                    #endregion
+
+                    case ConsoleKey.D9:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
+                        if (_currentVisualization is Shape)
+                        {
+                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            int[] validSides = { 5, 6, 8, 10, 12 };
+                            int currentIndex = Array.IndexOf(validSides, Config.Config.SHAPE_POLYGON_SIDES);
+                            if (currentIndex > 0)
+                                Config.Config.SHAPE_POLYGON_SIDES = validSides[currentIndex - 1];
+                        }
+                        break;
+
+                    case ConsoleKey.D0:
+                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
+                        if (_currentVisualization is Shape)
+                        {
+                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            int[] validSides = { 5, 6, 8, 10, 12 };
+                            int currentIndex = Array.IndexOf(validSides, Config.Config.SHAPE_POLYGON_SIDES);
+                            if (currentIndex < validSides.Length - 1)
+                                Config.Config.SHAPE_POLYGON_SIDES = validSides[currentIndex + 1];
+                        }
                         break;
                 }
             }
