@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
@@ -11,6 +12,7 @@ namespace TERMINAL_FREQUENCY
     {
         private static bool _isPaused = false;
         private static int _currentMode = Config.Config.DEFAULT_MODE;
+        private static bool _isChild = false;
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
 
@@ -19,19 +21,21 @@ namespace TERMINAL_FREQUENCY
 
         static void Main(string[] args)
         {
-            bool isChild = args.Length > 0 && args[0] == "--child";
+            ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
+            _isChild = args.Length > 0 && args[0] == "--child";
 
+            //TODO: Handle Dark Mode better
             if(!Config.Config.DARK_MODE)
             {
                 Console.BackgroundColor = ConsoleColor.White;
                 Config.Config.SHAPE_UNIFORM_COLOR = ConsoleColor.Black;
                 Config.Config.RING_COLOR_MODE = ColorMode.Dark;
             }
-            if (!isChild)
+            if (!_isChild)
             {
                 for (int i = 1; i < Config.Config.INSTANCES; i++)
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = Environment.ProcessPath,
                         Arguments = "--child",
@@ -42,11 +46,7 @@ namespace TERMINAL_FREQUENCY
                 }
             }
 
-
-            Console.Title = isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
-            Console.CursorVisible = false;
-
-            Utility.PrintStartup();
+            HandleConsoleWindow();
 
             try
             {
@@ -80,6 +80,9 @@ namespace TERMINAL_FREQUENCY
                 {
                     if (_isPaused) return;
 
+                    if (Config.Config.ENABLE_FLASH_ON_BEAT) //doesnt seem to really work
+                        ConsoleWindow.FlashWindowOnBeat(Config.Config.FLASH_ON_BEAT_COUNT);
+
                     if (_currentVisualization is Rings rings)
                         rings.OnSpike();
                     else if(_currentVisualization is Waterfall waterfall)
@@ -90,7 +93,8 @@ namespace TERMINAL_FREQUENCY
 
                 //capture the audio
                 audioCapture.Start();
-
+                
+                
                 //render
                 while (true)
                 {
@@ -150,7 +154,7 @@ namespace TERMINAL_FREQUENCY
 
 
                         buffer.Render();
-                        Thread.Sleep(Config.Config.THREAD_RATE);
+                        //Thread.Sleep(Config.Config.THREAD_RATE);
                     }
                     else
                     {
@@ -407,6 +411,59 @@ namespace TERMINAL_FREQUENCY
                         break;
                 }
             }
+        }
+        static void HandleConsoleWindow()
+        {
+
+            //manage window features
+            if (Config.Config.DISABLE_TITLE_BAR)
+                ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border
+
+            if(Config.Config.DISABLE_SCROLL_BARS)
+                ConsoleWindow.DisableScrollBars();
+
+
+
+            ConsoleWindow.SetAlwaysOnTop(Config.Config.ALWAYS_ON_TOP);
+            ConsoleWindow.SetOpacity(Config.Config.WINDOW_OPACITY);
+            ConsoleWindow.SetClickThrough(Config.Config.ENABLE_CLICK_THROUGH);
+            ConsoleWindow.SetWindowBlur(Config.Config.ENABLE_WINDOW_BLUR);
+
+            //seems to not work
+            if (Config.Config.ENABLE_WINDOW_GLOW)
+                ConsoleWindow.SetWindowGlow(Config.Config.WINDOW_GLOW_RADIUS, (byte)Config.Config.WINDOW_GLOW_R, (byte)Config.Config.WINDOW_GLOW_G, (byte)Config.Config.WINDOW_GLOW_B);
+            
+            //size
+            if (Config.Config.LAUNCH_FULL_SCREEN)
+                ConsoleWindow.SetFullScreen();
+            else if (Config.Config.ENABLE_CUSTOM_WINDOW_SIZE)
+                ConsoleWindow.SetScreenSize(Config.Config.CUSTOM_WINDOW_WIDTH, Config.Config.CUSTOM_WINDOW_HEIGHT);
+
+            //position
+            if (!Config.Config.LAUNCH_FULL_SCREEN)
+            {
+                if (Config.Config.LAUNCH_AT && Config.Config.LAUNCH_AT_X >= 0 && Config.Config.LAUNCH_AT_Y >= 0)
+                    ConsoleWindow.LaunchConsoleAt(Config.Config.LAUNCH_AT_X, Config.Config.LAUNCH_AT_Y);
+                else if (Config.Config.LAUNCH_IN_CENTER)
+                    ConsoleWindow.LaunchConsoleCenter();
+            }
+
+            if (Config.Config.DISABLE_WINDOW_RESIZE)
+                ConsoleWindow.DisableResize();
+
+            Console.CursorVisible = false;
+
+            //manage process title
+            if (Config.Config.DISABLE_APP_TITLE)
+                Console.Title = string.Empty;
+            else if (!string.IsNullOrEmpty(Config.Config.CUSTOM_TITLE))
+                Console.Title = Config.Config.CUSTOM_TITLE;
+            else
+                Console.Title = _isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
+
+            if (!Config.Config.BYPASS_STARTUP)
+                Utility.PrintStartup();
+
         }
     }
 }

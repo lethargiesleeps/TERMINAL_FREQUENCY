@@ -87,5 +87,9 @@ namespace TERMINAL_FREQUENCY.Core
                 SmoothedVolume = volumeNow;
             }
         }
+
+        //TODO: ListenToMIDI() //react to midi controll6r
+        //TODO: LowLatencyAudioMode() request that Windows prioritize audio thread
+        
     }
 }

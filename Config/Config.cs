@@ -11,6 +11,7 @@ namespace TERMINAL_FREQUENCY.Config
     public static class Config
     {
         #region GlobalSettings
+        //app specific stuff
         public static bool FORCE_DEFAULT_SETTINGS = true; //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
         public static bool SAFE_MODE = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
         public static bool ERROR_MODE = true; //if true prints all errors of values outside saferanges to the console and closes window on input
@@ -20,9 +21,38 @@ namespace TERMINAL_FREQUENCY.Config
         public static bool DEBUG_MODE = true; //displays extra info if true
         public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
         public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
+        #endregion
+
+        #region ConsoleSettings
         public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
         public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
         public static int INSTANCES = 1; //how many independent window processes to launch
+        public static bool BYPASS_STARTUP = false; //if true, skip startup and launch directly into visuals
+        public static bool DISABLE_APP_TITLE = false;//if true, removes any text to be found on control bar of console window
+        public static string CUSTOM_TITLE = ""; //replace TERMINAL FREQUENCY window title, if empty uses default
+        public static bool DISABLE_TITLE_BAR = false; //removes the entire window control bar if true
+        public static bool DISABLE_SCROLL_BARS = false; //removes the x,y scroll bars in the console
+        public static bool DISABLE_WINDOW_RESIZE = false; //if true, window cannot be resized
+        public static bool LAUNCH_FULL_SCREEN = false; //if true, launches console in maximized mode
+        public static bool LAUNCH_IN_CENTER = true; //if true, launches console in center of screen, gets ignored if launch full screen is true
+        public static bool LAUNCH_AT = false; //if true launches window at LAUNCH_AT_X and LAUNCH_AT_Y
+        public static int LAUNCH_AT_X = -1; //xPos of where console launches. if -1, gets ignored regardless status of LAUNCH_AT
+        public static int LAUNCH_AT_Y = -1; //yPos of where console launches. if -1, gets ignored regardless status of LAUNCH_AT
+        public static bool ENABLE_CUSTOM_WINDOW_SIZE = true; //if true launches with CUSTOM_WINDOW_SIZE_H/W
+        public static int CUSTOM_WINDOW_WIDTH = 115; //custom window width if enabled
+        public static int CUSTOM_WINDOW_HEIGHT = 35; //custom window height if enabled
+        public static byte WINDOW_OPACITY = 255; //window opacity, 0 transparent, 255 solid.
+        public static bool ALWAYS_ON_TOP = true; //if true, console is always on top regardless
+        public static bool ENABLE_WINDOW_BLUR = true; //if true, add acryllic blur to the console
+        public static bool ENABLE_CLICK_THROUGH = false; //if true, can click on apps behind the console. can pair well with opacity and always on top
+        public static bool ENABLE_FLASH_ON_BEAT = false; //if true, console flashes in OnSpike hook
+        public static int FLASH_ON_BEAT_COUNT = 2; //how many time it flashes
+        public static bool ENABLE_WINDOW_GLOW = false;
+        public static int WINDOW_GLOW_RADIUS = 100; // if > 0, creates a glow around the window
+        public static int WINDOW_GLOW_R = 255;
+        public static int WINDOW_GLOW_G = 255;
+        public static int WINDOW_GLOW_B = 0;
+
         public static ConsoleColor[] DEFAULT_COLORS =        
         {
             ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green,
@@ -87,7 +117,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static WaterfallMode WATERFALL_MODE = WaterfallMode.Normal; //see WaterfallMode enum, normal is just from origin point
         public static float WATERFALL_START_WIDTH_PERCENT = 0.05f; //width of waterfall at origin in percent of console width (safe range 1%-50%)
         public static float WATERFALL_END_WIDTH_PERCENT = 0.8f; //width of waterfall at end of its life in percent of console width, has to be higher than start width (safe range 40%-95%)
-        public static float WATERFALL_SPEED = 3.0f; //speed which waterfall progresses across screen (safe range 1 - 10)
+        public static float WATERFALL_SPEED = 2.0f; //speed which waterfall progresses across screen (safe range 1 - 10)
         public static float WATERFALL_FADE_RATE = 0.005f; //life lost per frame where 1 represents full life (safe range 0.001 0.05)
         public static int WATERFALL_MAX_STREAMS = 8; //maximum number of waterfall streams before oldest one disappears, the higher the more cpu intensive and the likelier of losing FPS (safe range 1-25)
         public static float WATERFALL_TRIGGER_THRESHOLD = 0.08f; //minimum volume intensity to spawn new waterfall in percentage (safe range 1% to 30%)
@@ -98,7 +128,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static char[] WATERFALL_HORIZONTAL_CHARS = new char[3] { '█', '▌', '.' }; //chars rendered on horizontal waterfalls (left/right origin)
         public static float WATERFALL_CURVE_INTENSITY_VERITCAL = 0.3f; //how pronounced the trailing curve is for vertical waterfalls, 0 = no curve 1 = full curve (range 0 to 1)
         public static float WATERFALL_CURVE_INTENSITY_HORIZONTAL = 0.5f; ////how pronounced the trailing curve is for horizontal waterfalls, 0 = no curve 1 = full curve (range 0 to 1)
-        public static char WATERFALL_CURVE_CHAR = '·'; //character used for trailing curve effect
+        public static char WATERFALL_CURVE_CHAR = '.'; //character used for trailing curve effect
         public static bool WATERFALL_RAINBOW_MODE = false; //if true, each waterfall is a different color without repeating the previous waterfall
         public static float WATERFALL_RAINBOW_FADE_BRIGHT = 0.15f; //white phase end (rainbow mode, only matters if true)
         public static float WATERFALL_RAINBOW_FADE_COLOR = 0.35f;  //full color phase end (rainbow mode, only matters if true)
@@ -134,7 +164,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static bool SHAPE_SMOOTH_MODE = true; //if true, attemps to smooth out the shape on motion
         public static float SHAPE_LERP_FACTOR = 0.4f; //smoothing speed for smooth mode
         public static int SHAPE_PADDING = 2; //Chars between concentric shapes
-        public static char SHAPE_CHARACTER = 'O'; //what prints as the shape
+        public static char SHAPE_CHARACTER = '█'; //what prints as the shape
         public static bool SHAPE_VERTICAL_STACK = true; //for count=2: true=vertical, false=horizontal
         
         public static float SHAPE_CIRCLE_SEGMENT_DENSITY = 0.7f; //how many points make up the circle relative to its cirumfrance. 1 is one point per radian (super dense)(safe range 0.3 to 1.5)
@@ -151,7 +181,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static float SHAPE_PYRAMID_ROW_SPACING = 0.25f; //space between rows in pyramid layout, higher = more space, lower = less space (safe range 0.08 to 0.3)
         public static int SHAPE_POLYGON_SIDES = 5;//can accept 5, 6, 8, 10, 12 anything higher might as well use circle        
         public static bool SHAPE_FILL_MODE = false; //if true, fills inside the shape with character, super buggy will fix later, you can make THREAD_RATE really low but beware your CPU usage, works best in a smaller console window
-        public static char[] SHAPE_FILL_CHARACTERS = { 'O', '▒', '▓', '█' }; //one per shape, if 1 shape then always index 0
+        public static char[] SHAPE_FILL_CHARACTERS = { '░', '▒', '▓', '█' }; //one per shape, if 1 shape then always index 0
         public static ConsoleColor[] SHAPE_FILL_COLORS = { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray }; //same as above but for color
         public static int SHAPE_FILL_SPACING = 0; //0 = solid, 1 = every other, 2 = every third
 
