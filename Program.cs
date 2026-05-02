@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable CS8618
+using System;
 using System.Diagnostics;
 using System.Threading;
 using TERMINAL_FREQUENCY.Config;
@@ -15,12 +16,22 @@ namespace TERMINAL_FREQUENCY
         private static bool _isChild = false;
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
+        private static readonly ConsoleColor[] _colors = Config.Config.DEFAULT_COLORS;
 
-        private static ConsoleColor[] _colors = Config.Config.DEFAULT_COLORS;
+        //fps calculations
+        private static Stopwatch _stopWatch;
+        private static long _sampleWindowStart = 0;
+        private static int _framesInWindow = 0;
+        private static int _hitsInWindow = 0;
+        private static float _currentFps = 0;
+        private static float _hitRate = 0;
+        private static int _frameCount = 0;
+        private const float SAMPLE_DURATION_SECONDS = 1.0f;
 
 
         static void Main(string[] args)
         {
+            if (Config.Config.ENABLE_THREAD_PRIORITY) Thread.CurrentThread.Priority = Config.Config.THREAD_PRIORITY;
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
             _isChild = args.Length > 0 && args[0] == "--child";
 
@@ -35,7 +46,7 @@ namespace TERMINAL_FREQUENCY
             {
                 for (int i = 1; i < Config.Config.INSTANCES; i++)
                 {
-                    Process.Start(new System.Diagnostics.ProcessStartInfo
+                    Process.Start(new ProcessStartInfo
                     {
                         FileName = Environment.ProcessPath,
                         Arguments = "--child",
@@ -93,14 +104,42 @@ namespace TERMINAL_FREQUENCY
 
                 //capture the audio
                 audioCapture.Start();
-                
-                
+
+                _stopWatch = Stopwatch.StartNew(); //prep for FPS tracking
+                _sampleWindowStart = _stopWatch.ElapsedTicks;
+
                 //render
                 while (true)
                 {
-                    HandleInput(audioCapture);
+                    long frameStart = _stopWatch.ElapsedTicks;
+
+                    HandleInput(audioCapture, buffer);
+
                     if(!_isPaused)
                     {
+                        if(Config.Config.DEBUG_MODE)
+                        {
+
+                            _framesInWindow++;
+
+                            float elapsedSinceSample = (_stopWatch.ElapsedTicks - _sampleWindowStart) / (float)Stopwatch.Frequency;
+                            if (elapsedSinceSample >= SAMPLE_DURATION_SECONDS && _framesInWindow > 0)
+                            {
+                                _currentFps = _framesInWindow / elapsedSinceSample;
+
+                                //hit rate: was the average FPS over this second on target?
+                                //TODO: Fix the hit ratio calc
+                                /**
+                                if (_currentFps >= Config.Config.TARGET_FPS * 0.98f)
+                                    _hitsInWindow++;
+
+                                _hitRate = (float)_hitsInWindow / _framesInWindow * 100f;
+                                */
+                                _sampleWindowStart = _stopWatch.ElapsedTicks;
+                                _framesInWindow = 0;
+                            }
+                        }
+
                         _currentVisualization = _visualizations[_currentMode];
 
                         //redraw
@@ -147,14 +186,31 @@ namespace TERMINAL_FREQUENCY
 
                             if (Config.Config.SHOW_GLOBAL_CONTROLS)
                             {
-                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [1-6] FPS | [ESC] EXIT";
+                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [ESC] EXIT";
                                 buffer.DrawString(0, buffer.Height - 1, controls, ConsoleColor.DarkGray);
                             }
+
+                            //fps stuff
+                            int rightX = buffer.Width - 10; //top right corner
+                            buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", ConsoleColor.Yellow);
+                            //buffer.DrawString(rightX, 1, $"TGT:{Config.Config.TARGET_FPS,6}", ConsoleColor.DarkGray);
+                            //buffer.DrawString(rightX, 2, $"HIT:{_hitRate,5:F0}%", _hitRate > 90 ? ConsoleColor.Green : _hitRate > 70 ? ConsoleColor.Yellow : ConsoleColor.Red);
                         }
 
 
                         buffer.Render();
-                        //Thread.Sleep(Config.Config.THREAD_RATE);
+
+                        //yield settings
+                        long targetTicks = Stopwatch.Frequency / Config.Config.TARGET_FPS;
+
+                        if(Config.Config.ENABLE_YIELD)
+                            Thread.Sleep(Config.Config.YIELD_TIMEOUT);
+                        else if(Config.Config.ENABLE_SPIN_WAIT)
+                        {
+                            while (_stopWatch.ElapsedTicks - frameStart < targetTicks)
+                                Thread.SpinWait(Config.Config.SPIN_WAIT_ITERATIONS);
+                        }
+
                     }
                     else
                     {
@@ -185,7 +241,7 @@ namespace TERMINAL_FREQUENCY
             }
 
         }
-        static void HandleInput(AudioCapture audioCapture)
+        static void HandleInput(AudioCapture audioCapture, ScreenBuffer buffer)
         {
             while (Console.KeyAvailable)
             {
@@ -230,7 +286,13 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.M:
-                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if(_isPaused)
+                        {
+                            buffer.CycleRenderMode();
+                            return;
+                        }
+
+                        if (Config.Config.LOCK_CONTROLS) return;
 
                         if(_currentVisualization is Rings)
                             Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
@@ -352,8 +414,8 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
                         if (_currentVisualization is Rings)
                         {
-                            Config.Config.RING_SEGMENTS = Math.Min(60, Config.Config.RING_SEGMENTS + 2);
-                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Min(40, Config.Config.RING_AMBIENT_SEGMENTS + 2);
+                            Config.Config.RING_SEGMENTS = Math.Min(100, Config.Config.RING_SEGMENTS + 2);
+                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Min(80, Config.Config.RING_AMBIENT_SEGMENTS + 2);
                         }
 
                         if (_currentVisualization is Shape)
@@ -427,7 +489,11 @@ namespace TERMINAL_FREQUENCY
             ConsoleWindow.SetAlwaysOnTop(Config.Config.ALWAYS_ON_TOP);
             ConsoleWindow.SetOpacity(Config.Config.WINDOW_OPACITY);
             ConsoleWindow.SetClickThrough(Config.Config.ENABLE_CLICK_THROUGH);
-            ConsoleWindow.SetWindowBlur(Config.Config.ENABLE_WINDOW_BLUR);
+
+            if (Config.Config.ENABLE_WINDOW_VIBRANCY)
+                ConsoleWindow.SetWindowVibrancy(Config.Config.WINDOW_VIBRANCY_R, Config.Config.WINDOW_VIBRANCY_G, Config.Config.WINDOW_VIBRANCY_B, Config.Config.WINDOW_VIBRANCY_A);
+            else if (Config.Config.ENABLE_WINDOW_BLUR)
+                ConsoleWindow.SetWindowBlur(Config.Config.ENABLE_WINDOW_BLUR);
 
             //seems to not work
             if (Config.Config.ENABLE_WINDOW_GLOW)
@@ -467,3 +533,4 @@ namespace TERMINAL_FREQUENCY
         }
     }
 }
+#pragma warning restore CS8618

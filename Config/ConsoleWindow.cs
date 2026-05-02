@@ -181,6 +181,29 @@ namespace TERMINAL_FREQUENCY.Config
 
             SetWindowLong(handle, GWL_EXSTYLE, exStyle);
         }
+
+        public static void SetWindowVibrancy(byte r, byte g, byte b, byte alpha = 0x99)
+        {
+            IntPtr handle = GetConsoleWindow();
+
+            var accent = new AccentPolicy();
+            accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
+            accent.AccentFlags = 2;
+            accent.GradientColor = (alpha << 24) | (r << 16) | (g << 8) | b;
+
+            var accentStructSize = Marshal.SizeOf(accent);
+            IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+            Marshal.StructureToPtr(accent, accentPtr, false);
+
+            var data = new WindowCompositionAttributeData();
+            data.Attribute = WCA_ACCENT_POLICY;
+            data.SizeOfData = accentStructSize;
+            data.Data = accentPtr;
+
+            SetWindowCompositionAttribute(handle, ref data);
+            Marshal.FreeHGlobal(accentPtr);
+        }
+
         public static void SetOpacity(byte opacity)
         {
             if (opacity < 0) opacity = 0;
@@ -223,6 +246,7 @@ namespace TERMINAL_FREQUENCY.Config
             ApplyStyle(handle);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static void DisableScrollBars()
         {
             IntPtr handle = GetConsoleWindow();
@@ -300,6 +324,7 @@ namespace TERMINAL_FREQUENCY.Config
             ShowWindow(GetConsoleWindow(), 3); //SW_MAXIMIZE
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static void SetScreenSize(int width, int height)
         {
             try

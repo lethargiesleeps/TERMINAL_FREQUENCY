@@ -8,6 +8,7 @@ using TERMINAL_FREQUENCY.Core;
 using NAudio.Wave;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Visualization.Shape;
+using System.Diagnostics;
 
 namespace TERMINAL_FREQUENCY.Core
 {
@@ -59,20 +60,20 @@ namespace TERMINAL_FREQUENCY.Core
         {
             string[] lines = new string[]
             {
-                "╔═══════════════════════════════════════════════════════════════╗",
-                "║                                                               ║",
-                "║              T E R M I N A L   F R E Q U E N C Y              ║",
-                "║                                                               ║",
-                "║       ██████╗  █████╗ ██╗   ██╗███████╗███████╗██████╗        ║",
-                "║       ██╔══██╗██╔══██╗██║   ██║██╔════╝██╔════╝██╔══██╗       ║",
-                "║       ██████╔╝███████║██║   ██║███████╗█████╗  ██║  ██║       ║",
-                "║       ██╔═══╝ ██╔══██║██║   ██║╚════██║██╔══╝  ██║  ██║       ║",
-                "║       ██║     ██║  ██║╚██████╔╝███████║███████╗██████╔╝       ║",
-                "║       ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚═════╝        ║",
-                "║                                                               ║",
-                "║                    [SPACE] Resume  [ESC] Exit                 ║",
-                "╚═══════════════════════════════════════════════════════════════╝",
-                $"CURRENT MODE: {modeName}"
+                "╔══════════════════════════════════════════════════════════════════════════════════════════╗",
+                "║                                                                                          ║",
+                "║                              T E R M I N A L   F R E Q U E N C Y                         ║",
+                "║                                                                                          ║",
+                "║                       ██████╗  █████╗ ██╗   ██╗███████╗███████╗██████╗                   ║",
+                "║                       ██╔══██╗██╔══██╗██║   ██║██╔════╝██╔════╝██╔══██╗                  ║",
+                "║                       ██████╔╝███████║██║   ██║███████╗█████╗  ██║  ██║                  ║",
+                "║                       ██╔═══╝ ██╔══██║██║   ██║╚════██║██╔══╝  ██║  ██║                  ║",
+                "║                       ██║     ██║  ██║╚██████╔╝███████║███████╗██████╔╝                  ║",
+                "║                       ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚═════╝                   ║",
+                "║                                                                                          ║",
+                "║                    [SPACE] Resume  [ESC] Exit  [M] CHANGE RENDERING MODE                 ║",
+                "╚══════════════════════════════════════════════════════════════════════════════════════════╝",
+                $"CURRENT MODE: {modeName} RENDERER: {buffer.RendererMode}"
 
             };
 
@@ -146,6 +147,17 @@ namespace TERMINAL_FREQUENCY.Core
 
         public static string FormatEnum(Enum value)
         {
+            if(value is RenderMode renderer)
+            {
+                return renderer switch
+                {
+                    RenderMode.PerPixel => "PER PIXEL",
+                    RenderMode.DirtyRect => "DIRTY RECT",
+                    RenderMode.RowBatched => "ROW BATCHED",
+                    RenderMode.DirectWrite => "DIRECT WRITE",
+                    _ => "???"
+                };
+            }
             if(value is ConsoleColor color)
             {
                 return color switch 

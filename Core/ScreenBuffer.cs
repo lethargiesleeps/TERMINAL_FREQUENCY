@@ -1,45 +1,111 @@
 ﻿using System;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace TERMINAL_FREQUENCY.Core
 {
     public class ScreenBuffer
     {
-        private char[,] currentChar;
-        private ConsoleColor[,] currentColor;
-        private char[,] nextChar;
-        private ConsoleColor[,] nextColor;
-
+        private char[,] _currentChar;
+        private ConsoleColor[,] _currentColor;
+        private char[,] _nextChar;
+        private ConsoleColor[,] _nextColor;
+        private ConsoleColor _bgColor;
+        private int _dirtyMinX, _dirtyMinY, _dirtyMaxX, _dirtyMaxY; //for dirty buffer
         public int Width { get; private set; }
         public int Height { get; private set; }
+        public RenderMode RendererMode { get; private set; }
 
+        #region Kernel32
+        //all configs for DirectWrite
+
+        //imports
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetStdHandle(int nStdHandle);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool SetConsoleOutputCP(uint codePage);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern bool WriteConsoleOutput(
+            IntPtr hConsoleOutput,
+            CHAR_INFO[,] lpBuffer,
+            COORD dwBufferSize,
+            COORD dwBufferCoord,
+            ref SMALL_RECT lpWriteRegion
+            );
+
+        //structs
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CHAR_INFO
+        {
+            public char UnicodeChar;
+            public short Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct COORD
+        {
+            public short X;
+            public short Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SMALL_RECT
+        {
+            public short Left;
+            public short Top;
+            public short Right;
+            public short Bottom;
+        }
+
+        //vars
+        private const int STD_OUTPUT_HANDLE = -11;
+        private static readonly IntPtr ConsoleOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+        private CHAR_INFO[,] _fastBuffer;
+
+        #endregion
         public ScreenBuffer()
         {
+            //SetConsoleOutputCP(437);
             Width = Console.WindowWidth;
             Height = Console.WindowHeight;
+            RendererMode = Config.Config.RENDERER_MODE;
 
-            currentChar = new char[Height, Width];
-            currentColor = new ConsoleColor[Height, Width];
-            nextChar = new char[Height, Width];
-            nextColor = new ConsoleColor[Height, Width];
+            _bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
+            _currentChar = new char[Height, Width];
+            _currentColor = new ConsoleColor[Height, Width];
+            _nextChar = new char[Height, Width];
+            _nextColor = new ConsoleColor[Height, Width];
+
+            if(this.RendererMode == RenderMode.DirectWrite)
+                _fastBuffer = new CHAR_INFO[Height, Width];
 
             Clear();
 
-            // Force full redraw on first frame
+            //force full redraw on first frame
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++)
-                    currentChar[y, x] = '\0';
+                    _currentChar[y, x] = '\0';
+
+            //for dirty buffering
+            _dirtyMinX = int.MaxValue;
+            _dirtyMinY = int.MaxValue;
+            _dirtyMaxX = int.MinValue;
+            _dirtyMaxY = int.MinValue;
         }
 
         public void Clear()
         {
-            ConsoleColor bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
             for (int y = 0; y < Height; y++)
                 for (int x = 0; x < Width; x++)
                 {
-                    nextChar[y, x] = ' ';
-                    nextColor[y, x] = bgColor;
+                    _nextChar[y, x] = ' ';
+                    _nextColor[y, x] = _bgColor;
                 }
         }
+
 
         public void SetPixel(int x, int y, char c, ConsoleColor color = ConsoleColor.White)
         {
@@ -47,8 +113,15 @@ namespace TERMINAL_FREQUENCY.Core
             if (x < 0 || x >= Width || y < 0 || y >= Height)
                 return;
 
-            nextChar[y, x] = c;
-            nextColor[y, x] = color;
+            _nextChar[y, x] = c;
+            _nextColor[y, x] = color;
+
+            if (RendererMode != RenderMode.DirtyRect) return;
+
+            if (x < _dirtyMinX) _dirtyMinX = x;
+            if (x > _dirtyMaxX) _dirtyMaxX = x;
+            if (y < _dirtyMinY) _dirtyMinY = y;
+            if (y > _dirtyMaxY) _dirtyMaxY = y;
         }
 
         public void DrawString(int x, int y, string text, ConsoleColor color = ConsoleColor.White)
@@ -57,6 +130,7 @@ namespace TERMINAL_FREQUENCY.Core
                 SetPixel(x + i, y, text[i], color);
         }
 
+        //TODO: add some color options
         public void DrawStatusBar(string text, float volume)
         {
             DrawString(0, Height - 1, text, ConsoleColor.Gray);
@@ -73,44 +147,95 @@ namespace TERMINAL_FREQUENCY.Core
 
         public void Render()
         {
-            ConsoleColor bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
-
             //handle console resize
             if (Width != Console.WindowWidth || Height != Console.WindowHeight)
             {
                 Width = Console.WindowWidth;
                 Height = Console.WindowHeight;
 
-                currentChar = new char[Height, Width];
-                currentColor = new ConsoleColor[Height, Width];
-                nextChar = new char[Height, Width];
-                nextColor = new ConsoleColor[Height, Width];
+                _currentChar = new char[Height, Width];
+                _currentColor = new ConsoleColor[Height, Width];
+                _nextChar = new char[Height, Width];
+                _nextColor = new ConsoleColor[Height, Width];
+
+                if(RendererMode == RenderMode.DirectWrite)
+                    _fastBuffer = new CHAR_INFO[Height, Width];
 
                 for (int y = 0; y < Height; y++)
                     for (int x = 0; x < Width; x++)
-                        currentChar[y, x] = '\0';
-                Console.BackgroundColor = bgColor;
+                        _currentChar[y, x] = '\0'; //set to NUL char
+
+                Console.BackgroundColor = _bgColor;
                 Console.Clear();
                 return;
             }
 
+            switch(RendererMode)
+            {
+                case RenderMode.DirectWrite:
+                    RenderDirectWrite(); 
+                    break;
 
-            //render only changed pixels
+                case RenderMode.RowBatched:
+                    RenderRowBatched(); 
+                    break;
+
+                case RenderMode.DirtyRect:
+                    if (_dirtyMinX <= _dirtyMaxX && _dirtyMinY <= _dirtyMaxY)
+                        RenderDirtyRect();
+                    else
+                        RenderPerPixel();
+                    break;
+
+                case RenderMode.PerPixel:
+                default:
+                    RenderPerPixel();
+                    break;
+            }
+        }
+
+        public void CycleRenderMode()
+        {
+            RendererMode = (RenderMode)(((int)RendererMode + 1) % 4);
+            ResetRenderState();
+        }
+
+        private void ResetRenderState()
+        {
+            //force full redraw
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    _currentChar[y, x] = '\0';
+
+            //reset dirty rectangle
+            _dirtyMinX = int.MaxValue;
+            _dirtyMinY = int.MaxValue;
+            _dirtyMaxX = int.MinValue;
+            _dirtyMaxY = int.MinValue;
+
+            //re-alloc fast buffer if switching to Fast mode
+            if (RendererMode == RenderMode.DirectWrite && _fastBuffer == null)
+                _fastBuffer = new CHAR_INFO[Height, Width];
+        }
+
+        #region RendererModes
+        private void RenderPerPixel()
+        {
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    if (nextChar[y, x] != currentChar[y, x] || nextColor[y, x] != currentColor[y, x])
+                    if (_nextChar[y, x] != _currentChar[y, x] || _nextColor[y, x] != _currentColor[y, x])
                     {
                         if (y < Console.WindowHeight && x < Console.WindowWidth)
                         {
                             Console.SetCursorPosition(x, y);
-                            Console.BackgroundColor = bgColor;
-                            Console.ForegroundColor = nextColor[y, x];
-                            Console.Write(nextChar[y, x]);
+                            Console.BackgroundColor = _bgColor;
+                            Console.ForegroundColor = _nextColor[y, x];
+                            Console.Write(_nextChar[y, x]);
                         }
-                        currentChar[y, x] = nextChar[y, x];
-                        currentColor[y, x] = nextColor[y, x];
+                        _currentChar[y, x] = _nextChar[y, x];
+                        _currentColor[y, x] = _nextColor[y, x];
                     }
                 }
             }
@@ -118,5 +243,110 @@ namespace TERMINAL_FREQUENCY.Core
             Console.SetCursorPosition(0, Math.Min(Height - 1, Console.WindowHeight - 1));
             Console.ResetColor();
         }
+
+        private void RenderDirtyRect()
+        {
+            for (int y = _dirtyMinY; y <= _dirtyMaxY; y++)
+            {
+                for (int x = _dirtyMinX; x <= _dirtyMaxX; x++)
+                {
+                    if (_nextChar[y, x] != _currentChar[y, x] || _nextColor[y, x] != _currentColor[y, x])
+                    {
+                        if (y < Console.WindowHeight && x < Console.WindowWidth)
+                        {
+                            Console.SetCursorPosition(x, y);
+                            Console.BackgroundColor = _bgColor;
+                            Console.ForegroundColor = _nextColor[y, x];
+                            Console.Write(_nextChar[y, x]);
+                        }
+                        _currentChar[y, x] = _nextChar[y, x];
+                        _currentColor[y, x] = _nextColor[y, x];
+                    }
+                }
+            }
+
+            _dirtyMinX = int.MaxValue;
+            _dirtyMinY = int.MaxValue;
+            _dirtyMaxX = int.MinValue;
+            _dirtyMaxY = int.MinValue;
+
+            Console.SetCursorPosition(0, Math.Min(Height - 1, Console.WindowHeight - 1));
+            Console.ResetColor();
+        }
+
+        private void RenderRowBatched()
+        {
+            ConsoleColor fgColor = Config.Config.ROW_BATCH_COLOR;
+            StringBuilder sb = new StringBuilder();
+            bool anyRowChanged = false;
+
+            for (int y = 0; y < Height; y++)
+            {
+                bool rowChanged = false;
+                sb.Clear();
+
+                for (int x = 0; x < Width; x++)
+                {
+                    if (_nextChar[y, x] != _currentChar[y, x] || _nextColor[y, x] != _currentColor[y, x])
+                    {
+                        rowChanged = true;
+                        anyRowChanged = true;
+                    }
+                    _currentChar[y, x] = _nextChar[y, x];
+                    _currentColor[y, x] = _nextColor[y, x];
+                    sb.Append(_nextChar[y, x]);
+                }
+
+                if (rowChanged)
+                {
+                    Console.SetCursorPosition(0, y);
+                    Console.BackgroundColor = _bgColor;
+                    Console.ForegroundColor = fgColor;
+                    Console.Write(sb.ToString());
+                }
+            }
+
+            if (anyRowChanged)
+            {
+                Console.SetCursorPosition(0, Math.Min(Height - 1, Console.WindowHeight - 1));
+                Console.ResetColor();
+            }
+        }
+
+        private void RenderDirectWrite()
+        {
+            bool anyChanged = false;
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    if (_nextChar[y, x] != _currentChar[y, x] || _nextColor[y, x] != _currentColor[y, x])
+                    {
+                        anyChanged = true;
+                        _fastBuffer[y, x].UnicodeChar = _nextChar[y, x];
+                        _fastBuffer[y, x].Attributes = (short)((int)_nextColor[y, x] | ((int)_bgColor << 4));
+
+                        _currentChar[y, x] = _nextChar[y, x];
+                        _currentColor[y, x] = _nextColor[y, x];
+                    }
+                }
+            }
+
+            if (!anyChanged) return;
+
+            COORD bufferSize = new COORD { X = (short)Width, Y = (short)Height };
+            COORD bufferCoord = new COORD { X = 0, Y = 0 };
+            SMALL_RECT writeRegion = new SMALL_RECT
+            {
+                Left = 0,
+                Top = 0,
+                Right = (short)(Width - 1),
+                Bottom = (short)(Height - 1)
+            };
+
+            WriteConsoleOutput(ConsoleOutputHandle, _fastBuffer, bufferSize, bufferCoord, ref writeRegion);
+        }
+        #endregion
     }
 }
