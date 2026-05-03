@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TERMINAL_FREQUENCY.Visualization
+namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
     public enum WaterfallMode
     {
@@ -12,6 +12,7 @@ namespace TERMINAL_FREQUENCY.Visualization
         Clockwise,
         AntiClockwise,
         TopBottom,
-        LeftRight
+        LeftRight,
+        All
     }
 }

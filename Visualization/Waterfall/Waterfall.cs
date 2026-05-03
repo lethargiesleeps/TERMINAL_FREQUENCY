@@ -3,45 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
 
-namespace TERMINAL_FREQUENCY.Visualization
+namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
     public class Waterfall : IVisualization
     {
-        private string name = "WATERFALL";
-        private int modeIndex = 1;
-        private List<WaterfallStream> streams = new List<WaterfallStream>();
-        private readonly object streamLock = new object();
-        private int clockwiseIndex = 0;
-        private bool topBottomToggle = true; // true = top, false = bottom
-        private bool leftRightToggle = true; // true = left, false = right
+        private string _name = "WATERFALL";
+        private int _modeIndex = 1;
+        private List<WaterfallStream> _streams = new List<WaterfallStream>();
+        private readonly object _streamLock = new object();
+        private int _clockwiseIndex = 0;
+        private bool _topBottomToggle = true; // true = top, false = bottom
+        private bool _leftRightToggle = true; // true = left, false = right
+        private static readonly VisualizationOrigin[] _clockwiseOrder = { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
+        private static readonly VisualizationOrigin[] _antiClockwiseOrder = { VisualizationOrigin.Top, VisualizationOrigin.Left, VisualizationOrigin.Bottom, VisualizationOrigin.Right };
 
-        private static readonly VisualizationOrigin[] ClockwiseOrder =
-            { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
-
-        private static readonly VisualizationOrigin[] AntiClockwiseOrder =
-            { VisualizationOrigin.Top, VisualizationOrigin.Left, VisualizationOrigin.Bottom, VisualizationOrigin.Right };
-
-        string IVisualization.Name => name;
-        int IVisualization.ModeIndex => modeIndex;
+        string IVisualization.Name => _name;
+        int IVisualization.ModeIndex => _modeIndex;
 
         public Waterfall()
         {
-            clockwiseIndex = Array.IndexOf(ClockwiseOrder, Config.Config.WATERFALL_ORIGIN);
-            if (clockwiseIndex < 0) clockwiseIndex = 0;
+            _clockwiseIndex = Array.IndexOf(_clockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+            if (_clockwiseIndex < 0) _clockwiseIndex = 0;
         }
 
         public void Update(float volume)
         {
-            lock (streamLock)
+            lock (_streamLock)
             {
-                for (int i = streams.Count - 1; i >= 0; i--)
+                for (int i = _streams.Count - 1; i >= 0; i--)
                 {
-                    streams[i].Update();
-                    if (!streams[i].IsAlive)
-                        streams.RemoveAt(i);
+                    _streams[i].Update();
+                    if (!_streams[i].IsAlive)
+                        _streams.RemoveAt(i);
                 }
             }
         }
@@ -49,23 +44,46 @@ namespace TERMINAL_FREQUENCY.Visualization
         public void OnSpike(float intensity)
         {
             if (Config.Config.WATERFALL_ONLY_SPAWN_ON_THRESHOLD && intensity < Config.Config.WATERFALL_TRIGGER_THRESHOLD) return;
-            lock (streamLock)
-            {
-                if (streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
-                    streams.RemoveAt(0);
 
-                VisualizationOrigin origin = GetNextOrigin();
-                streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
+            lock (_streamLock)
+            {
+                if (Config.Config.WATERFALL_MODE == WaterfallMode.All)
+                {
+                    VisualizationOrigin[] allOrigins =
+                    {
+                        VisualizationOrigin.Top,
+                        VisualizationOrigin.Bottom,
+                        VisualizationOrigin.Left,
+                        VisualizationOrigin.Right
+                    };
+
+                    foreach (VisualizationOrigin o in allOrigins)
+                    {
+                        while (_streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                            _streams.RemoveAt(0);
+
+                        bool isReversed = Config.Config.WATERFALL_REVERSE_MODE;
+                        _streams.Add(new WaterfallStream(intensity, o, isReversed));
+                    }
+                }
+                else
+                {
+                    if (_streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                        _streams.RemoveAt(0);
+
+                    VisualizationOrigin origin = GetNextOrigin();
+                    _streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
+                }
             }
 
-            // Update all streams
-            lock (streamLock)
+            // Update all _streams
+            lock (_streamLock)
             {
-                for (int i = streams.Count - 1; i >= 0; i--)
+                for (int i = _streams.Count - 1; i >= 0; i--)
                 {
-                    streams[i].Update();
-                    if (!streams[i].IsAlive)
-                        streams.RemoveAt(i);
+                    _streams[i].Update();
+                    if (!_streams[i].IsAlive)
+                        _streams.RemoveAt(i);
                 }
             }
         }
@@ -73,9 +91,9 @@ namespace TERMINAL_FREQUENCY.Visualization
         public void Draw(ScreenBuffer buffer)
         {
             List<WaterfallStream> streamsCopy;
-            lock(streamLock)
+            lock(_streamLock)
             {
-                streamsCopy = new List<WaterfallStream>(streams);
+                streamsCopy = new List<WaterfallStream>(_streams);
             }
 
             foreach (WaterfallStream stream in streamsCopy)
@@ -90,24 +108,26 @@ namespace TERMINAL_FREQUENCY.Visualization
                     return Config.Config.WATERFALL_ORIGIN;
 
                 case WaterfallMode.Clockwise:
-                    int startIdx = Array.IndexOf(ClockwiseOrder, Config.Config.WATERFALL_ORIGIN);
-                    VisualizationOrigin next = ClockwiseOrder[(startIdx + clockwiseIndex) % 4];
-                    clockwiseIndex = (clockwiseIndex + 1) % 4;
+                    int startIdx = Array.IndexOf(_clockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+                    VisualizationOrigin next = _clockwiseOrder[(startIdx + _clockwiseIndex) % 4];
+                    _clockwiseIndex = (_clockwiseIndex + 1) % 4;
                     return next;
 
                 case WaterfallMode.AntiClockwise:
-                    startIdx = Array.IndexOf(AntiClockwiseOrder, Config.Config.WATERFALL_ORIGIN);
-                    next = AntiClockwiseOrder[(startIdx + clockwiseIndex) % 4];
-                    clockwiseIndex = (clockwiseIndex + 1) % 4;
+                    startIdx = Array.IndexOf(_antiClockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+                    next = _antiClockwiseOrder[(startIdx + _clockwiseIndex) % 4];
+                    _clockwiseIndex = (_clockwiseIndex + 1) % 4;
                     return next;
 
                 case WaterfallMode.TopBottom:
-                    topBottomToggle = !topBottomToggle;
-                    return topBottomToggle ? VisualizationOrigin.Top : VisualizationOrigin.Bottom;
+                    _topBottomToggle = !_topBottomToggle;
+                    return _topBottomToggle ? VisualizationOrigin.Top : VisualizationOrigin.Bottom;
 
                 case WaterfallMode.LeftRight:
-                    leftRightToggle = !leftRightToggle;
-                    return leftRightToggle ? VisualizationOrigin.Left : VisualizationOrigin.Right;
+                    _leftRightToggle = !_leftRightToggle;
+                    return _leftRightToggle ? VisualizationOrigin.Left : VisualizationOrigin.Right;
+                case WaterfallMode.All:
+                    return (VisualizationOrigin)new Random().Next(4); // 0=Top, 1=Bottom, 2=Left, 3=Right
 
                 default:
                     return Config.Config.WATERFALL_ORIGIN;
@@ -182,6 +202,7 @@ namespace TERMINAL_FREQUENCY.Visualization
 
             //curve
             int curveOffset = (int)(halfWidth * Config.Config.WATERFALL_CURVE_INTENSITY_VERITCAL);
+
             if (curveOffset > 0 && streamY > 0 && streamY < consoleHeight - 1)
             {
                 int curveY = fromTop ? streamY - 1 : streamY + 1;

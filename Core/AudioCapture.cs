@@ -9,7 +9,7 @@ namespace TERMINAL_FREQUENCY.Core
         public event Action<float>? OnVolumeUpdated;
         public event Action<float>? OnVolumeSpike;
 
-        private WasapiLoopbackCapture? capture;
+        private WasapiLoopbackCapture? _capture;
         private int _deviceIndex = -1; //fallback audio device
 
         public float SmoothedVolume { get; private set; } = 0;
@@ -27,21 +27,21 @@ namespace TERMINAL_FREQUENCY.Core
         }
         public void Start()
         {
-            capture = new WasapiLoopbackCapture();
-            capture.DataAvailable += OnDataAvailable;
-            capture.StartRecording();
+            _capture = new WasapiLoopbackCapture();
+            _capture.DataAvailable += OnDataAvailable;
+            _capture.StartRecording();
 
             if(Config.Config.DEBUG_MODE)
-                Console.WriteLine($"Audio capture started ({capture.WaveFormat.SampleRate}Hz)");
+                Console.WriteLine($"Audio capture started ({_capture.WaveFormat.SampleRate}Hz)");
         }
 
         public void Stop()
         {
-            if (capture != null)
+            if (_capture != null)
             {
-                capture.StopRecording();
-                capture.Dispose();
-                capture = null;
+                _capture.StopRecording();
+                _capture.Dispose();
+                _capture = null;
             }
         }
 
@@ -87,5 +87,9 @@ namespace TERMINAL_FREQUENCY.Core
                 SmoothedVolume = volumeNow;
             }
         }
+
+        //TODO: ListenToMIDI() //react to midi controll6r
+        //TODO: LowLatencyAudioMode() request that Windows prioritize audio thread
+        
     }
 }
