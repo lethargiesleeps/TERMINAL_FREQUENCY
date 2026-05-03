@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TERMINAL_FREQUENCY.Config.Font;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Rings;
@@ -14,17 +15,23 @@ namespace TERMINAL_FREQUENCY.Config
     public static class Config
     {
         #region GlobalSettings
-        //app specific stuff
-        public static bool FORCE_DEFAULT_SETTINGS = true; //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
-        public static bool SAFE_MODE = true; //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
-        public static bool ERROR_MODE = true; //if true prints all errors of values outside saferanges to the console and closes window on input
-        public static bool LOCK_CONTROLS = false; //if true, all controls except debug mode, exit, and unlock are ignored
-        public static bool SHOW_GLOBAL_CONTROLS = true; //shows global controls in debug mode
-        public static bool DEBUG_MODE = true; //displays extra info if true
-        public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
-        public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
+        public static bool FORCE_DEFAULT_SETTINGS = true;                                //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
+        public static bool SAFE_MODE = true;                                             //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
+        public static bool ERROR_MODE = true;                                            //if true prints all errors of values outside saferanges to the console and closes window on input
+        public static bool LOCK_CONTROLS = false;                                        //if true, all controls except debug mode, exit, and unlock are ignored
+        public static bool SHOW_GLOBAL_CONTROLS = true;                                  //shows global controls in debug mode
+        public static bool DEBUG_MODE = true;                                            //displays extra info if true
+        public static int DEFAULT_MODE = 0;                                              //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
+        public static bool ENABLE_RASTER_FONT = true;                                    //if true, uses a raster font, can be used if some characters are not displaying correctly (appear as different characters or not found character
+        public static RasterFontType RASTER_FONT_TYPE = RasterFontType.EightByTwelve;    //which raster font to use
+        public static bool ENABLE_CUSTOM_FONT = false;                                   //allows user to set font settings. enabling raster font takes priority
+        public static FontFace CUSTOM_FONT_FACE = FontFace.Consolas;                     //true type font to use, user can use font face override if their system supports that font
+        public static string CUSTOM_FONT_FACE_OVERRIDE = string.Empty;                   //if not empty, attemps to set to provided font face
+        public static int CUSTOM_FONT_SIZE = 16;                                         //size of custom font
+        public static bool CUSTOM_FONT_BOLD = false;                                     //if true, font weight is 700, otherwise 400
+        #endregion
 
-        //speed stuff - mess with these to achieve higher frame rates at bigger screen sizes. slower framerates may be desirable for stutter effects or to accomodate for different screens/projectors
+        #region RenderSettings
         public static int TARGET_FPS = 120; //not regarded if THREAD_SLEEP or SPIN_WAIT is disabled
         public static bool ENABLE_YIELD = false; //if true, yield for THREAD_RATE ms on every frame, prioritized over SpinWait. if you are looking to accurately track FPS just note that this will totally break the calculations
         public static int YIELD_TIMEOUT = 33; //in miliseconds, he higher the slower... approx FPS values are [1 = ~ 1000fps (max speed, max cpu usage, beware!), 8 = ~120fps, 16 = ~60fps, 33 = ~30fps, 50 = ~20fps, 100 = ~10fps] (safe range 8-100)
@@ -38,10 +45,8 @@ namespace TERMINAL_FREQUENCY.Config
 
         #region ConsoleSettings
         public static int INSTANCES = 1; //how many independent window processes to launch
-
-        public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
         public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
-        public static bool BYPASS_STARTUP = false; //if true, skip startup and launch directly into visuals
+        public static bool BYPASS_STARTUP = true; //if true, skip startup and launch directly into visuals
         public static bool DISABLE_APP_TITLE = false;//if true, removes any text to be found on control bar of console window
         public static string CUSTOM_TITLE = ""; //replace TERMINAL FREQUENCY window title, if empty uses default
         public static bool DISABLE_TITLE_BAR = false; //removes the entire window control bar if true
@@ -65,7 +70,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static byte WINDOW_VIBRANCY_A = 0;
         public static bool ENABLE_CLICK_THROUGH = false; //if true, can click on apps behind the console. can pair well with opacity and always on top
         public static bool ENABLE_FLASH_ON_BEAT = false; //if true, console flashes in OnSpike hook
-        public static int FLASH_ON_BEAT_COUNT = 2; //how many time it flashes
+        public static int FLASH_ON_BEAT_COUNT = 4; //how many time it flashes
         public static bool ENABLE_WINDOW_GLOW = false;
         public static int WINDOW_GLOW_RADIUS = 500; // if > 0, creates a glow around the window
         public static int WINDOW_GLOW_R = 255;
@@ -84,9 +89,10 @@ namespace TERMINAL_FREQUENCY.Config
         #endregion
 
         #region AudioCaptureSettings
+        public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
         public static int AUDIO_SAMPLE_RESOLUTION = 4; //bytes per sample (typically 4, can be 2 or 4)
-        public static float RMS_MULTIPLIER = 100; //scale RMS to the useable volume, safe range 10-500
-        public static float NOISE_GATE_THRESHHOLD = 0.01f; //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
+        public static float RMS_MULTIPLIER = 100f; //scale RMS to the useable volume, safe range 10-500
+        public static float NOISE_GATE_THRESHHOLD = 0.1f; //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
         public static float SMOOTHING_FACTOR_EXISTING = 0.8f; //existing + incoming is always = to 1, controls how quickly volume reacts to a change (how quickly vol is updated)
         public static float SMOOTHING_FACTOR_INCOMING = 0.2f; //see above
         public static float PEAK_TRACKING_MINIMUM = 0.1f; //range to track peaks, prevents noise from becoming a peak (0.05 to 0.3ish for best results)
@@ -94,13 +100,10 @@ namespace TERMINAL_FREQUENCY.Config
         public static float SPIKE_VOLUME_MINIMUM = 0.05f; //minimum volume to even consider a reaction (tested safe range 0.01 - 0.2)
         public static float SPIKE_RATIO = 1.15f; //how much louder than calculated volume to trigger spike, lower = more sensitive 
         #endregion
-        #region ScreenBufferSettings
-        //nothing here yet, probably shouldn't mess wit
-        #endregion
 
         #region RingSettings
         public static bool RINGS_REVERSE_MODE = false; //if true rings start at max radius and shrink inwards
-        public static float RING_RADIUS_MIN = 10f; //minimum radius for reverse mode where rings disappear
+        public static float RING_RADIUS_MIN = 50f; //minimum radius for reverse mode where rings disappear
         public static float RING_RADIUS = 5f; //starting radius of a ring, the lower the closer to the center of the terminal the ring starts (safe range 1-100)
         public static float RING_RADIUS_MAX = 50f; //max radius a ring reaches before being removed, has to be greater than RING_RADIUS
         public static float RING_LIFETIME = 1.0f; //lifespan of ring measured in normalized units. LIFETIME / FADE_RATE = frames before ring 'dies' (safe range 0.1 - 10ish)
@@ -123,7 +126,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static ConsoleColor RINGS_CROSSHAIR_COLOR = ConsoleColor.Gray; //see above
         public static ConsoleColor RING_AMBIENT_COLOR = ConsoleColor.Gray; //ambient color
         public static char RINGS_CROSSHAIR_CHAR = '+';
-        public static char RINGS_CROSSHAIR_CHAR_AMBIENT = '0';
+        public static char RINGS_CROSSHAIR_CHAR_AMBIENT = '.';
         public static int RING_OFFSET = 2; //where in the console is deemed the 'center' for the ring to originate from, 2 is always the true center.
         public static bool RINGS_FIREWORKS_MODE = false; //TODO: if true changes origin point of ring randomly, not yet implemented
     
@@ -146,7 +149,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static char[] WATERFALL_HORIZONTAL_CHARS = new char[3] { '█', '▓', '▒' }; //chars rendered on horizontal waterfalls (left/right origin)
         public static float WATERFALL_CURVE_INTENSITY_VERITCAL = 0.3f; //how pronounced the trailing curve is for vertical waterfalls, 0 = no curve 1 = full curve (range 0 to 1)
         public static float WATERFALL_CURVE_INTENSITY_HORIZONTAL = 0.5f; ////how pronounced the trailing curve is for horizontal waterfalls, 0 = no curve 1 = full curve (range 0 to 1)
-        public static char WATERFALL_CURVE_CHAR = '0'; //character used for trailing curve effect
+        public static char WATERFALL_CURVE_CHAR = '='; //character used for trailing curve effect
         public static bool WATERFALL_RAINBOW_MODE = false; //if true, each waterfall is a different color without repeating the previous waterfall
         public static float WATERFALL_RAINBOW_FADE_BRIGHT = 0.15f; //white phase end (rainbow mode, only matters if true)
         public static float WATERFALL_RAINBOW_FADE_COLOR = 0.35f;  //full color phase end (rainbow mode, only matters if true)
@@ -167,6 +170,8 @@ namespace TERMINAL_FREQUENCY.Config
         public static float SHAPE_MAX_SIZE_PERCENT = 0.8f; //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99), keep in mind though that the louder the audio might still exceed window bounds on peak
         public static float SHAPE_MIN_SIZE_PERCENT = 0.02f; //size at 0 volume, must be lower than max
         public static int SHAPE_COUNT = 1; //how many shapes get rendered, between 1 and 4
+        public static int SHAPE_CONCENTRIC_LAYERS = 1; //how many layers in Concentric mode
+        public static int SHAPE_CONENTRIC_PADDING = 2; //Chars between concentric layers
         public static int SHAPE_THICKNESS = 1; //thickness of the outline of the shape
         public static int SHAPE_THICKNESS_MAX = 8; //prevents thickness from dynamically exceeding this value
 
@@ -181,7 +186,6 @@ namespace TERMINAL_FREQUENCY.Config
         public static float SHAPE_REVERSE_VOLUME_SENSITIVITY = 0.05f; //normalizes the threshold so shape get closer to center, the closer to 0 the closer to center the shape will get at max volume (safe range: 0.01 to 0.05ish) 
         public static bool SHAPE_SMOOTH_MODE = true; //if true, attemps to smooth out the shape on motion
         public static float SHAPE_LERP_FACTOR = 0.4f; //smoothing speed for smooth mode
-        public static int SHAPE_PADDING = 2; //Chars between concentric shapes
         public static char SHAPE_CHARACTER = '█'; //what prints as the shape
         public static bool SHAPE_VERTICAL_STACK = true; //for count=2: true=vertical, false=horizontal
         

@@ -26,7 +26,7 @@ namespace TERMINAL_FREQUENCY.Core
         public static void PrintStartup()
         {
             Console.Clear();
-            Console.ForegroundColor = Config.Config.DARK_MODE ? ConsoleColor.DarkMagenta : ConsoleColor.DarkCyan;
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(@"
     ╔════════════════════════════════════════════════════════╗
     ║                                                        ║
@@ -50,13 +50,13 @@ namespace TERMINAL_FREQUENCY.Core
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
-            Console.ForegroundColor = Config.Config.DARK_MODE ?  ConsoleColor.Gray : ConsoleColor.DarkGray;
+
             Console.WriteLine("\nControls:");
-            Console.WriteLine("  TAB: Cycle visualization modes");
-            Console.WriteLine("  D: Toggle Debug");
-            Console.WriteLine("  SPACE: Pause/Resume");
-            Console.WriteLine("  L: Freeze Controls");
-            Console.WriteLine("  ESC: Exit");
+            Console.WriteLine("  [TAB] CHANGE VISUALIZATION");
+            Console.WriteLine("  [D]EBUG ON/OFF");
+            Console.WriteLine("  [SPACE] PAUSE/RESUME");
+            Console.WriteLine("  [L]OCK");
+            Console.WriteLine("  [ESC] EXIT");
             Console.WriteLine("--------------------------------");
             Console.WriteLine("  Modify the JSON file to change settings");
             Console.WriteLine("  Press any key to continue :)");

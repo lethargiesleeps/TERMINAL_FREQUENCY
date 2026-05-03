@@ -34,18 +34,17 @@ namespace TERMINAL_FREQUENCY
         static void Main(string[] args)
         {
             if (Config.Config.ENABLE_THREAD_PRIORITY) Thread.CurrentThread.Priority = Config.Config.THREAD_PRIORITY;
+
+            Config.Font.Font.SetCustomFont(Config.Font.FontFace.Consolas, 16, false); //always start at default type
+            Config.Font.Font.SaveCurrentFont();
+
+            if(Config.Config.ENABLE_RASTER_FONT)
+                Config.Font.Font.SetRasterFont(Config.Config.RASTER_FONT_TYPE);
+            else if(Config.Config.ENABLE_CUSTOM_FONT)
+                Config.Font.Font.SetCustomFont(Config.Config.CUSTOM_FONT_FACE, Config.Config.CUSTOM_FONT_SIZE, Config.Config.CUSTOM_FONT_BOLD, Config.Config.CUSTOM_FONT_FACE_OVERRIDE);
+
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
-
             CLI.HandleCliArgs(args);
-
-            //TODO: Handle Dark Mode better
-            if(!Config.Config.DARK_MODE)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Config.Config.SHAPE_UNIFORM_COLOR = ConsoleColor.Black;
-                Config.Config.RING_COLOR_MODE = RingColorMode.Dark;
-            }
-
 
             HandleConsoleWindow();
 
@@ -165,8 +164,11 @@ namespace TERMINAL_FREQUENCY
 
                                 if (Config.Config.SHAPE_TYPE == ShapeType.Polygon)
                                     shapeStatus += $" | [9/0] VERT:{Config.Config.SHAPE_POLYGON_SIDES}";
-                                if(Config.Config.SHAPE_LAYOUT != ShapeLayout.Single)
+                                if(Config.Config.SHAPE_LAYOUT != ShapeLayout.Single && Config.Config.SHAPE_LAYOUT != ShapeLayout.Concentric)
                                     shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_COUNT}";
+                                if(Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_CONCENTRIC_LAYERS}";
+
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, ConsoleColor.Gray);
                             }
 
@@ -363,6 +365,13 @@ namespace TERMINAL_FREQUENCY
                         {
                             if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
 
+                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                            {
+                                int layerCount = Math.Max(1, Config.Config.SHAPE_CONCENTRIC_LAYERS - 1);
+                                Config.Config.SHAPE_CONCENTRIC_LAYERS = layerCount;
+                                return;
+                            }
+
                             int shapeCount = Math.Max(1, Config.Config.SHAPE_COUNT - 1);
                             Config.Config.SHAPE_COUNT = shapeCount;
                         }
@@ -381,6 +390,12 @@ namespace TERMINAL_FREQUENCY
                         {
                             if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
 
+                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                            {
+                                int layerCount = Math.Min(10, Config.Config.SHAPE_CONCENTRIC_LAYERS + 1);
+                                Config.Config.SHAPE_CONCENTRIC_LAYERS = layerCount;
+                                return;
+                            }
                             int shapeCount = Math.Min(4, Config.Config.SHAPE_COUNT + 1);
                             Config.Config.SHAPE_COUNT = shapeCount;
                         }
