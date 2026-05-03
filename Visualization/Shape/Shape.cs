@@ -260,7 +260,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
         private void DrawConcentric(ScreenBuffer buffer)
         {
-            int count = Config.Config.SHAPE_COUNT;
+            int count = Config.Config.SHAPE_CONCENTRIC_LAYERS;
 
             if(count == 1)
             {
@@ -271,7 +271,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int centerX = buffer.Width / 2;
             int centerY = buffer.Height / 2;
             
-            int padding = Config.Config.SHAPE_PADDING;
+            int padding = Config.Config.SHAPE_CONENTRIC_PADDING;
             int thickness = GetEffectiveThickness(count);
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
 

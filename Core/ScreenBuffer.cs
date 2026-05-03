@@ -73,7 +73,7 @@ namespace TERMINAL_FREQUENCY.Core
             Height = Console.WindowHeight;
             RendererMode = Config.Config.RENDERER_MODE;
 
-            _bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
+            _bgColor = Config.Config.BACKGROUND_COLOR;
             _currentChar = new char[Height, Width];
             _currentColor = new ConsoleColor[Height, Width];
             _nextChar = new char[Height, Width];
