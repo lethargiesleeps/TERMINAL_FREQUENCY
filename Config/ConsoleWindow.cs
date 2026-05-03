@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-
+#pragma warning disable SYSLIB1054 // Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time
 namespace TERMINAL_FREQUENCY.Config
 {
     public static class ConsoleWindow
@@ -30,6 +30,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         [DllImport("user32.dll")]
         private static extern int GetSystemMetrics(int nIndex);
+
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetStdHandle(int nStdHandle);
 
@@ -437,3 +438,4 @@ namespace TERMINAL_FREQUENCY.Config
         }
     }
 }
+#pragma warning restore SYSLIB1054 // Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time

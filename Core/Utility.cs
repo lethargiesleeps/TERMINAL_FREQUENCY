@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable warnings
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,15 +7,22 @@ using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Core;
 using NAudio.Wave;
-using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using System.Diagnostics;
+using TERMINAL_FREQUENCY.Visualization.Rings;
+using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 namespace TERMINAL_FREQUENCY.Core
 {
+    /// <summary>
+    /// Static utility functions used throughout the program.
+    /// Mostly any code that can be reused all across the program.
+    /// </summary>
     public static class Utility
     {
-        
+        /// <summary>
+        /// String data and console methods for the program launch screen.
+        /// </summary>
         public static void PrintStartup()
         {
             Console.Clear();
@@ -56,6 +64,11 @@ namespace TERMINAL_FREQUENCY.Core
 
         }
 
+        /// <summary>
+        /// String data for when the user paused the screen.
+        /// </summary>
+        /// <param name="buffer">The main ScreenBuffer being used during program runtime.</param>
+        /// <param name="modeName">Name of the current Visualization. </param>
         public static void PrintPause(ScreenBuffer buffer, string modeName)
         {
             string[] lines = new string[]
@@ -88,7 +101,13 @@ namespace TERMINAL_FREQUENCY.Core
                     if (startX + x < buffer.Width && startY + y < buffer.Height)
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
-        public static AudioCapture SelectAudioDevice()
+
+        /// <summary>
+        /// Allows user to select audio device/interface to capture.
+        /// </summary>
+        /// <returns>The selected audio device/interface.</returns>
+        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
+        public static AudioCapture? SelectAudioDevice()
         {
             Console.WriteLine("\nPlease select an audio device to capture...");
             Console.WriteLine("--------------------------------");
@@ -133,6 +152,7 @@ namespace TERMINAL_FREQUENCY.Core
             }
         }
 
+
         public static string GetModeName(int modeIndex)
         {
             return modeIndex switch
@@ -145,6 +165,11 @@ namespace TERMINAL_FREQUENCY.Core
             };
         }
 
+        /// <summary>
+        /// Generates renderable strings of values for all of the program's enums.
+        /// </summary>
+        /// <param name="value">The enum who's values to print.</param>
+        /// <returns>The generated value string.</returns>
         public static string FormatEnum(Enum value)
         {
             if(value is RenderMode renderer)
@@ -158,6 +183,7 @@ namespace TERMINAL_FREQUENCY.Core
                     _ => "???"
                 };
             }
+
             if(value is ConsoleColor color)
             {
                 return color switch 
@@ -195,20 +221,20 @@ namespace TERMINAL_FREQUENCY.Core
                 };
             }
 
-            if(value is ColorMode colorMode)
+            if(value is RingColorMode colorMode)
             {
                 return colorMode switch
                 {
-                    ColorMode.All => "ALL",
-                    ColorMode.Light => "LIGHT",
-                    ColorMode.Dark => "DARK",
-                    ColorMode.Red => "RED",
-                    ColorMode.Blue => "BLUE",
-                    ColorMode.Green => "GREEN",
-                    ColorMode.Yellow => "YLLOW",
-                    ColorMode.RainbowDark => "DRNBW",
-                    ColorMode.RainbowLight => "RNBW",
-                    ColorMode.Random => "RNDM",
+                    RingColorMode.All => "ALL",
+                    RingColorMode.Light => "LIGHT",
+                    RingColorMode.Dark => "DARK",
+                    RingColorMode.Red => "RED",
+                    RingColorMode.Blue => "BLUE",
+                    RingColorMode.Green => "GREEN",
+                    RingColorMode.Yellow => "YLLOW",
+                    RingColorMode.RainbowDark => "DRNBW",
+                    RingColorMode.RainbowLight => "RNBW",
+                    RingColorMode.Random => "RNDM",
                     _ => "???"
                 };
             }
@@ -258,6 +284,12 @@ namespace TERMINAL_FREQUENCY.Core
             //fallback
             return value.ToString().ToUpper();
         }
+
+        /// <summary>
+        /// Uses WASAPI to get a list of all audio devices on a system.
+        /// </summary>
+        /// <returns>A list of string containing all the available audio devices.</returns>
+        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
         public static List<string> GetAvailableDevices()
         {
             List<string> devices = new List<string>();
@@ -274,6 +306,11 @@ namespace TERMINAL_FREQUENCY.Core
             return devices;
         }
 
+        /// <summary>
+        /// Takes a ConsoleColor and returns it's darker counterpart.
+        /// </summary>
+        /// <param name="color">The ConsoleColor to darken.</param>
+        /// <returns>The darkened ConsoleColor.</returns>
         public static ConsoleColor DarkenColor(ConsoleColor color)
         {
             return color switch
@@ -284,14 +321,115 @@ namespace TERMINAL_FREQUENCY.Core
                 ConsoleColor.Cyan => ConsoleColor.DarkCyan,
                 ConsoleColor.Blue => ConsoleColor.DarkBlue,
                 ConsoleColor.Magenta => ConsoleColor.DarkMagenta,
-                ConsoleColor.DarkRed => ConsoleColor.DarkRed,
-                ConsoleColor.DarkYellow => ConsoleColor.DarkYellow,
-                ConsoleColor.DarkGreen => ConsoleColor.DarkGreen,
-                ConsoleColor.DarkCyan => ConsoleColor.DarkCyan,
-                ConsoleColor.DarkBlue => ConsoleColor.DarkBlue,
-                ConsoleColor.DarkMagenta => ConsoleColor.DarkMagenta,
-                _ => ConsoleColor.DarkGray
+                ConsoleColor.Gray => ConsoleColor.DarkGray,
+                ConsoleColor.White => ConsoleColor.Black,
+                _ => color
             };
         }
+
+
+        /// <summary>
+        /// Takes a ConsoleColor and returns it's lighter counterpart.
+        /// </summary>
+        /// <param name="color">The ConsoleColor to lighten.</param>
+        /// <returns>The lightened ConsoleColor.</returns>
+        public static ConsoleColor LightenColor(ConsoleColor color)
+        {
+            return color switch
+            {
+                ConsoleColor.DarkRed => ConsoleColor.Red,
+                ConsoleColor.DarkYellow => ConsoleColor.Yellow,
+                ConsoleColor.DarkGreen => ConsoleColor.Green,
+                ConsoleColor.DarkCyan => ConsoleColor.Cyan,
+                ConsoleColor.DarkBlue => ConsoleColor.Blue,
+                ConsoleColor.DarkMagenta => ConsoleColor.Magenta,
+                ConsoleColor.DarkGray => ConsoleColor.Gray,
+                ConsoleColor.Black => ConsoleColor.Black,
+                _ => color
+            };
+        }
+
+        #region ArrayCycleHandling
+        /// <summary>
+        /// Cycles to next value in a predefined array.
+        /// </summary>
+        /// <typeparam name="T">the type of elements in the array. Can be any type that supports equality comparison.</typeparam>
+        /// <param name="values">The array to cycle through.</param>
+        /// <param name="currentValue">The value to find in the array. If not found, returns the first value of the array.</param>
+        /// <param name="clamp">If true, does not cycle back to first position of the array.</param>
+        /// <returns>The next value in sequence from the array.</returns>
+        /// <exception cref="ArgumentException">Throws if values aregument is null or empty.</exception>
+        public static T CycleNext<T>(T[] values, T currentValue, bool clamp = false)
+        {
+            if (values == null || values.Length == 0)
+                throw new ArgumentException("Values array cannot be null or empty", nameof(values));
+
+            int currentIndex = Array.IndexOf(values, currentValue);
+
+            //start from beginning if value no found
+            if (currentIndex < 0)
+                return values[0];
+
+            if (currentIndex == values.Length - 1 && clamp)
+                return values[currentIndex];
+
+            int nextIndex = (currentIndex + 1) % values.Length;
+            return values[nextIndex];
+        }
+
+        /// <summary>
+        /// Cycles to previous value in a predefined array.
+        /// </summary>
+        /// <typeparam name="T">the type of elements in the array. Can be any type that supports equality comparison.</typeparam>
+        /// <param name="values">The array to cycle through.</param>
+        /// <param name="currentValue">The value to find in the array. If not found, returns the first value of the array.</param>
+        /// <param name="clamp">If true, does not cycle back to last value of the enum.</param>
+        /// <returns>The previous value in sequence from the array.</returns>
+        /// <exception cref="ArgumentException">Throws if values aregument is null or empty.</exception>
+        public static T CyclePrevious<T>(T[] values, T currentValue, bool clamp = false)
+        {
+            if (values == null || values.Length == 0)
+                throw new ArgumentException("Values array cannot be null or empty", nameof(values));
+
+            int currentIndex = Array.IndexOf(values, currentValue);
+
+            //start from end if value no found
+            if (currentIndex < 0)
+                return values[values.Length - 1];
+
+            if (currentIndex == 0 && clamp)
+                return values[currentIndex];
+
+            int prevIndex = (currentIndex - 1 + values.Length) % values.Length;
+            return values[prevIndex];
+        }
+
+        /// <summary>
+        /// Cycles through an enum and returns the next value by converting it into an array of T enum.
+        /// </summary>
+        /// <typeparam name="T">The enum type to cycle through.</typeparam>
+        /// <param name="currentValue">Current value of argument, used to determine enum type.</param>
+        /// <param name="clamp">If true, does not cycle back to first value of the enum.</param>
+        /// <returns>The next value in the enum.</returns>
+        public static T CycleNextEnum<T>(T currentValue, bool clamp = false) where T : struct, Enum
+        {
+            T[] values = (T[])Enum.GetValues(typeof(T));
+            return CycleNext(values, currentValue, clamp);
+        }
+
+        /// <summary>
+        /// Cycles through an enum and returns the previous value by converting it into an array of T enum.
+        /// </summary>
+        /// <typeparam name="T">The enum type to cycle through.</typeparam>
+        /// <param name="currentValue">Current value of argument, used to determine enum type.</param>
+        /// <param name="clamp">If true, does not cycle back to last value of the enum.</param>
+        /// <returns>The previous value in the enum.</returns>
+        public static T CyclePreviousEnum<T>(T currentValue, bool clamp = false) where T : struct, Enum
+        {
+            T[] values = (T[])Enum.GetValues(typeof(T));
+            return CyclePrevious(values, currentValue, clamp);
+        }
+        #endregion
+
     }
 }

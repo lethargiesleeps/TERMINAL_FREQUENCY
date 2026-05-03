@@ -196,7 +196,7 @@ namespace TERMINAL_FREQUENCY.Core
 
         public void CycleRenderMode()
         {
-            RendererMode = (RenderMode)(((int)RendererMode + 1) % 4);
+            RendererMode = Utility.CycleNextEnum(RendererMode);
             ResetRenderState();
         }
 

@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
+using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 namespace TERMINAL_FREQUENCY.Config
 {
@@ -19,7 +21,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static bool LOCK_CONTROLS = false; //if true, all controls except debug mode, exit, and unlock are ignored
         public static bool SHOW_GLOBAL_CONTROLS = true; //shows global controls in debug mode
         public static bool DEBUG_MODE = true; //displays extra info if true
-        public static int DEFAULT_MODE = 2; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
+        public static int DEFAULT_MODE = 0; //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
         public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
 
         //speed stuff - mess with these to achieve higher frame rates at bigger screen sizes. slower framerates may be desirable for stutter effects or to accomodate for different screens/projectors
@@ -35,11 +37,11 @@ namespace TERMINAL_FREQUENCY.Config
         #endregion
 
         #region ConsoleSettings
-        public static int INSTANCES = 4; //how many independent window processes to launch
+        public static int INSTANCES = 1; //how many independent window processes to launch
 
         public static bool DARK_MODE = true; //TODO: if false, console bg is white and default visuals are black to dark gray, not implemented
         public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
-        public static bool BYPASS_STARTUP = true; //if true, skip startup and launch directly into visuals
+        public static bool BYPASS_STARTUP = false; //if true, skip startup and launch directly into visuals
         public static bool DISABLE_APP_TITLE = false;//if true, removes any text to be found on control bar of console window
         public static string CUSTOM_TITLE = ""; //replace TERMINAL FREQUENCY window title, if empty uses default
         public static bool DISABLE_TITLE_BAR = false; //removes the entire window control bar if true
@@ -83,7 +85,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         #region AudioCaptureSettings
         public static int AUDIO_SAMPLE_RESOLUTION = 4; //bytes per sample (typically 4, can be 2 or 4)
-        public static float RMS_MULTIPLIER = 1000f; //scale RMS to the useable volume, safe range 10-500
+        public static float RMS_MULTIPLIER = 100; //scale RMS to the useable volume, safe range 10-500
         public static float NOISE_GATE_THRESHHOLD = 0.01f; //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
         public static float SMOOTHING_FACTOR_EXISTING = 0.8f; //existing + incoming is always = to 1, controls how quickly volume reacts to a change (how quickly vol is updated)
         public static float SMOOTHING_FACTOR_INCOMING = 0.2f; //see above
@@ -104,7 +106,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static float RING_LIFETIME = 1.0f; //lifespan of ring measured in normalized units. LIFETIME / FADE_RATE = frames before ring 'dies' (safe range 0.1 - 10ish)
         public static float RING_SPEED = 1f; //how many character units the ring expands outward each update frame, higher = expands faster (safe range 0.1 - 5)
         public static float RING_FADE_RATE = 0.02f; //amount of life subtracted each update frame. Higher values = rings die faster (CANNOT BE 0)
-        public static ColorMode RING_COLOR_MODE = ColorMode.Light; //modes of colour of the rings, see ColorMode enum
+        public static RingColorMode RING_COLOR_MODE = RingColorMode.Light; //modes of colour of the rings, see ColorMode enum
         public static char[] RING_CHARACTERS = { 'O', 'o', '.' }; //default characters used in rings
         public static bool RING_CHAR_RANDOMIZER = false; //if true, randomly renders a character from RING_CHAR_RANDOMIZER_CHARSET instead of using RING_CHARACTERS
         public static string RING_CHAR_RANDOMIZER_CHARSET = "1234567890"; //see above
@@ -135,7 +137,7 @@ namespace TERMINAL_FREQUENCY.Config
         public static float WATERFALL_END_WIDTH_PERCENT = 0.9f; //width of waterfall at end of its life in percent of console width, has to be higher than start width (safe range 40%-95%)
         public static float WATERFALL_SPEED = 1.0f; //speed which waterfall progresses across screen (safe range 1 - 10)
         public static float WATERFALL_FADE_RATE = 0.005f; //life lost per frame where 1 represents full life (safe range 0.001 0.05)
-        public static int WATERFALL_MAX_STREAMS = 10; //maximum number of waterfall streams before oldest one disappears, the higher the more cpu intensive and the likelier of losing FPS (safe range 1-25)
+        public static int WATERFALL_MAX_STREAMS = 10; //maximum number of waterfall _streams before oldest one disappears, the higher the more cpu intensive and the likelier of losing FPS (safe range 1-25)
         public static float WATERFALL_TRIGGER_THRESHOLD = 0.08f; //minimum volume intensity to spawn new waterfall in percentage (safe range 1% to 30%)
         public static bool WATERFALL_ONLY_SPAWN_ON_THRESHOLD = false; //if true, new waterfall only spawns if volume threshold is met
         public static float WATERFALL_MIDPOINT_CHANGE = 0.5f; //progress threshold where character pattern changes in percentage (first transition) (safe range 20% - 80%)
@@ -202,5 +204,10 @@ namespace TERMINAL_FREQUENCY.Config
         public static int SHAPE_FILL_SPACING = 1; //0 = solid, 1 = every other, 2 = every third
 
         #endregion
+
+        public static void RestoreDefaults()
+        {
+
+        }
     }
 }

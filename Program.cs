@@ -1,11 +1,14 @@
-﻿#pragma warning disable CS8618
+﻿#nullable disable warnings
 using System;
 using System.Diagnostics;
 using System.Threading;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
+using TERMINAL_FREQUENCY.Core.CLI;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
+using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 namespace TERMINAL_FREQUENCY
 {
@@ -28,34 +31,21 @@ namespace TERMINAL_FREQUENCY
         private static int _frameCount = 0;
         private const float SAMPLE_DURATION_SECONDS = 1.0f;
 
-
         static void Main(string[] args)
         {
             if (Config.Config.ENABLE_THREAD_PRIORITY) Thread.CurrentThread.Priority = Config.Config.THREAD_PRIORITY;
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
-            _isChild = args.Length > 0 && args[0] == "--child";
+
+            CLI.HandleCliArgs(args);
 
             //TODO: Handle Dark Mode better
             if(!Config.Config.DARK_MODE)
             {
                 Console.BackgroundColor = ConsoleColor.White;
                 Config.Config.SHAPE_UNIFORM_COLOR = ConsoleColor.Black;
-                Config.Config.RING_COLOR_MODE = ColorMode.Dark;
+                Config.Config.RING_COLOR_MODE = RingColorMode.Dark;
             }
-            if (!_isChild)
-            {
-                for (int i = 1; i < Config.Config.INSTANCES; i++)
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = Environment.ProcessPath,
-                        Arguments = "--child",
-                        UseShellExecute = true,
-                        CreateNoWindow = false
-                    });
-                    Thread.Sleep(300);
-                }
-            }
+
 
             HandleConsoleWindow();
 
@@ -68,7 +58,7 @@ namespace TERMINAL_FREQUENCY
                     new Shape()
                 };
 
-                AudioCapture audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
+                AudioCapture? audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
 
                 if (audioCapture == null)
                 {
@@ -197,7 +187,6 @@ namespace TERMINAL_FREQUENCY
                             //buffer.DrawString(rightX, 2, $"HIT:{_hitRate,5:F0}%", _hitRate > 90 ? ConsoleColor.Green : _hitRate > 70 ? ConsoleColor.Yellow : ConsoleColor.Red);
                         }
 
-
                         buffer.Render();
 
                         //yield settings
@@ -210,7 +199,6 @@ namespace TERMINAL_FREQUENCY
                             while (_stopWatch.ElapsedTicks - frameStart < targetTicks)
                                 Thread.SpinWait(Config.Config.SPIN_WAIT_ITERATIONS);
                         }
-
                     }
                     else
                     {
@@ -218,10 +206,7 @@ namespace TERMINAL_FREQUENCY
                         Utility.PrintPause(buffer, Utility.GetModeName(_currentMode));
                         buffer.Render();
                     }
-
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -241,6 +226,7 @@ namespace TERMINAL_FREQUENCY
             }
 
         }
+
         static void HandleInput(AudioCapture audioCapture, ScreenBuffer buffer)
         {
             while (Console.KeyAvailable)
@@ -249,7 +235,7 @@ namespace TERMINAL_FREQUENCY
 
                 switch (key)
                 {
-                    #region GlobalControls
+                    #region GlobalInputs
                     case ConsoleKey.Escape:
                         audioCapture?.Stop();
                         Environment.Exit(0);
@@ -263,7 +249,7 @@ namespace TERMINAL_FREQUENCY
                     case ConsoleKey.Tab:
                         if (Config.Config.LOCK_CONTROLS) return;
                         if(!_isPaused)
-                            _currentMode = (_currentMode + 1) % _visualizations.Count;
+                            _currentMode = (_currentMode + 1) % _visualizations.Count; //TODO: Make visualization enum
                         break;
 
                     case ConsoleKey.D:
@@ -277,7 +263,6 @@ namespace TERMINAL_FREQUENCY
                         break;
                     #endregion
 
-                    #region VisualizationControls
                     case ConsoleKey.R:
                         if(_isPaused || Config.Config.LOCK_CONTROLS) return;
 
@@ -298,10 +283,7 @@ namespace TERMINAL_FREQUENCY
                             Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
 
                         if(_currentVisualization is Waterfall)
-                        {
-                            int modeCount = Enum.GetValues(typeof(WaterfallMode)).Length;
-                            Config.Config.WATERFALL_MODE = (WaterfallMode)(((int)Config.Config.WATERFALL_MODE + 1) % modeCount);
-                        }
+                            Config.Config.WATERFALL_MODE = Utility.CycleNextEnum(Config.Config.WATERFALL_MODE);
                         break;
 
                     case ConsoleKey.V:
@@ -312,6 +294,7 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Waterfall)
                             Config.Config.WATERFALL_REVERSE_MODE = !Config.Config.WATERFALL_REVERSE_MODE;
+
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_REVERSE_MODE = !Config.Config.SHAPE_REVERSE_MODE;
                         break;
@@ -321,29 +304,16 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Rings)
                         {
-                            ColorMode[] cycle = { ColorMode.Light, ColorMode.Red, ColorMode.Green, ColorMode.Blue, ColorMode.Yellow, ColorMode.RainbowLight, ColorMode.RainbowDark };
-                            int index = Array.IndexOf(cycle, Config.Config.RING_COLOR_MODE);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % cycle.Length;
-                            Config.Config.RING_COLOR_MODE = cycle[index];
+                            RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark };
+                            Config.Config.RING_COLOR_MODE = Utility.CycleNext(cycle, Config.Config.RING_COLOR_MODE);
                         }
 
                         if(_currentVisualization is Waterfall && !Config.Config.WATERFALL_RAINBOW_MODE)
-                        {
-                            //TODO: make this a utility function
-                            int index = Array.IndexOf(_colors, Config.Config.WATERFALL_COLOR);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % _colors.Length;
-                            Config.Config.WATERFALL_COLOR = _colors[index];
-                        }
+                            Config.Config.WATERFALL_COLOR = Utility.CycleNext(_colors, Config.Config.WATERFALL_COLOR);
+
 
                         if(_currentVisualization is Shape)
-                        {
-                            int index = Array.IndexOf(_colors, Config.Config.SHAPE_UNIFORM_COLOR);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % _colors.Length;
-                            Config.Config.SHAPE_UNIFORM_COLOR = _colors[index];
-                        }
+                            Config.Config.SHAPE_UNIFORM_COLOR = Utility.CycleNext(_colors, Config.Config.SHAPE_UNIFORM_COLOR);
                         break;
 
                     case ConsoleKey.F:
@@ -357,25 +327,14 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
 
                         if(_currentVisualization is Shape)
-                        {
-                            ShapeType[] types = (ShapeType[])Enum.GetValues(typeof(ShapeType));
-                            int index = Array.IndexOf(types, Config.Config.SHAPE_TYPE);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % types.Length;
-                            Config.Config.SHAPE_TYPE = types[index];
-                        }
+                            Config.Config.SHAPE_TYPE = Utility.CycleNextEnum(Config.Config.SHAPE_TYPE);
                         break;
 
                     case ConsoleKey.Y:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
                         if (_currentVisualization is Shape)
-                        {
-                            ShapeLayout[] layouts = (ShapeLayout[])Enum.GetValues(typeof(ShapeLayout));
-                            int index = Array.IndexOf(layouts, Config.Config.SHAPE_LAYOUT);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % layouts.Length;
-                            Config.Config.SHAPE_LAYOUT = layouts[index];
-                        }
+                            Config.Config.SHAPE_LAYOUT = Utility.CycleNextEnum(Config.Config.SHAPE_LAYOUT);
                         break;
 
                     case ConsoleKey.T:
@@ -383,10 +342,11 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_SMOOTH_MODE = !Config.Config.SHAPE_SMOOTH_MODE;
-
                         break;
-                    case ConsoleKey.O: //decrement param 2, except Waterfall Normal mode
+
+                    case ConsoleKey.O:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
                         if (_currentVisualization is Rings)
                         {
                             Config.Config.RING_SEGMENTS = Math.Max(8, Config.Config.RING_SEGMENTS - 2);
@@ -396,22 +356,21 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Waterfall && Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
                         {
                             VisualizationOrigin[] cycle = { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
-                            int index = Array.IndexOf(cycle, Config.Config.WATERFALL_ORIGIN);
-                            if (index < 0) index = 0;
-                            index = (index + 1) % cycle.Length;
-                            Config.Config.WATERFALL_ORIGIN = cycle[index];
+                            Config.Config.WATERFALL_ORIGIN = Utility.CycleNext(cycle, Config.Config.WATERFALL_ORIGIN);
                         }
 
                         if (_currentVisualization is Shape)
                         {
                             if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+
                             int shapeCount = Math.Max(1, Config.Config.SHAPE_COUNT - 1);
                             Config.Config.SHAPE_COUNT = shapeCount;
                         }
                         break;
 
-                    case ConsoleKey.P: //increment param 2
+                    case ConsoleKey.P:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
                         if (_currentVisualization is Rings)
                         {
                             Config.Config.RING_SEGMENTS = Math.Min(100, Config.Config.RING_SEGMENTS + 2);
@@ -421,13 +380,15 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Shape)
                         {
                             if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+
                             int shapeCount = Math.Min(4, Config.Config.SHAPE_COUNT + 1);
                             Config.Config.SHAPE_COUNT = shapeCount;
                         }
                         break;
 
-                    case ConsoleKey.OemMinus: //decrement param 1
+                    case ConsoleKey.OemMinus:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Max(Config.Config.RING_RADIUS_MIN + 5, Config.Config.RING_RADIUS_MAX - 5);
 
@@ -436,15 +397,15 @@ namespace TERMINAL_FREQUENCY
 
                         break;
 
-                    case ConsoleKey.OemPlus: //increment param 1
+                    case ConsoleKey.OemPlus:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Min(200, Config.Config.RING_RADIUS_MAX + 5);
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Min(1.0f, Config.Config.SHAPE_MAX_SIZE_PERCENT + 0.02f);
                         break;
-                    #endregion
 
                     case ConsoleKey.D9:
                         if (_isPaused || Config.Config.LOCK_CONTROLS) return;
@@ -452,10 +413,10 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Shape)
                         {
                             if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+
                             int[] validSides = { 5, 6, 8, 10, 12 };
-                            int currentIndex = Array.IndexOf(validSides, Config.Config.SHAPE_POLYGON_SIDES);
-                            if (currentIndex > 0)
-                                Config.Config.SHAPE_POLYGON_SIDES = validSides[currentIndex - 1];
+
+                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CyclePrevious(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
                         }
                         break;
 
@@ -465,10 +426,10 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Shape)
                         {
                             if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+
                             int[] validSides = { 5, 6, 8, 10, 12 };
-                            int currentIndex = Array.IndexOf(validSides, Config.Config.SHAPE_POLYGON_SIDES);
-                            if (currentIndex < validSides.Length - 1)
-                                Config.Config.SHAPE_POLYGON_SIDES = validSides[currentIndex + 1];
+
+                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CycleNext(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
                         }
                         break;
                 }
@@ -476,7 +437,6 @@ namespace TERMINAL_FREQUENCY
         }
         static void HandleConsoleWindow()
         {
-
             //manage window features
             if (Config.Config.DISABLE_TITLE_BAR)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TERMINAL_FREQUENCY.Config
+namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
-    public enum ColorMode
+    public enum RingColorMode
     {
         Light,
         Dark,

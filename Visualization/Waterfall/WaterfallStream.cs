@@ -3,24 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Core;
 
-namespace TERMINAL_FREQUENCY.Visualization
+namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
     public class WaterfallStream
     {
-        public float Progress; //0 is origin, 1 is furthest edge
-        public float Life; //1 is full life, 0 is dead
-        public float Intensity;
-        public bool IsReversed;
-        public VisualizationOrigin Origin;
-        private ConsoleColor streamColor;
-        private static ConsoleColor lastColor = ConsoleColor.White;
-        private static readonly Random rng = new Random();
-
-        private static readonly ConsoleColor[] RainbowColors =
-        {
+        private ConsoleColor _streamColor;
+        private static ConsoleColor _lastColor = ConsoleColor.White;
+        private static readonly Random _rnd = new Random();
+        private static readonly ConsoleColor[] _rainbowColors =
+{
             ConsoleColor.Red, ConsoleColor.DarkRed,
             ConsoleColor.Yellow, ConsoleColor.DarkYellow,
             ConsoleColor.Green, ConsoleColor.DarkGreen,
@@ -28,6 +21,12 @@ namespace TERMINAL_FREQUENCY.Visualization
             ConsoleColor.Blue, ConsoleColor.DarkBlue,
             ConsoleColor.Magenta, ConsoleColor.DarkMagenta
         };
+
+        public float Progress; //0 is origin, 1 is furthest edge
+        public float Life; //1 is full life, 0 is dead
+        public float Intensity;
+        public bool IsReversed;
+        public VisualizationOrigin Origin;
 
         public WaterfallStream(float intensity, VisualizationOrigin origin, bool isReversed = false)
         {
@@ -42,11 +41,11 @@ namespace TERMINAL_FREQUENCY.Visualization
                 ConsoleColor newColor;
                 do
                 {
-                    newColor = RainbowColors[rng.Next(RainbowColors.Length)];
-                } while (newColor == lastColor);
+                    newColor = _rainbowColors[_rnd.Next(_rainbowColors.Length)];
+                } while (newColor == _lastColor);
 
-                streamColor = newColor;
-                lastColor = newColor;
+                _streamColor = newColor;
+                _lastColor = newColor;
             }
 
             IsReversed = isReversed;
@@ -79,7 +78,7 @@ namespace TERMINAL_FREQUENCY.Visualization
                 return positionRatio < 0.3f || positionRatio > 0.7f ? Config.Config.WATERFALL_VERTICAL_CHARS[0] : ' ';
             else if (Progress < Config.Config.WATERFALL_ENDPOINT_CHANGE)
                 return positionRatio < 0.2f || positionRatio > 0.8f ? Config.Config.WATERFALL_VERTICAL_CHARS[1] :
-                       (position % 3 == 0 ? Config.Config.WATERFALL_VERTICAL_CHARS[2] : ' ');
+                       position % 3 == 0 ? Config.Config.WATERFALL_VERTICAL_CHARS[2] : ' ';
             else
                 return position % 4 == 0 ? Config.Config.WATERFALL_VERTICAL_CHARS[2] : ' ';
         }
@@ -91,9 +90,9 @@ namespace TERMINAL_FREQUENCY.Visualization
                 if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_BRIGHT)
                     return ConsoleColor.White;
                 else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_COLOR)
-                    return streamColor;
+                    return _streamColor;
                 else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_DARK)
-                    return Utility.DarkenColor(streamColor);
+                    return Utility.DarkenColor(_streamColor);
                 else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_DARKGRAY)
                     return ConsoleColor.DarkGray;
                 else

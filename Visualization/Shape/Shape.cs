@@ -9,26 +9,27 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 {
     public class Shape : IVisualization
     {
-        private string name = "SHAPE";
-        private int modeIndex = 2;
-        private float currentSize = 0f;
-        private float targetSize = 0f;
-        private float sizeBoost = 2.0f;
-        string IVisualization.Name => name;
-        int IVisualization.ModeIndex => modeIndex;
+        private string _name = "SHAPE";
+        private int _modeIndex = 2;
+        private float _currentSize = 0f;
+        private float _targetSize = 0f;
+        private float _peakVolume = 0.1f;
+        private const float SIZE_BOOST = 2.0f; //small boost for layouts where shapes tend to get cramped, non modifiable, user can modify many other settings to get bigger shapes
+
+        string IVisualization.Name => _name;
+        int IVisualization.ModeIndex => _modeIndex;
         public bool IsReversed { get; set; }
         public bool IsSmoothingEnabled { get; set; }
         public bool IsCustomColorEnabled { get; set; }
         public bool IsCyclingEnabled { get; set; }
-        private float peakVolume = 0.1f;
+        
         public Shape()
         {
             IsReversed = Config.Config.SHAPE_REVERSE_MODE;
             IsSmoothingEnabled = Config.Config.SHAPE_SMOOTH_MODE;
             IsCustomColorEnabled = Config.Config.SHAPE_USE_CUSTOM_COLOR;
-
-
         }
+
         #region IVisualization
         public void Update(float volume)
         {
@@ -43,11 +44,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             if (IsReversed)
             {
                 //track peak and normalize for reverse
-                if (volume > peakVolume)
-                    peakVolume = volume;
-                peakVolume *= 0.995f;
+                if (volume > _peakVolume)
+                    _peakVolume = volume;
+                _peakVolume *= 0.995f;
 
-                float normalizedVolume = peakVolume > 0.01f ? Math.Clamp(volume / peakVolume, 0f, 1f) : 0f;
+                float normalizedVolume = _peakVolume > 0.01f ? Math.Clamp(volume / _peakVolume, 0f, 1f) : 0f;
 
                 if (normalizedVolume < Config.Config.SHAPE_TRIGGER_THRESHOLD * Config.Config.SHAPE_REVERSE_VOLUME_SENSITIVITY)
                     normalizedVolume = 0;
@@ -56,7 +57,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 //boost maxSize artificially to look more like raw volume
                 maxSize *= 5;
 
-                targetSize = maxSize - (normalizedVolume * (maxSize - minSize));
+                _targetSize = maxSize - (normalizedVolume * (maxSize - minSize));
             }
             else
             {
@@ -66,18 +67,18 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
                 scaledVolume = volume * Config.Config.SHAPE_VOLUME_SENSITIVITY;
 
-                targetSize = minSize + (scaledVolume * (maxSize - minSize));
+                _targetSize = minSize + (scaledVolume * (maxSize - minSize));
             }
 
-            currentSize = IsSmoothingEnabled
-                ? currentSize + (targetSize - currentSize) * Config.Config.SHAPE_LERP_FACTOR
-                : targetSize;
+            _currentSize = IsSmoothingEnabled
+                ? _currentSize + (_targetSize - _currentSize) * Config.Config.SHAPE_LERP_FACTOR
+                : _targetSize;
         }
 
         public void OnSpike()
         {
-            targetSize = IsReversed ? GetMinSize() : GetEffectiveMaxSize();
-            if (!IsSmoothingEnabled) currentSize = targetSize;
+            _targetSize = IsReversed ? GetMinSize() : GetEffectiveMaxSize();
+            if (!IsSmoothingEnabled) _currentSize = _targetSize;
         }
         #endregion
 
@@ -103,7 +104,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int centerX = buffer.Width / 2;
             int centerY = buffer.Height / 2;
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
-            int radius = (int)(maxDimension * currentSize / 2);
+            int radius = (int)(maxDimension * _currentSize / 2);
 
             int thickness = GetEffectiveThickness(1);
 
@@ -130,8 +131,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 int centerX = buffer.Width / 2;
                 int centerY = GetVerticalPosition(buffer.Height, count, i, spacing);
                 int maxDimension = Math.Min(buffer.Width, buffer.Height / Math.Max(1, count));
-                maxDimension = (int)(maxDimension * sizeBoost);
-                int radius = (int)(maxDimension * currentSize / 2);
+                maxDimension = (int)(maxDimension * SIZE_BOOST);
+                int radius = (int)(maxDimension * _currentSize / 2);
 
                 FillShape(buffer, centerX, centerY, radius, thickness, i);
                 DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
@@ -159,7 +160,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 int centerX = GetHorizontalPosition(buffer.Width, count, i, spacing);
                 int centerY = buffer.Height / 2;
                 int maxDimension = Math.Min(buffer.Width / Math.Max(1, count), buffer.Height);
-                int radius = (int)(maxDimension * currentSize / 2);
+                int radius = (int)(maxDimension * _currentSize / 2);
 
                 FillShape(buffer, centerX, centerY, radius, thickness, i);
                 DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
@@ -203,7 +204,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                         centerX = buffer.Width / 2 + (s == 0 ? -buffer.Width / 6 : buffer.Width / 6);
 
                     int maxDim = Math.Min(buffer.Width / 3, buffer.Height / 3);
-                    int radius = (int)(maxDim * currentSize / 2);
+                    int radius = (int)(maxDim * _currentSize / 2);
 
                     FillShape(buffer, centerX, rowY, radius, thickness, shapeIndex);
                     DrawShapeAt(buffer, centerX, rowY, radius, thickness, GetColor(shapeIndex));
@@ -219,10 +220,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int[] indices = GetQuadrantIndices(count);
             int actualShapes = indices.Length;
             int maxDimension = Math.Min(buffer.Width, buffer.Height) / (actualShapes == 1 ? 2 : actualShapes);
-            int radius = (int)(maxDimension * currentSize / 2);
+            int radius = (int)(maxDimension * _currentSize / 2);
             (int x, int y)[] quads;
 
-            if(count == 4) maxDimension = (int)(maxDimension * sizeBoost);
+            if(count == 4) maxDimension = (int)(maxDimension * SIZE_BOOST);
             if (Config.Config.SHAPE_QUADRANT_CENTERED && actualShapes == 4)
             {
                 //cluster to middle
@@ -274,12 +275,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int thickness = GetEffectiveThickness(count);
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
 
-            int outerRadius = (int)(maxDimension * currentSize / 2);
+            int outerRadius = (int)(maxDimension * _currentSize / 2);
 
             //ensure rings don't collapse, but respect low volume
             int minOuter = (count * (thickness + padding)) + padding;
-            int calculatedOuter = (int)(maxDimension * currentSize / 2);
-            if (calculatedOuter < minOuter && currentSize > 0.05f)
+            int calculatedOuter = (int)(maxDimension * _currentSize / 2);
+            if (calculatedOuter < minOuter && _currentSize > 0.05f)
                 outerRadius = minOuter;
             else
                 outerRadius = calculatedOuter;
@@ -297,6 +298,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
         #endregion
+
         #region ShapeDrawingMethods
         private void DrawShapeAt(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
