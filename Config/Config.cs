@@ -14,91 +14,18 @@ namespace TERMINAL_FREQUENCY.Config
 {
     public static class Config
     {
-        #region GlobalSettings
-        public static bool FORCE_DEFAULT_SETTINGS = true;                                //TODO: if true, and a settings.json file is read, it ignores any updates and uses default settings
-        public static bool SAFE_MODE = true;                                             //if true, when reading settings if a value is outside predetermined range it snaps to closest acceptable value
-        public static bool ERROR_MODE = true;                                            //if true prints all errors of values outside saferanges to the console and closes window on input
-        public static bool LOCK_CONTROLS = false;                                        //if true, all controls except debug mode, exit, and unlock are ignored
-        public static bool SHOW_GLOBAL_CONTROLS = true;                                  //shows global controls in debug mode
-        public static bool DEBUG_MODE = true;                                            //displays extra info if true
-        public static int DEFAULT_MODE = 0;                                              //which visualization to start with [0 = Rings, 1 = Waterfall, 2 = shape]
-        public static bool ENABLE_RASTER_FONT = true;                                    //if true, uses a raster font, can be used if some characters are not displaying correctly (appear as different characters or not found character
-        public static RasterFontType RASTER_FONT_TYPE = RasterFontType.EightByTwelve;    //which raster font to use
-        public static bool ENABLE_CUSTOM_FONT = false;                                   //allows user to set font settings. enabling raster font takes priority
-        public static FontFace CUSTOM_FONT_FACE = FontFace.Consolas;                     //true type font to use, user can use font face override if their system supports that font
-        public static string CUSTOM_FONT_FACE_OVERRIDE = string.Empty;                   //if not empty, attemps to set to provided font face
-        public static int CUSTOM_FONT_SIZE = 16;                                         //size of custom font
-        public static bool CUSTOM_FONT_BOLD = false;                                     //if true, font weight is 700, otherwise 400
-        #endregion
-
-        #region RenderSettings
-        public static int TARGET_FPS = 120; //not regarded if THREAD_SLEEP or SPIN_WAIT is disabled
-        public static bool ENABLE_YIELD = false; //if true, yield for THREAD_RATE ms on every frame, prioritized over SpinWait. if you are looking to accurately track FPS just note that this will totally break the calculations
-        public static int YIELD_TIMEOUT = 33; //in miliseconds, he higher the slower... approx FPS values are [1 = ~ 1000fps (max speed, max cpu usage, beware!), 8 = ~120fps, 16 = ~60fps, 33 = ~30fps, 50 = ~20fps, 100 = ~10fps] (safe range 8-100)
-        public static bool ENABLE_SPIN_WAIT = false;
-        public static int SPIN_WAIT_ITERATIONS = 10; //how many times the thread waits before resuming, lower = faster
-        public static bool ENABLE_THREAD_PRIORITY = false; //if true, set thread priority at program launch. can be lowered or highered depending on what audio software is running
-        public static ThreadPriority THREAD_PRIORITY = ThreadPriority.Normal;
-        public static RenderMode RENDERER_MODE = RenderMode.DirectWrite; //switch rendering mode between Normal, Dirty Buffering, Per Row Buffering and Fast... cannot be switched at run time
-        public static ConsoleColor ROW_BATCH_COLOR = ConsoleColor.White; //color for row batch renderer
-        #endregion
-
-        #region ConsoleSettings
-        public static int INSTANCES = 1; //how many independent window processes to launch
-        public static ConsoleColor BACKGROUND_COLOR = ConsoleColor.Black; //TODO: bg color of console at launch, not implemented
-        public static bool BYPASS_STARTUP = true; //if true, skip startup and launch directly into visuals
-        public static bool DISABLE_APP_TITLE = false;//if true, removes any text to be found on control bar of console window
-        public static string CUSTOM_TITLE = ""; //replace TERMINAL FREQUENCY window title, if empty uses default
-        public static bool DISABLE_TITLE_BAR = false; //removes the entire window control bar if true
-        public static bool DISABLE_SCROLL_BARS = false; //removes the x,y scroll bars in the console
-        public static bool DISABLE_WINDOW_RESIZE = false; //if true, window cannot be resized
-        public static bool LAUNCH_FULL_SCREEN = false; //if true, launches console in maximized mode
-        public static bool LAUNCH_IN_CENTER = false; //if true, launches console in center of screen, gets ignored if launch full screen is true
-        public static bool LAUNCH_AT = false; //if true launches window at LAUNCH_AT_X and LAUNCH_AT_Y
-        public static int LAUNCH_AT_X = -1; //xPos of where console launches. if -1, gets ignored regardless status of LAUNCH_AT
-        public static int LAUNCH_AT_Y = -1; //yPos of where console launches. if -1, gets ignored regardless status of LAUNCH_AT
-        public static bool ENABLE_CUSTOM_WINDOW_SIZE = false; //if true launches with CUSTOM_WINDOW_SIZE_H/W
-        public static int CUSTOM_WINDOW_WIDTH = 115; //custom window width if enabled
-        public static int CUSTOM_WINDOW_HEIGHT = 35; //custom window height if enabled
-        public static byte WINDOW_OPACITY = 255; //window opacity, 0 transparent, 255 solid.
-        public static bool ALWAYS_ON_TOP = false; //if true, console is always on top regardless
-        public static bool ENABLE_WINDOW_BLUR = false; //if true, add acryllic blur to the console
-        public static bool ENABLE_WINDOW_VIBRANCY = false; //if true, does blur but with custom settings, prioritized over blur
-        public static byte WINDOW_VIBRANCY_R = 0;
-        public static byte WINDOW_VIBRANCY_G = 255;
-        public static byte WINDOW_VIBRANCY_B = 0;
-        public static byte WINDOW_VIBRANCY_A = 0;
-        public static bool ENABLE_CLICK_THROUGH = false; //if true, can click on apps behind the console. can pair well with opacity and always on top
-        public static bool ENABLE_FLASH_ON_BEAT = false; //if true, console flashes in OnSpike hook
-        public static int FLASH_ON_BEAT_COUNT = 4; //how many time it flashes
-        public static bool ENABLE_WINDOW_GLOW = false;
-        public static int WINDOW_GLOW_RADIUS = 500; // if > 0, creates a glow around the window
-        public static int WINDOW_GLOW_R = 255;
-        public static int WINDOW_GLOW_G = 255;
-        public static int WINDOW_GLOW_B = 0;
-
-        public static ConsoleColor[] DEFAULT_COLORS =        
-        {
-            ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green,
-            ConsoleColor.Blue, ConsoleColor.Yellow, ConsoleColor.Cyan,
-            ConsoleColor.Magenta, ConsoleColor.Gray, ConsoleColor.DarkRed,
-            ConsoleColor.DarkGreen, ConsoleColor.DarkBlue, ConsoleColor.DarkYellow,
-            ConsoleColor.DarkCyan, ConsoleColor.DarkMagenta, ConsoleColor.DarkGray
-        };
-
-        #endregion
 
         #region AudioCaptureSettings
-        public static bool SPECIFY_AUDIO_DEVICE = false; //TODO: lets user select which audio device to capture, not implemented
-        public static int AUDIO_SAMPLE_RESOLUTION = 4; //bytes per sample (typically 4, can be 2 or 4)
-        public static float RMS_MULTIPLIER = 100f; //scale RMS to the useable volume, safe range 10-500
-        public static float NOISE_GATE_THRESHHOLD = 0.1f; //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
-        public static float SMOOTHING_FACTOR_EXISTING = 0.8f; //existing + incoming is always = to 1, controls how quickly volume reacts to a change (how quickly vol is updated)
-        public static float SMOOTHING_FACTOR_INCOMING = 0.2f; //see above
-        public static float PEAK_TRACKING_MINIMUM = 0.1f; //range to track peaks, prevents noise from becoming a peak (0.05 to 0.3ish for best results)
-        public static float PEAK_DECAY_FACTOR = 0.995f;//higher value = hold peak longer for dramatic effect, lower is more responsive (tested safe range of 0.95 - 0.999)
-        public static float SPIKE_VOLUME_MINIMUM = 0.05f; //minimum volume to even consider a reaction (tested safe range 0.01 - 0.2)
-        public static float SPIKE_RATIO = 1.15f; //how much louder than calculated volume to trigger spike, lower = more sensitive 
+        public static bool SPECIFY_AUDIO_DEVICE = false;                                   //TODO: lets user select which audio device to capture, not implemented
+        public static int AUDIO_SAMPLE_RESOLUTION = 4;                                     //bytes per sample (typically 4, can be 2 or 4)
+        public static float RMS_MULTIPLIER = 100f;                                         //scale RMS to the useable volume, safe range 10-500
+        public static float NOISE_GATE_THRESHHOLD = 0.1f;                                  //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
+        public static float SMOOTHING_FACTOR_EXISTING = 0.8f;                              //existing + incoming is always = to 1, controls how quickly volume reacts to a change (how quickly vol is updated)
+        public static float SMOOTHING_FACTOR_INCOMING = 0.2f;                              //see above
+        public static float PEAK_TRACKING_MINIMUM = 0.1f;                                  //range to track peaks, prevents noise from becoming a peak (0.05 to 0.3ish for best results)
+        public static float PEAK_DECAY_FACTOR = 0.995f;                                    //higher value = hold peak longer for dramatic effect, lower is more responsive (tested safe range of 0.95 - 0.999)
+        public static float SPIKE_VOLUME_MINIMUM = 0.05f;                                  //minimum volume to even consider a reaction (tested safe range 0.01 - 0.2)
+        public static float SPIKE_RATIO = 1.15f;                                           //how much louder than calculated volume to trigger spike, lower = more sensitive 
         #endregion
 
         #region RingSettings

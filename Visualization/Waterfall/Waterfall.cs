@@ -211,12 +211,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                         if (x >= 0 && x < consoleWidth)
                             buffer.SetPixel(x, curveY, Config.Config.WATERFALL_CURVE_CHAR, color);
             }
-
-            if (Config.Config.DEBUG_MODE)
-            {
-                string debug = $"P:{stream.Progress:F2} L:{stream.Life:F2}";
-                buffer.DrawString(0, 0, debug, ConsoleColor.Yellow);
-            }
         }
 
         private void DrawHorizontalStream(ScreenBuffer buffer, WaterfallStream stream, bool fromLeft)
@@ -278,12 +272,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     for (int y = centerY - curveOffset; y <= centerY + curveOffset; y++)
                         if (y >= 0 && y < consoleHeight)
                             buffer.SetPixel(curveX, y, Config.Config.WATERFALL_CURVE_CHAR, color);
-            }
-
-            if (Config.Config.DEBUG_MODE)
-            {
-                string debug = $"P:{stream.Progress:F2} L:{stream.Life:F2}";
-                buffer.DrawString(0, 0, debug, ConsoleColor.Yellow);
             }
         }
     }

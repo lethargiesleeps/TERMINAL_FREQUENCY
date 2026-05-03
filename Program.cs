@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using TERMINAL_FREQUENCY.Config;
+using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Core.CLI;
 using TERMINAL_FREQUENCY.Visualization;
@@ -14,12 +15,13 @@ namespace TERMINAL_FREQUENCY
 {
     class Program
     {
+        private static Settings _settings = new Settings();
         private static bool _isPaused = false;
-        private static int _currentMode = Config.Config.DEFAULT_MODE;
+        private static int _currentMode = (int)_settings.GlobalSettings.DefaultMode;
         private static bool _isChild = false;
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
-        private static readonly ConsoleColor[] _colors = Config.Config.DEFAULT_COLORS;
+        private static readonly ConsoleColor[] _colors = _settings.ConsoleSettings.DefaultColors;
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -33,18 +35,24 @@ namespace TERMINAL_FREQUENCY
 
         static void Main(string[] args)
         {
-            if (Config.Config.ENABLE_THREAD_PRIORITY) Thread.CurrentThread.Priority = Config.Config.THREAD_PRIORITY;
+            if (_settings.RendererSettings.EnableThreadPriority)
+                Thread.CurrentThread.Priority = _settings.RendererSettings.ThreadPriority;
 
             Config.Font.Font.SetCustomFont(Config.Font.FontFace.Consolas, 16, false); //always start at default type
             Config.Font.Font.SaveCurrentFont();
 
-            if(Config.Config.ENABLE_RASTER_FONT)
-                Config.Font.Font.SetRasterFont(Config.Config.RASTER_FONT_TYPE);
-            else if(Config.Config.ENABLE_CUSTOM_FONT)
-                Config.Font.Font.SetCustomFont(Config.Config.CUSTOM_FONT_FACE, Config.Config.CUSTOM_FONT_SIZE, Config.Config.CUSTOM_FONT_BOLD, Config.Config.CUSTOM_FONT_FACE_OVERRIDE);
+            if(_settings.FontSettings.EnableRasterFont)
+                Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+            else if(_settings.FontSettings.EnableCustomFont)
+                Config.Font.Font.SetCustomFont(
+                    _settings.FontSettings.CustomFontFace, 
+                    _settings.FontSettings.CustomFontSize, 
+                    _settings.FontSettings.CustomFontBold, 
+                    _settings.FontSettings.CustomFontFaceOverride
+                    );
 
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
-            CLI.HandleCliArgs(args);
+            CLI.HandleCliArgs(args, _settings.GlobalSettings);
 
             HandleConsoleWindow();
 
@@ -67,7 +75,7 @@ namespace TERMINAL_FREQUENCY
                 }
 
 
-                ScreenBuffer buffer = new ScreenBuffer();
+                ScreenBuffer buffer = new ScreenBuffer(_settings);
                 _currentVisualization = _visualizations[_currentMode];
 
                 //register audio events
@@ -80,8 +88,8 @@ namespace TERMINAL_FREQUENCY
                 {
                     if (_isPaused) return;
 
-                    if (Config.Config.ENABLE_FLASH_ON_BEAT) //doesnt seem to really work
-                        ConsoleWindow.FlashWindowOnBeat(Config.Config.FLASH_ON_BEAT_COUNT);
+                    if (_settings.ConsoleSettings.EnableFlashOnBeat)
+                        ConsoleWindow.FlashWindowOnBeat(_settings.ConsoleSettings.FlashOnBeatCount);
 
                     if (_currentVisualization is Rings rings)
                         rings.OnSpike();
@@ -106,7 +114,7 @@ namespace TERMINAL_FREQUENCY
 
                     if(!_isPaused)
                     {
-                        if(Config.Config.DEBUG_MODE)
+                        if(_settings.GlobalSettings.EnableDebugMode)
                         {
 
                             _framesInWindow++;
@@ -136,7 +144,7 @@ namespace TERMINAL_FREQUENCY
                         _currentVisualization.Draw(buffer);
 
                         //debug bar
-                        if(Config.Config.DEBUG_MODE)
+                        if(_settings.GlobalSettings.EnableDebugMode)
                         {
 
                             if (_currentVisualization is Rings)
@@ -173,10 +181,10 @@ namespace TERMINAL_FREQUENCY
                             }
 
                             string modeName = Utility.GetModeName(_currentMode);
-                            string status = $"MODE: {modeName} | VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | LOCK: {(Config.Config.LOCK_CONTROLS ? "ON" : "OFF")}";
+                            string status = $"MODE: {modeName} | VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
                             buffer.DrawString(0, buffer.Height - 2, status, ConsoleColor.Gray);
 
-                            if (Config.Config.SHOW_GLOBAL_CONTROLS)
+                            if (_settings.GlobalSettings.ShowGlobalControls)
                             {
                                 string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [ESC] EXIT";
                                 buffer.DrawString(0, buffer.Height - 1, controls, ConsoleColor.DarkGray);
@@ -192,14 +200,14 @@ namespace TERMINAL_FREQUENCY
                         buffer.Render();
 
                         //yield settings
-                        long targetTicks = Stopwatch.Frequency / Config.Config.TARGET_FPS;
+                        long targetTicks = Stopwatch.Frequency / _settings.RendererSettings.TargetFps;
 
-                        if(Config.Config.ENABLE_YIELD)
-                            Thread.Sleep(Config.Config.YIELD_TIMEOUT);
-                        else if(Config.Config.ENABLE_SPIN_WAIT)
+                        if(_settings.RendererSettings.EnableYield)
+                            Thread.Sleep(_settings.RendererSettings.YieldTimeout);
+                        else if(_settings.RendererSettings.EnableSpinWait)
                         {
                             while (_stopWatch.ElapsedTicks - frameStart < targetTicks)
-                                Thread.SpinWait(Config.Config.SPIN_WAIT_ITERATIONS);
+                                Thread.SpinWait(_settings.RendererSettings.SpinWaitIterations);
                         }
                     }
                     else
@@ -244,29 +252,29 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.Spacebar:
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
                         _isPaused = !_isPaused;
                         break;
 
                     case ConsoleKey.Tab:
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
                         if(!_isPaused)
                             _currentMode = (_currentMode + 1) % _visualizations.Count; //TODO: Make visualization enum
                         break;
 
                     case ConsoleKey.D:
                         if(!_isPaused)
-                            Config.Config.DEBUG_MODE = !Config.Config.DEBUG_MODE;
+                            _settings.GlobalSettings.EnableDebugMode = !_settings.GlobalSettings.EnableDebugMode;
                         break;
 
                     case ConsoleKey.L:
                         if (!_isPaused)
-                            Config.Config.LOCK_CONTROLS = !Config.Config.LOCK_CONTROLS;
+                            _settings.GlobalSettings.EnableControlLock = !_settings.GlobalSettings.EnableControlLock;
                         break;
                     #endregion
 
                     case ConsoleKey.R:
-                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Waterfall)
                             Config.Config.WATERFALL_RAINBOW_MODE = !Config.Config.WATERFALL_RAINBOW_MODE;
@@ -279,7 +287,7 @@ namespace TERMINAL_FREQUENCY
                             return;
                         }
 
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
                             Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
@@ -289,7 +297,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.V:
-                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
                             Config.Config.RINGS_REVERSE_MODE = !Config.Config.RINGS_REVERSE_MODE;
@@ -302,7 +310,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.C:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
@@ -319,35 +327,35 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.F:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_FILL_MODE = !Config.Config.SHAPE_FILL_MODE;
                         break;
 
                     case ConsoleKey.S:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Shape)
                             Config.Config.SHAPE_TYPE = Utility.CycleNextEnum(Config.Config.SHAPE_TYPE);
                         break;
 
                     case ConsoleKey.Y:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_LAYOUT = Utility.CycleNextEnum(Config.Config.SHAPE_LAYOUT);
                         break;
 
                     case ConsoleKey.T:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_SMOOTH_MODE = !Config.Config.SHAPE_SMOOTH_MODE;
                         break;
 
                     case ConsoleKey.O:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
@@ -378,7 +386,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.P:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
@@ -402,7 +410,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.OemMinus:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Max(Config.Config.RING_RADIUS_MIN + 5, Config.Config.RING_RADIUS_MAX - 5);
@@ -413,7 +421,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.OemPlus:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                             Config.Config.RING_RADIUS_MAX = Math.Min(200, Config.Config.RING_RADIUS_MAX + 5);
@@ -423,7 +431,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.D9:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                         {
@@ -436,7 +444,7 @@ namespace TERMINAL_FREQUENCY
                         break;
 
                     case ConsoleKey.D0:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                         {
@@ -453,56 +461,57 @@ namespace TERMINAL_FREQUENCY
         static void HandleConsoleWindow()
         {
             //manage window features
-            if (Config.Config.DISABLE_TITLE_BAR)
+            if (_settings.ConsoleSettings.DisableTitleBar)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border
 
-            if(Config.Config.DISABLE_SCROLL_BARS)
+            if(_settings.ConsoleSettings.DisableScrollBars)
                 ConsoleWindow.DisableScrollBars();
 
 
 
-            ConsoleWindow.SetAlwaysOnTop(Config.Config.ALWAYS_ON_TOP);
-            ConsoleWindow.SetOpacity(Config.Config.WINDOW_OPACITY);
-            ConsoleWindow.SetClickThrough(Config.Config.ENABLE_CLICK_THROUGH);
+            ConsoleWindow.SetAlwaysOnTop(_settings.ConsoleSettings.AlwaysOnTop);
+            ConsoleWindow.SetOpacity((byte)_settings.ConsoleSettings.WindowOpacity);
+            ConsoleWindow.SetClickThrough(_settings.ConsoleSettings.EnableClickThrough);
 
-            if (Config.Config.ENABLE_WINDOW_VIBRANCY)
-                ConsoleWindow.SetWindowVibrancy(Config.Config.WINDOW_VIBRANCY_R, Config.Config.WINDOW_VIBRANCY_G, Config.Config.WINDOW_VIBRANCY_B, Config.Config.WINDOW_VIBRANCY_A);
-            else if (Config.Config.ENABLE_WINDOW_BLUR)
-                ConsoleWindow.SetWindowBlur(Config.Config.ENABLE_WINDOW_BLUR);
+            if (_settings.ConsoleSettings.EnableWindowVibrancy)
+                ConsoleWindow.SetWindowVibrancy(
+                    (byte)_settings.ConsoleSettings.WindowVibrancyR,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyG,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyB,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyA
+                );
+            else if (_settings.ConsoleSettings.EnableWindowBlur)
+                ConsoleWindow.SetWindowBlur(_settings.ConsoleSettings.EnableWindowBlur);
 
-            //seems to not work
-            if (Config.Config.ENABLE_WINDOW_GLOW)
-                ConsoleWindow.SetWindowGlow(Config.Config.WINDOW_GLOW_RADIUS, (byte)Config.Config.WINDOW_GLOW_R, (byte)Config.Config.WINDOW_GLOW_G, (byte)Config.Config.WINDOW_GLOW_B);
-            
             //size
-            if (Config.Config.LAUNCH_FULL_SCREEN)
+            if (_settings.ConsoleSettings.LaunchMaximized)
                 ConsoleWindow.SetFullScreen();
-            else if (Config.Config.ENABLE_CUSTOM_WINDOW_SIZE)
-                ConsoleWindow.SetScreenSize(Config.Config.CUSTOM_WINDOW_WIDTH, Config.Config.CUSTOM_WINDOW_HEIGHT);
+            else if (_settings.ConsoleSettings.EnableCustomWindowSize)
+                ConsoleWindow.SetScreenSize(_settings.ConsoleSettings.CustomWindowWidth, _settings.ConsoleSettings.CustomWindowHeight);
 
             //position
-            if (!Config.Config.LAUNCH_FULL_SCREEN)
+            if (!_settings.ConsoleSettings.LaunchMaximized)
             {
-                if (Config.Config.LAUNCH_AT && Config.Config.LAUNCH_AT_X >= 0 && Config.Config.LAUNCH_AT_Y >= 0)
-                    ConsoleWindow.LaunchConsoleAt(Config.Config.LAUNCH_AT_X, Config.Config.LAUNCH_AT_Y);
-                else if (Config.Config.LAUNCH_IN_CENTER)
+                if (_settings.ConsoleSettings.LaunchAt && _settings.ConsoleSettings.LaunchAtX >= 0 && _settings.ConsoleSettings.LaunchAtY >= 0)
+                    ConsoleWindow.LaunchConsoleAt(_settings.ConsoleSettings.LaunchAtX, _settings.ConsoleSettings.LaunchAtY);
+                else if (_settings.ConsoleSettings.LaunchInCenter)
                     ConsoleWindow.LaunchConsoleCenter();
             }
 
-            if (Config.Config.DISABLE_WINDOW_RESIZE)
+            if (_settings.ConsoleSettings.DisableWindowResize)
                 ConsoleWindow.DisableResize();
 
             Console.CursorVisible = false;
 
             //manage process title
-            if (Config.Config.DISABLE_APP_TITLE)
+            if (_settings.ConsoleSettings.DisableAppTitle)
                 Console.Title = string.Empty;
-            else if (!string.IsNullOrEmpty(Config.Config.CUSTOM_TITLE))
-                Console.Title = Config.Config.CUSTOM_TITLE;
+            else if (!string.IsNullOrEmpty(_settings.ConsoleSettings.CustomTitle))
+                Console.Title = _settings.ConsoleSettings.CustomTitle;
             else
                 Console.Title = _isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
 
-            if (!Config.Config.BYPASS_STARTUP)
+            if (!_settings.GlobalSettings.BypassStartupScreen)
                 Utility.PrintStartup();
 
         }

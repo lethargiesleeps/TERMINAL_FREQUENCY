@@ -30,9 +30,6 @@ namespace TERMINAL_FREQUENCY.Core
             _capture = new WasapiLoopbackCapture();
             _capture.DataAvailable += OnDataAvailable;
             _capture.StartRecording();
-
-            if(Config.Config.DEBUG_MODE)
-                Console.WriteLine($"Audio capture started ({_capture.WaveFormat.SampleRate}Hz)");
         }
 
         public void Stop()

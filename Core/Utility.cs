@@ -1,17 +1,10 @@
-﻿#nullable disable warnings
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Visualization;
-using TERMINAL_FREQUENCY.Core;
+﻿using TERMINAL_FREQUENCY.Visualization;
 using NAudio.Wave;
 using TERMINAL_FREQUENCY.Visualization.Shape;
-using System.Diagnostics;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
+#nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
 {
     /// <summary>
@@ -86,7 +79,7 @@ namespace TERMINAL_FREQUENCY.Core
                 "║                                                                                          ║",
                 "║                    [SPACE] Resume  [ESC] Exit  [M] CHANGE RENDERING MODE                 ║",
                 "╚══════════════════════════════════════════════════════════════════════════════════════════╝",
-                $"CURRENT MODE: {modeName} RENDERER: {buffer.RendererMode}"
+                $"CURRENT MODE: {modeName} RENDERER: {buffer.GetRendererMode()}"
 
             };
 
@@ -163,6 +156,19 @@ namespace TERMINAL_FREQUENCY.Core
                 // 3 => "EQUALIZER",
                 _ => "UNKNOWN"
             };
+        }
+
+        public static int ByteConstraintsCheck(int value)
+        {
+            if (value < byte.MinValue) return byte.MinValue;
+            else if (value > byte.MaxValue) return byte.MaxValue;
+            else return value;
+        }
+        public static int EnumCount<T>(bool returnLastIndex = false) where T : Enum
+        {
+            return returnLastIndex
+                ? Enum.GetValues(typeof(T)).Length - 1 
+                : Enum.GetValues(typeof (T)).Length;
         }
 
         /// <summary>
