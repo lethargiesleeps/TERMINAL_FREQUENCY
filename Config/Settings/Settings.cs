@@ -9,7 +9,7 @@
         public AudioCaptureSettings AudioCaptureSettings { get; private set; }
         public RingsSettings RingsSettings { get; private set; }
         public WaterfallSettings WaterfallSettings { get; private set; }
-
+        public ShapeSettings ShapeSettings { get; private set; }
         public Settings()
         {
             GlobalSettings = new GlobalSettings();
@@ -19,6 +19,7 @@
             AudioCaptureSettings = new AudioCaptureSettings();
             RingsSettings = new RingsSettings();
             WaterfallSettings = new WaterfallSettings();
+            ShapeSettings = new ShapeSettings();
         }
 
         public void Restore()
@@ -30,6 +31,7 @@
             AudioCaptureSettings.Restore();
             RingsSettings.Restore();
             WaterfallSettings.Restore();
+            ShapeSettings.Restore();
         }
 
         public void EnforceConstraints()
@@ -41,6 +43,7 @@
             AudioCaptureSettings.EnforceConstraints();
             RingsSettings.EnforceConstraints();
             WaterfallSettings.EnforceConstraints();
+            ShapeSettings.EnforceConstraints();
         }
 
         public void EnforceMandatoryConstraints()
@@ -52,6 +55,7 @@
             AudioCaptureSettings.EnforceMandatoryConstraints();
             RingsSettings.EnforceMandatoryConstraints();
             WaterfallSettings.EnforceMandatoryConstraints();
+            ShapeSettings.EnforceMandatoryConstraints();
         }
     }
 }

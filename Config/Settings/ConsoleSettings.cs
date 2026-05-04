@@ -7,6 +7,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
     public class ConsoleSettings : IConfigurable
     {
         public ConsoleColor BackgroundColor { get; set; }              //TODO: bg color of console at launch, not implemented
+        public bool DisableCursor { get; set; }                        //if true, console cursor is disabled
         public bool DisableAppTitle { get; set; }                      //if true, removes any text to be found on control bar of console window
         public string CustomTitle { get; set; }                        //replace TERMINAL FREQUENCY window title, if empty uses default
         public bool DisableTitleBar { get; set; }                      //removes the entire window control bar if true
@@ -46,6 +47,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public void Restore()
         {
             BackgroundColor = ConsoleColor.Black;
+            DisableCursor = true;
             DisableAppTitle = false;
             CustomTitle = "";
             DisableTitleBar = false;

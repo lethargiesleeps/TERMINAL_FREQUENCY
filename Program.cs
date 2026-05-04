@@ -62,7 +62,7 @@ namespace TERMINAL_FREQUENCY
                 {
                     new Rings(_settings),
                     new Waterfall(_settings),
-                    new Shape()
+                    new Shape(_settings)
                 };
 
                 AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
@@ -168,14 +168,14 @@ namespace TERMINAL_FREQUENCY
 
                             if(_currentVisualization is Shape)
                             {
-                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(Config.Config.SHAPE_TYPE)} | LA[Y]OUT:{Utility.FormatEnum(Config.Config.SHAPE_LAYOUT)} | [C]OLOR:{Utility.FormatEnum(Config.Config.SHAPE_UNIFORM_COLOR)} | [F]ILL:{(Config.Config.SHAPE_FILL_MODE ? "ON" : "OFF")} | RE[V]ERSE:{(Config.Config.SHAPE_REVERSE_MODE ? "ON" : "OFF")} | SMOO[T]H:{(Config.Config.SHAPE_SMOOTH_MODE ? "ON" : "OFF")} | [-/=] SIZE:{Config.Config.SHAPE_MAX_SIZE_PERCENT:F2}";
+                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(_settings.ShapeSettings.Type)} | LA[Y]OUT:{Utility.FormatEnum(_settings.ShapeSettings.Layout)} | [C]OLOR:{Utility.FormatEnum(_settings.ShapeSettings.UniformColor)} | [F]ILL:{(_settings.ShapeSettings.FillMode ? "ON" : "OFF")} | RE[V]ERSE:{(_settings.ShapeSettings.ReverseMode ? "ON" : "OFF")} | SMOO[T]H:{(_settings.ShapeSettings.SmoothMode ? "ON" : "OFF")} | [-/=] SIZE:{_settings.ShapeSettings.MaxSizePercent:F2}";
 
-                                if (Config.Config.SHAPE_TYPE == ShapeType.Polygon)
-                                    shapeStatus += $" | [9/0] VERT:{Config.Config.SHAPE_POLYGON_SIDES}";
-                                if(Config.Config.SHAPE_LAYOUT != ShapeLayout.Single && Config.Config.SHAPE_LAYOUT != ShapeLayout.Concentric)
-                                    shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_COUNT}";
-                                if(Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
-                                    shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_CONCENTRIC_LAYERS}";
+                                if (_settings.ShapeSettings.Type == ShapeType.Polygon)
+                                    shapeStatus += $" | [9/0] VERT:{_settings.ShapeSettings.PolygonSides}";
+                                if(_settings.ShapeSettings.Layout != ShapeLayout.Single && _settings.ShapeSettings.Layout != ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.Count}";
+                                if(_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.ConcentricLayers}";
 
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, ConsoleColor.Gray);
                             }
@@ -306,7 +306,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.WaterfallSettings.ReverseMode = !_settings.WaterfallSettings.ReverseMode;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_REVERSE_MODE = !Config.Config.SHAPE_REVERSE_MODE;
+                            _settings.ShapeSettings.ReverseMode = !_settings.ShapeSettings.ReverseMode;
                         break;
 
                     case ConsoleKey.C:
@@ -323,35 +323,35 @@ namespace TERMINAL_FREQUENCY
 
 
                         if(_currentVisualization is Shape)
-                            Config.Config.SHAPE_UNIFORM_COLOR = Utility.CycleNext(_colors, Config.Config.SHAPE_UNIFORM_COLOR);
+                            _settings.ShapeSettings.UniformColor = Utility.CycleNext(_colors, _settings.ShapeSettings.UniformColor);
                         break;
 
                     case ConsoleKey.F:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_FILL_MODE = !Config.Config.SHAPE_FILL_MODE;
+                            _settings.ShapeSettings.FillMode = !_settings.ShapeSettings.FillMode;
                         break;
 
                     case ConsoleKey.S:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Shape)
-                            Config.Config.SHAPE_TYPE = Utility.CycleNextEnum(Config.Config.SHAPE_TYPE);
+                            _settings.ShapeSettings.Type = Utility.CycleNextEnum(_settings.ShapeSettings.Type);
                         break;
 
                     case ConsoleKey.Y:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_LAYOUT = Utility.CycleNextEnum(Config.Config.SHAPE_LAYOUT);
+                            _settings.ShapeSettings.Layout = Utility.CycleNextEnum(_settings.ShapeSettings.Layout);
                         break;
 
                     case ConsoleKey.T:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_SMOOTH_MODE = !Config.Config.SHAPE_SMOOTH_MODE;
+                            _settings.ShapeSettings.SmoothMode = !_settings.ShapeSettings.SmoothMode;
                         break;
 
                     case ConsoleKey.O:
@@ -371,17 +371,17 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
 
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
                             {
-                                int layerCount = Math.Max(1, Config.Config.SHAPE_CONCENTRIC_LAYERS - 1);
-                                Config.Config.SHAPE_CONCENTRIC_LAYERS = layerCount;
+                                int layerCount = Math.Max(1, _settings.ShapeSettings.ConcentricLayers - 1);
+                                _settings.ShapeSettings.ConcentricLayers = layerCount;
                                 return;
                             }
 
-                            int shapeCount = Math.Max(1, Config.Config.SHAPE_COUNT - 1);
-                            Config.Config.SHAPE_COUNT = shapeCount;
+                            int shapeCount = Math.Max(1, _settings.ShapeSettings.Count - 1);
+                            _settings.ShapeSettings.Count = shapeCount;
                         }
                         break;
 
@@ -396,16 +396,16 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
 
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Concentric)
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
                             {
-                                int layerCount = Math.Min(10, Config.Config.SHAPE_CONCENTRIC_LAYERS + 1);
-                                Config.Config.SHAPE_CONCENTRIC_LAYERS = layerCount;
+                                int layerCount = Math.Min(10, _settings.ShapeSettings.ConcentricLayers + 1);
+                                _settings.ShapeSettings.ConcentricLayers = layerCount;
                                 return;
                             }
-                            int shapeCount = Math.Min(4, Config.Config.SHAPE_COUNT + 1);
-                            Config.Config.SHAPE_COUNT = shapeCount;
+                            int shapeCount = Math.Min(4, _settings.ShapeSettings.Count + 1);
+                            _settings.ShapeSettings.Count = shapeCount;
                         }
                         break;
 
@@ -416,7 +416,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.RadiusMin + 5, _settings.RingsSettings.RadiusMax - 5);
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Max(0.05f, Config.Config.SHAPE_MAX_SIZE_PERCENT - 0.02f);
+                            _settings.ShapeSettings.MaxSizePercent = Math.Max(0.05f, _settings.ShapeSettings.MaxSizePercent - 0.02f);
 
                         break;
 
@@ -427,7 +427,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 5);
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Min(1.0f, Config.Config.SHAPE_MAX_SIZE_PERCENT + 0.02f);
+                            _settings.ShapeSettings.MaxSizePercent = Math.Min(1.0f, _settings.ShapeSettings.MaxSizePercent + 0.02f);
                         break;
 
                     case ConsoleKey.D9:
@@ -435,11 +435,11 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CyclePrevious(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
+                            _settings.ShapeSettings.PolygonSides = Utility.CyclePrevious(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
                         break;
 
@@ -448,11 +448,11 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CycleNext(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
+                            _settings.ShapeSettings.PolygonSides = Utility.CycleNext(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
                         break;
                 }
@@ -460,7 +460,9 @@ namespace TERMINAL_FREQUENCY
         }
         static void HandleConsoleWindow()
         {
-            Console.CursorVisible = false;
+            if (_settings.ConsoleSettings.DisableCursor)
+                Console.CursorVisible = false;
+
             //manage window features
             if (_settings.ConsoleSettings.DisableTitleBar)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border

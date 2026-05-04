@@ -1,52 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Core;
+﻿using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 
+#nullable disable warnings
 namespace TERMINAL_FREQUENCY.Config.Settings
 {
     public class ShapeSettings : IConfigurable
     {
-        public ShapeType Type { get; set; }
-        public ShapeLayout Layout { get; set; }
-        public float VolumeSensitivity { get; set; }
-        public float TriggerThreshold { get; set; }
-        public float MaxSizePercent { get; set; }
-        public float MinSizePercent { get; set; }
-        public int Count { get; set; }
-        public int ConcentricLayers { get; set; }
-        public int ConcentricPadding { get; set; }
-        public int Thickness { get; set; }
-        public int ThicknessMax { get; set; }
-        public bool QuadrantCentered { get; set; }
-        public int[] QuadrantIndices { get; set; }
-        public int QuadrantGapDivisor { get; set; }
-        public bool UseCustomColor { get; set; }
-        public ConsoleColor UniformColor { get; set; }
-        public ConsoleColor[] CustomColors { get; set; }
-        public bool ReverseMode { get; set; }
-        public float ReverseVolumeSensitivity { get; set; }
-        public bool SmoothMode { get; set; }
-        public float LerpFactor { get; set; }
-        public char Character { get; set; }
-        public bool VerticalStack { get; set; }
-        public float CircleSegmentDensity { get; set; }
-        public int CircleMinSegments { get; set; }
-        public int CircleMaxSegments { get; set; }
-        public float SquareWidthRatio { get; set; }
-        public float SquareHeightRatio { get; set; }
-        public float TriangleSideMultiplier { get; set; }
-        public float TriangleHeightMultiplier { get; set; }
-        public float TriangleAspectCorrection { get; set; }
-        public float PyramidRowSpacing { get; set; }
-        public int PolygonSides { get; set; }
-        public bool FillMode { get; set; }
-        public char[] FillCharacters { get; set; }
-        public ConsoleColor[] FillColors { get; set; }
-        public int FillSpacing { get; set; }
+        public ShapeType Type { get; set; }                              //which shape gets rendered, see enum
+        public ShapeLayout Layout { get; set; }                          //how the shape gets laid out (always center if shape count is 1 or shape layout is concentric)
+        public float VolumeSensitivity { get; set; }                     //use in tandem with TRIGGER_THRESHOLD to effectively clamp the visual and make it less sensitive to louder peaks 1.0 = full, 0.5 = half, 0.1 = barely moves (0.1 - 1)
+        public float TriggerThreshold { get; set; }                      //ignores volume below this
+        public float MaxSizePercent { get; set; }                        //how far the shape goes in percentage, must be higher than min (safe range 0.02 to 0.99), keep in mind though that the louder the audio might still exceed window bounds on peak
+        public float MinSizePercent { get; set; }                        //size at 0 volume, must be lower than max
+        public int Count { get; set; }                                   //how many shapes get rendered, between 1 and 4
+        public int ConcentricLayers { get; set; }                        //how many layers in Concentric mode
+        public int ConcentricPadding { get; set; }                       //Chars between concentric layers
+        public int Thickness { get; set; }                               //thickness of the outline of the shape
+        public int ThicknessMax { get; set; }                            //prevents thickness from dynamically exceeding this value
+        public bool QuadrantCentered { get; set; }                       //if true, shapes cluster around center of window, only configured to work if shapes is 4
+        public int[] QuadrantIndices { get; set; }                       //empty = auto, else manual quadrants from 0 to 3
+        public int QuadrantGapDivisor { get; set; }                      //smaller = wider gap between shapes (safe range 5-20)
+        public bool UseCustomColor { get; set; }                         //if true, uses SHAPE_CUSTOM_COLORS array
+        public ConsoleColor UniformColor { get; set; }                   //change color here, use custom color if each shape should be different
+        public ConsoleColor[] CustomColors { get; set; }                 //used if mode is toggled on, macx of 4
+        public bool ReverseMode { get; set; }                            //if true, start at max and go inwards for each shape
+        public float ReverseVolumeSensitivity { get; set; }              //normalizes the threshold so shape get closer to center, the closer to 0 the closer to center the shape will get at max volume (safe range: 0.01 to 0.05ish) 
+        public bool SmoothMode { get; set; }                             //if true, attemps to smooth out the shape on motion
+        public float LerpFactor { get; set; }                            //smoothing speed for smooth mode
+        public char Character { get; set; }                              //what prints as the shape
+        public bool VerticalStack { get; set; }                          //for count=2: true=vertical, false=horizontal
+        public float CircleSegmentDensity { get; set; }                  //how many points make up the circle relative to its cirumfrance. 1 is one point per radian (super dense)(safe range 0.3 to 1.5)
+        public int CircleMinSegments { get; set; }                       //how 'circular' the circle is, < 12 can result in squares or triangles (safe range 6-20)
+        public int CircleMaxSegments { get; set; }                       //affects overall radius, 120 is plenty but can go higher(safe range 60-200)
+        public float SquareWidthRatio { get; set; }                      //1.0 = perfect square, 0.5 = half width, 2.0 = double width
+        public float SquareHeightRatio { get; set; }                     //1.0 = perfect square, 0.5 = half height, 2.0 = double height
+        public float TriangleSideMultiplier { get; set; }                // Side length relative to radius
+        public float TriangleHeightMultiplier { get; set; }              // sqrt(3)/2 for equilateral, adjust for different proportions
+        public float TriangleAspectCorrection { get; set; }              // Console char aspect ratio
+        public float PyramidRowSpacing { get; set; }                     //space between rows in pyramid layout, higher = more space, lower = less space (safe range 0.08 to 0.3)
+        public int PolygonSides { get; set; }                            //can accept 5, 6, 8, 10, 12 anything higher might as well use circle        
+        public bool FillMode { get; set; }                               //if true, fills inside the shape with character, super buggy will fix later, you can make THREAD_RATE really low but beware your CPU usage, works best in a smaller console window
+        public char[] FillCharacters { get; set; }                       //one per shape, if 1 shape then always index 0
+        public ConsoleColor[] FillColors { get; set; }                   //same as above but for color
+        public int FillSpacing { get; set; }                             //0 = solid, 1 = every other, 2 = every third
 
         public ShapeSettings()
         {
@@ -69,7 +65,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             QuadrantCentered = false;
             QuadrantIndices = new int[0];
             QuadrantGapDivisor = 8;
-            UseCustomColor = false;
+            UseCustomColor = true;
             UniformColor = ConsoleColor.White;
             CustomColors = new ConsoleColor[] { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue };
             ReverseMode = false;
@@ -89,7 +85,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             PyramidRowSpacing = 0.25f;
             PolygonSides = 5;
             FillMode = false;
-            FillCharacters = new char[] { '█', '▓', '▒', '█' };
+            FillCharacters = new char[] { 'd', 'r', 'u', 'g' };
             FillColors = new ConsoleColor[] { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray };
             FillSpacing = 1;
         }
@@ -98,14 +94,16 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         {
             if (VolumeSensitivity < 0.1f) VolumeSensitivity = 0.1f;
             if (VolumeSensitivity > 1f) VolumeSensitivity = 1f;
+
             if (MaxSizePercent < 0.02f) MaxSizePercent = 0.02f;
             if (MaxSizePercent > 0.99f) MaxSizePercent = 0.99f;
             if (MinSizePercent < 0f) MinSizePercent = 0f;
             if (MinSizePercent >= MaxSizePercent) MinSizePercent = MaxSizePercent - 0.01f;
+
             if (Count < 1) Count = 1;
-            if (Count > 4) Count = 4;
+            if (Count > 5) Count = 5;
             if (ConcentricLayers < 1) ConcentricLayers = 1;
-            if (ConcentricLayers > 4) ConcentricLayers = 4;
+            if (ConcentricLayers > 10) ConcentricLayers = 10;
             if (ConcentricPadding < 0) ConcentricPadding = 0;
             if (ThicknessMax < 1) ThicknessMax = 1;
             if (QuadrantGapDivisor < 5) QuadrantGapDivisor = 5;
@@ -163,23 +161,32 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (PyramidRowSpacing < 0f) PyramidRowSpacing = 0.01f;
             if (PolygonSides < 3) PolygonSides = 3;
             if (FillSpacing < 0) FillSpacing = 0;
+
             if (QuadrantIndices == null || QuadrantIndices.Length == 0)
                 QuadrantIndices = new int[0];
+
             if (CustomColors == null || CustomColors.Length == 0)
                 CustomColors = new ConsoleColor[] { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue };
+
             if (FillCharacters == null || FillCharacters.Length == 0)
                 FillCharacters = new char[] { '█', '▓', '▒', '█' };
+
             if (FillColors == null || FillColors.Length == 0)
                 FillColors = new ConsoleColor[] { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray };
+
             if ((int)Type < 0 || (int)Type > Utility.EnumCount<ShapeType>(true))
                 Type = ShapeType.Circle;
+
             if ((int)Layout < 0 || (int)Layout > Utility.EnumCount<ShapeLayout>(true))
                 Layout = ShapeLayout.Single;
+
             if ((int)UniformColor < 0 || (int)UniformColor > Utility.EnumCount<ConsoleColor>(true))
                 UniformColor = ConsoleColor.White;
+
             for (int i = 0; i < CustomColors.Length; i++)
                 if ((int)CustomColors[i] < 0 || (int)CustomColors[i] > Utility.EnumCount<ConsoleColor>(true))
                     CustomColors[i] = ConsoleColor.White;
+
             for (int i = 0; i < FillColors.Length; i++)
                 if ((int)FillColors[i] < 0 || (int)FillColors[i] > Utility.EnumCount<ConsoleColor>(true))
                     FillColors[i] = ConsoleColor.DarkGray;
