@@ -20,7 +20,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
 
         public void Restore()
         {
-            EnableRasterFont = false;
+            EnableRasterFont = true;
             RasterFontType = RasterFontType.EightByTwelve;
             EnableCustomFont = false;
             CustomFontFace = FontFace.Consolas;

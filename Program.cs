@@ -60,12 +60,12 @@ namespace TERMINAL_FREQUENCY
             {
                 _visualizations = new List<IVisualization>()
                 {
-                    new Rings(),
-                    new Waterfall(),
+                    new Rings(_settings),
+                    new Waterfall(_settings),
                     new Shape()
                 };
 
-                AudioCapture? audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
+                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
 
                 if (audioCapture == null)
                 {
@@ -149,19 +149,19 @@ namespace TERMINAL_FREQUENCY
 
                             if (_currentVisualization is Rings)
                             {
-                                string ringsStatus = $"RE[V]ERSE:{(Config.Config.RINGS_REVERSE_MODE ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(Config.Config.RING_COLOR_MODE)} | RANDO[M] CHARS:{(Config.Config.RING_CHAR_RANDOMIZER ? "ON" : "OFF")} | [-/=] RADIUS:{Config.Config.RING_RADIUS_MAX} | [O/P] SEGMENTS:{Config.Config.RING_SEGMENTS}";
+                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.RadiusMax} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
                                 buffer.DrawString(0, buffer.Height - 3, ringsStatus, ConsoleColor.Gray);
                             }
 
                             if (_currentVisualization is Waterfall)
                             {
-                                string waterfallStatus = $"[R]AINBOW:{(Config.Config.WATERFALL_RAINBOW_MODE ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(Config.Config.WATERFALL_MODE)} | RE[V]ERSE:{(Config.Config.WATERFALL_REVERSE_MODE ? "ON" : "OFF")}";
+                                string waterfallStatus = $"[R]AINBOW:{(_settings.WaterfallSettings.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.WaterfallSettings.Mode)} | RE[V]ERSE:{(_settings.WaterfallSettings.ReverseMode ? "ON" : "OFF")}";
 
-                                if (!Config.Config.WATERFALL_RAINBOW_MODE)
-                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(Config.Config.WATERFALL_COLOR)}";
+                                if (!_settings.WaterfallSettings.RainbowMode)
+                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(_settings.WaterfallSettings.Color)}";
 
-                                if (Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
-                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(Config.Config.WATERFALL_ORIGIN)}";
+                                if (_settings.WaterfallSettings.Mode == WaterfallMode.Normal)
+                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.WaterfallSettings.Origin)}";
 
                                 buffer.DrawString(0, buffer.Height - 3, waterfallStatus, ConsoleColor.Gray);
                             }
@@ -277,7 +277,7 @@ namespace TERMINAL_FREQUENCY
                         if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_RAINBOW_MODE = !Config.Config.WATERFALL_RAINBOW_MODE;
+                            _settings.WaterfallSettings.RainbowMode = !_settings.WaterfallSettings.RainbowMode;
                         break;
 
                     case ConsoleKey.M:
@@ -290,20 +290,20 @@ namespace TERMINAL_FREQUENCY
                         if (_settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
-                            Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
+                            _settings.RingsSettings.CharRandomizer = !_settings.RingsSettings.CharRandomizer;
 
                         if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_MODE = Utility.CycleNextEnum(Config.Config.WATERFALL_MODE);
+                            _settings.WaterfallSettings.Mode = Utility.CycleNextEnum(_settings.WaterfallSettings.Mode);
                         break;
 
                     case ConsoleKey.V:
                         if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
-                        if(_currentVisualization is Rings)
-                            Config.Config.RINGS_REVERSE_MODE = !Config.Config.RINGS_REVERSE_MODE;
+                        if (_currentVisualization is Rings)
+                            _settings.RingsSettings.ReverseMode = !_settings.RingsSettings.ReverseMode;
 
-                        if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_REVERSE_MODE = !Config.Config.WATERFALL_REVERSE_MODE;
+                        if (_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.ReverseMode = !_settings.WaterfallSettings.ReverseMode;
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_REVERSE_MODE = !Config.Config.SHAPE_REVERSE_MODE;
@@ -315,11 +315,11 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Rings)
                         {
                             RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark };
-                            Config.Config.RING_COLOR_MODE = Utility.CycleNext(cycle, Config.Config.RING_COLOR_MODE);
+                            _settings.RingsSettings.ColorMode = Utility.CycleNext(cycle, _settings.RingsSettings.ColorMode);
                         }
 
-                        if(_currentVisualization is Waterfall && !Config.Config.WATERFALL_RAINBOW_MODE)
-                            Config.Config.WATERFALL_COLOR = Utility.CycleNext(_colors, Config.Config.WATERFALL_COLOR);
+                        if(_currentVisualization is Waterfall && !_settings.WaterfallSettings.RainbowMode)
+                            _settings.WaterfallSettings.Color = Utility.CycleNext(_colors, _settings.WaterfallSettings.Color);
 
 
                         if(_currentVisualization is Shape)
@@ -359,14 +359,14 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Rings)
                         {
-                            Config.Config.RING_SEGMENTS = Math.Max(8, Config.Config.RING_SEGMENTS - 2);
-                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Max(8, Config.Config.RING_AMBIENT_SEGMENTS - 2);
+                            _settings.RingsSettings.Segments = Math.Max(8, _settings.RingsSettings.Segments - 2);
+                            _settings.RingsSettings.AmbientSegments = Math.Max(8, _settings.RingsSettings.AmbientSegments - 2);
                         }
 
-                        if (_currentVisualization is Waterfall && Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
+                        if (_currentVisualization is Waterfall && _settings.WaterfallSettings.Mode == WaterfallMode.Normal)
                         {
                             VisualizationOrigin[] cycle = { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
-                            Config.Config.WATERFALL_ORIGIN = Utility.CycleNext(cycle, Config.Config.WATERFALL_ORIGIN);
+                            _settings.WaterfallSettings.Origin = Utility.CycleNext(cycle, _settings.WaterfallSettings.Origin);
                         }
 
                         if (_currentVisualization is Shape)
@@ -390,8 +390,8 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Rings)
                         {
-                            Config.Config.RING_SEGMENTS = Math.Min(100, Config.Config.RING_SEGMENTS + 2);
-                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Min(80, Config.Config.RING_AMBIENT_SEGMENTS + 2);
+                            _settings.RingsSettings.Segments = Math.Min(100, _settings.RingsSettings.Segments + 2);
+                            _settings.RingsSettings.AmbientSegments = Math.Min(80, _settings.RingsSettings.AmbientSegments + 2);
                         }
 
                         if (_currentVisualization is Shape)
@@ -413,7 +413,7 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            Config.Config.RING_RADIUS_MAX = Math.Max(Config.Config.RING_RADIUS_MIN + 5, Config.Config.RING_RADIUS_MAX - 5);
+                            _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.RadiusMin + 5, _settings.RingsSettings.RadiusMax - 5);
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Max(0.05f, Config.Config.SHAPE_MAX_SIZE_PERCENT - 0.02f);
@@ -424,7 +424,7 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            Config.Config.RING_RADIUS_MAX = Math.Min(200, Config.Config.RING_RADIUS_MAX + 5);
+                            _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 5);
 
                         if (_currentVisualization is Shape)
                             Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Min(1.0f, Config.Config.SHAPE_MAX_SIZE_PERCENT + 0.02f);

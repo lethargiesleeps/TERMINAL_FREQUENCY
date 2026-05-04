@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 
 namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
     public class Waterfall : IVisualization
     {
+        private Settings _settings;
         private string _name = "WATERFALL";
         private int _modeIndex = 1;
         private List<WaterfallStream> _streams = new List<WaterfallStream>();
@@ -22,9 +20,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
 
-        public Waterfall()
+        public Waterfall(Settings settings)
         {
-            _clockwiseIndex = Array.IndexOf(_clockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+            _settings = settings;
+            _clockwiseIndex = Array.IndexOf(_clockwiseOrder, _settings.WaterfallSettings.Origin);
             if (_clockwiseIndex < 0) _clockwiseIndex = 0;
         }
 
@@ -43,11 +42,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
         public void OnSpike(float intensity)
         {
-            if (Config.Config.WATERFALL_ONLY_SPAWN_ON_THRESHOLD && intensity < Config.Config.WATERFALL_TRIGGER_THRESHOLD) return;
+            if (_settings.WaterfallSettings.OnlySpawnOnThreshold && intensity < _settings.WaterfallSettings.TriggerThreshold) return;
 
             lock (_streamLock)
             {
-                if (Config.Config.WATERFALL_MODE == WaterfallMode.All)
+                if (_settings.WaterfallSettings.Mode == WaterfallMode.All)
                 {
                     VisualizationOrigin[] allOrigins =
                     {
@@ -59,20 +58,20 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
                     foreach (VisualizationOrigin o in allOrigins)
                     {
-                        while (_streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                        while (_streams.Count >= _settings.WaterfallSettings.MaxStreams)
                             _streams.RemoveAt(0);
 
-                        bool isReversed = Config.Config.WATERFALL_REVERSE_MODE;
-                        _streams.Add(new WaterfallStream(intensity, o, isReversed));
+                        bool isReversed = _settings.WaterfallSettings.ReverseMode;
+                        _streams.Add(new WaterfallStream(_settings, intensity, o, isReversed));
                     }
                 }
                 else
                 {
-                    if (_streams.Count >= Config.Config.WATERFALL_MAX_STREAMS)
+                    if (_streams.Count >= _settings.WaterfallSettings.MaxStreams)
                         _streams.RemoveAt(0);
 
                     VisualizationOrigin origin = GetNextOrigin();
-                    _streams.Add(new WaterfallStream(intensity, origin, Config.Config.WATERFALL_REVERSE_MODE));
+                    _streams.Add(new WaterfallStream(_settings, intensity, origin, _settings.WaterfallSettings.ReverseMode));
                 }
             }
 
@@ -102,19 +101,19 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
         private VisualizationOrigin GetNextOrigin()
         {
-            switch (Config.Config.WATERFALL_MODE)
+            switch (_settings.WaterfallSettings.Mode)
             {
                 case WaterfallMode.Normal:
-                    return Config.Config.WATERFALL_ORIGIN;
+                    return _settings.WaterfallSettings.Origin;
 
                 case WaterfallMode.Clockwise:
-                    int startIdx = Array.IndexOf(_clockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+                    int startIdx = Array.IndexOf(_clockwiseOrder, _settings.WaterfallSettings.Origin);
                     VisualizationOrigin next = _clockwiseOrder[(startIdx + _clockwiseIndex) % 4];
                     _clockwiseIndex = (_clockwiseIndex + 1) % 4;
                     return next;
 
                 case WaterfallMode.AntiClockwise:
-                    startIdx = Array.IndexOf(_antiClockwiseOrder, Config.Config.WATERFALL_ORIGIN);
+                    startIdx = Array.IndexOf(_antiClockwiseOrder, _settings.WaterfallSettings.Origin);
                     next = _antiClockwiseOrder[(startIdx + _clockwiseIndex) % 4];
                     _clockwiseIndex = (_clockwiseIndex + 1) % 4;
                     return next;
@@ -130,7 +129,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     return (VisualizationOrigin)new Random().Next(4); // 0=Top, 1=Bottom, 2=Left, 3=Right
 
                 default:
-                    return Config.Config.WATERFALL_ORIGIN;
+                    return _settings.WaterfallSettings.Origin;
             }
         }
         private void DrawStream(ScreenBuffer buffer, WaterfallStream stream)
@@ -201,7 +200,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
 
             //curve
-            int curveOffset = (int)(halfWidth * Config.Config.WATERFALL_CURVE_INTENSITY_VERITCAL);
+            int curveOffset = (int)(halfWidth * _settings.WaterfallSettings.CurveIntensityVertical);
 
             if (curveOffset > 0 && streamY > 0 && streamY < consoleHeight - 1)
             {
@@ -209,7 +208,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                 if (curveY >= 0 && curveY < consoleHeight)
                     for (int x = centerX - curveOffset; x <= centerX + curveOffset; x++)
                         if (x >= 0 && x < consoleWidth)
-                            buffer.SetPixel(x, curveY, Config.Config.WATERFALL_CURVE_CHAR, color);
+                            buffer.SetPixel(x, curveY, _settings.WaterfallSettings.CurveChar, color);
             }
         }
 
@@ -255,23 +254,23 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
                 if (c != ' ')
                 {
-                    if (c == Config.Config.WATERFALL_VERTICAL_CHARS[0]) c = Config.Config.WATERFALL_HORIZONTAL_CHARS[0];
-                    else if (c == Config.Config.WATERFALL_VERTICAL_CHARS[1]) c = Config.Config.WATERFALL_HORIZONTAL_CHARS[1];
-                    else if (c == Config.Config.WATERFALL_VERTICAL_CHARS[2]) c = Config.Config.WATERFALL_HORIZONTAL_CHARS[2];
+                    if (c == _settings.WaterfallSettings.VerticalChars[0]) c = _settings.WaterfallSettings.HorizontalChars[0];
+                    else if (c == _settings.WaterfallSettings.VerticalChars[1]) c = _settings.WaterfallSettings.HorizontalChars[1];
+                    else if (c == _settings.WaterfallSettings.VerticalChars[2]) c = _settings.WaterfallSettings.HorizontalChars[2];
 
                     buffer.SetPixel(streamX, y, c, color);
                 }
             }
 
             //curvature
-            int curveOffset = (int)(halfHeight * Config.Config.WATERFALL_CURVE_INTENSITY_HORIZONTAL);
+            int curveOffset = (int)(halfHeight * _settings.WaterfallSettings.CurveIntensityHorizontal);
             if (curveOffset > 0 && streamX > 0 && streamX < consoleWidth - 1)
             {
                 int curveX = fromLeft ? streamX - 1 : streamX + 1;
                 if (curveX >= 0 && curveX < consoleWidth)
                     for (int y = centerY - curveOffset; y <= centerY + curveOffset; y++)
                         if (y >= 0 && y < consoleHeight)
-                            buffer.SetPixel(curveX, y, Config.Config.WATERFALL_CURVE_CHAR, color);
+                            buffer.SetPixel(curveX, y, _settings.WaterfallSettings.CurveChar, color);
             }
         }
     }

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
+using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 
 namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
     public class WaterfallStream
     {
+        private Settings _settings;
         private ConsoleColor _streamColor;
         private static ConsoleColor _lastColor = ConsoleColor.White;
         private static readonly Random _rnd = new Random();
@@ -28,15 +31,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         public bool IsReversed;
         public VisualizationOrigin Origin;
 
-        public WaterfallStream(float intensity, VisualizationOrigin origin, bool isReversed = false)
+        public WaterfallStream(Settings settings, float intensity, VisualizationOrigin origin, bool isReversed = false)
         {
+            _settings = settings;
             Progress = 0;
             Life = 1.0f;
             Intensity = Math.Min(1.0f, intensity);
             Origin = origin == VisualizationOrigin.Center ? VisualizationOrigin.Top : origin;
             IsReversed = isReversed;
 
-            if (Config.Config.WATERFALL_RAINBOW_MODE)
+            if (_settings.WaterfallSettings.RainbowMode)
             {
                 ConsoleColor newColor;
                 do
@@ -47,15 +51,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                 _streamColor = newColor;
                 _lastColor = newColor;
             }
-
-            IsReversed = isReversed;
         }
 
         public void Update()
         {
-            Progress += Config.Config.WATERFALL_SPEED * 0.025f; //0.025f is speed scaling factor
+            Progress += _settings.WaterfallSettings.Speed * 0.025f; //0.025f is speed scaling factor
             if(Progress > 1.0f) Progress = 1.0f;
-            Life -= Config.Config.WATERFALL_FADE_RATE;
+            Life -= _settings.WaterfallSettings.FadeRate;
             if (Progress >= 1.0f)
                 Life = 0;
         }
@@ -64,8 +66,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
         public float GetWidth(float consoleSize)
         {
-            float startWidth = consoleSize * Config.Config.WATERFALL_START_WIDTH_PERCENT;
-            float endWidth = consoleSize * Config.Config.WATERFALL_END_WIDTH_PERCENT;
+            float startWidth = consoleSize * _settings.WaterfallSettings.StartWidthPercent;
+            float endWidth = consoleSize * _settings.WaterfallSettings.EndWidthPercent;
 
             //linear interp
             return startWidth + (endWidth - startWidth) * Progress;
@@ -74,38 +76,38 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         public char GetCharacter(int position, int totalPositions)
         {
             float positionRatio = (float)position / totalPositions;
-            if (Progress < Config.Config.WATERFALL_MIDPOINT_CHANGE)
-                return positionRatio < 0.3f || positionRatio > 0.7f ? Config.Config.WATERFALL_VERTICAL_CHARS[0] : ' ';
-            else if (Progress < Config.Config.WATERFALL_ENDPOINT_CHANGE)
-                return positionRatio < 0.2f || positionRatio > 0.8f ? Config.Config.WATERFALL_VERTICAL_CHARS[1] :
-                       position % 3 == 0 ? Config.Config.WATERFALL_VERTICAL_CHARS[2] : ' ';
+            if (Progress < _settings.WaterfallSettings.MidpointChange)
+                return positionRatio < 0.3f || positionRatio > 0.7f ? _settings.WaterfallSettings.VerticalChars[0] : ' ';
+            else if (Progress < _settings.WaterfallSettings.EndpointChange)
+                return positionRatio < 0.2f || positionRatio > 0.8f ? _settings.WaterfallSettings.VerticalChars[1] :
+                       position % 3 == 0 ? _settings.WaterfallSettings.VerticalChars[2] : ' ';
             else
-                return position % 4 == 0 ? Config.Config.WATERFALL_VERTICAL_CHARS[2] : ' ';
+                return position % 4 == 0 ? _settings.WaterfallSettings.VerticalChars[2] : ' ';
         }
 
         public ConsoleColor GetColor()
         {
-            if (Config.Config.WATERFALL_RAINBOW_MODE)
+            if (_settings.WaterfallSettings.RainbowMode)
             {
-                if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_BRIGHT)
+                if (Progress < _settings.WaterfallSettings.RainbowFadeBright)
                     return ConsoleColor.White;
-                else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_COLOR)
+                else if (Progress < _settings.WaterfallSettings.RainbowFadeColor)
                     return _streamColor;
-                else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_DARK)
+                else if (Progress < _settings.WaterfallSettings.RainbowFadeDark)
                     return Utility.DarkenColor(_streamColor);
-                else if (Progress < Config.Config.WATERFALL_RAINBOW_FADE_DARKGRAY)
+                else if (Progress < _settings.WaterfallSettings.RainbowFadeDarkGray)
                     return ConsoleColor.DarkGray;
                 else
                     return ConsoleColor.Black;
             }
             else
             {
-                if (Progress < Config.Config.WATERFALL_NORMAL_FADE_WHITE)
+                if (Progress < _settings.WaterfallSettings.NormalFadeWhite)
                     return ConsoleColor.White;
-                else if (Progress < Config.Config.WATERFALL_NORMAL_FADE_GRAY)
-                    return Config.Config.WATERFALL_COLOR;
-                else if (Progress < Config.Config.WATERFALL_NORMAL_FADE_DARKGRAY)
-                    return Utility.DarkenColor(Config.Config.WATERFALL_COLOR);
+                else if (Progress < _settings.WaterfallSettings.NormalFadeGray)
+                    return _settings.WaterfallSettings.Color;
+                else if (Progress < _settings.WaterfallSettings.NormalFadeDarkGray)
+                    return Utility.DarkenColor(_settings.WaterfallSettings.Color);
                 else
                     return ConsoleColor.Black;
             }

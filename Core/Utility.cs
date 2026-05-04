@@ -128,20 +128,20 @@ namespace TERMINAL_FREQUENCY.Core
             if (string.IsNullOrWhiteSpace(input))
             {
                 Console.WriteLine("Using default device...");
-                return new AudioCapture(); // Use default device
+                return new AudioCapture(new Config.Settings.Settings()); // Use default device
             }
 
             if (int.TryParse(input, out selectedIndex) && selectedIndex >= 0 && selectedIndex < devices.Count)
             {
                 Console.WriteLine($"Selected: {devices[selectedIndex]}");
-                return new AudioCapture(); //TODO: Let user select audio device
+                return new AudioCapture(new Config.Settings.Settings()); //TODO: Let user select audio device
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Invalid selection. Using default device...");
                 Console.ResetColor();
-                return new AudioCapture();
+                return new AudioCapture(new Config.Settings.Settings());
             }
         }
 
