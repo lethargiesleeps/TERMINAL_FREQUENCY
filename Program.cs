@@ -460,6 +460,7 @@ namespace TERMINAL_FREQUENCY
         }
         static void HandleConsoleWindow()
         {
+            Console.CursorVisible = false;
             //manage window features
             if (_settings.ConsoleSettings.DisableTitleBar)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border

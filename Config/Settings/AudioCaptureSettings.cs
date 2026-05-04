@@ -63,8 +63,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         {
             SpecifyAudioDevice = false;
             AudioSampleResolution = 4;
-            RmsMultiplier = 100f;
-            NoiseGateFloor = 0.1f;
+            RmsMultiplier = 100;
+            NoiseGateFloor = 0.3f;
             SmoothingFactorExisting = 0.8f;
             SmoothingFactorIncoming = 0.2f;
             PeakTrackingMinimum = 0.1f;

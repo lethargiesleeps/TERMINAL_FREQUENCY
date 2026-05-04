@@ -43,6 +43,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         public void OnSpike(float intensity)
         {
             if (_settings.WaterfallSettings.OnlySpawnOnThreshold && intensity < _settings.WaterfallSettings.TriggerThreshold) return;
+            int thickness = _settings.WaterfallSettings.Thickness;
+            int halfThick = (thickness - 1) / 2;
 
             lock (_streamLock)
             {
@@ -57,21 +59,14 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     };
 
                     foreach (VisualizationOrigin o in allOrigins)
-                    {
-                        while (_streams.Count >= _settings.WaterfallSettings.MaxStreams)
-                            _streams.RemoveAt(0);
-
-                        bool isReversed = _settings.WaterfallSettings.ReverseMode;
-                        _streams.Add(new WaterfallStream(_settings, intensity, o, isReversed));
-                    }
+                            for (int t = -halfThick; t <= halfThick; t++)
+                                AddStream(intensity, o, t);
                 }
                 else
                 {
-                    if (_streams.Count >= _settings.WaterfallSettings.MaxStreams)
-                        _streams.RemoveAt(0);
-
                     VisualizationOrigin origin = GetNextOrigin();
-                    _streams.Add(new WaterfallStream(_settings, intensity, origin, _settings.WaterfallSettings.ReverseMode));
+                    for (int t = -halfThick; t <= halfThick; t++)
+                        AddStream(intensity, origin, t);
                 }
             }
 
@@ -93,6 +88,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             lock(_streamLock)
             {
                 streamsCopy = new List<WaterfallStream>(_streams);
+            }
+
+            if (_settings.GlobalSettings.EnableDebugMode)
+            {
+                buffer.DrawString(0, 0, $"Streams: {streamsCopy.Count}", ConsoleColor.Yellow);
             }
 
             foreach (WaterfallStream stream in streamsCopy)
@@ -151,17 +151,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     break;
             }
         }
+
         private void DrawVerticalStream(ScreenBuffer buffer, WaterfallStream stream, bool fromTop)
         {
             int consoleHeight = buffer.Height;
             int consoleWidth = buffer.Width;
 
-            //calcY
             int streamY;
-
-            if(stream.IsReversed)
+            if (stream.IsReversed)
             {
-                //start from middle, move toward origin edge
                 int centerY = consoleHeight / 2;
                 if (fromTop)
                     streamY = centerY - (int)(stream.Progress * centerY);
@@ -176,11 +174,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     streamY = consoleHeight - 1 - (int)(stream.Progress * consoleHeight);
             }
 
-            //calculate width
             int halfWidth = (int)(stream.GetWidth(consoleWidth) / 2);
             int centerX = consoleWidth / 2;
 
-            //draw
             int startX = Math.Max(0, centerX - halfWidth);
             int endX = Math.Min(consoleWidth - 1, centerX + halfWidth);
 
@@ -190,25 +186,29 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             {
                 int positionInStream = x - startX;
                 int totalPositions = endX - startX + 1;
-
                 char c = stream.GetCharacter(positionInStream, totalPositions);
 
                 if (c != ' ')
                 {
-                    buffer.SetPixel(x, streamY, c, color);
+                    int drawY = streamY + stream.ThicknessOffset;
+                    if (drawY >= 0 && drawY < consoleHeight)
+                        buffer.SetPixel(x, drawY, c, color);
                 }
             }
 
-            //curve
             int curveOffset = (int)(halfWidth * _settings.WaterfallSettings.CurveIntensityVertical);
-
             if (curveOffset > 0 && streamY > 0 && streamY < consoleHeight - 1)
             {
                 int curveY = fromTop ? streamY - 1 : streamY + 1;
                 if (curveY >= 0 && curveY < consoleHeight)
+                {
                     for (int x = centerX - curveOffset; x <= centerX + curveOffset; x++)
-                        if (x >= 0 && x < consoleWidth)
-                            buffer.SetPixel(x, curveY, _settings.WaterfallSettings.CurveChar, color);
+                    {
+                        int drawY = curveY + stream.ThicknessOffset;
+                        if (drawY >= 0 && drawY < consoleHeight)
+                            buffer.SetPixel(x, drawY, _settings.WaterfallSettings.CurveChar, color);
+                    }
+                }
             }
         }
 
@@ -217,7 +217,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             int consoleHeight = buffer.Height;
             int consoleWidth = buffer.Width;
 
-            //calcX
             int streamX;
             if (stream.IsReversed)
             {
@@ -235,11 +234,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     streamX = consoleWidth - 1 - (int)(stream.Progress * consoleWidth);
             }
 
-            //calc width
             int halfHeight = (int)(stream.GetWidth(consoleHeight) / 2);
             int centerY = consoleHeight / 2;
 
-            //draw
             int startY = Math.Max(0, centerY - halfHeight);
             int endY = Math.Min(consoleHeight - 1, centerY + halfHeight);
 
@@ -249,7 +246,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             {
                 int positionInStream = y - startY;
                 int totalPositions = endY - startY + 1;
-
                 char c = stream.GetCharacter(positionInStream, totalPositions);
 
                 if (c != ' ')
@@ -258,20 +254,39 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     else if (c == _settings.WaterfallSettings.VerticalChars[1]) c = _settings.WaterfallSettings.HorizontalChars[1];
                     else if (c == _settings.WaterfallSettings.VerticalChars[2]) c = _settings.WaterfallSettings.HorizontalChars[2];
 
-                    buffer.SetPixel(streamX, y, c, color);
+                    int drawX = streamX + stream.ThicknessOffset;
+                    if (drawX >= 0 && drawX < consoleWidth)
+                        buffer.SetPixel(drawX, y, c, color);
                 }
             }
 
-            //curvature
             int curveOffset = (int)(halfHeight * _settings.WaterfallSettings.CurveIntensityHorizontal);
             if (curveOffset > 0 && streamX > 0 && streamX < consoleWidth - 1)
             {
                 int curveX = fromLeft ? streamX - 1 : streamX + 1;
                 if (curveX >= 0 && curveX < consoleWidth)
+                {
                     for (int y = centerY - curveOffset; y <= centerY + curveOffset; y++)
-                        if (y >= 0 && y < consoleHeight)
-                            buffer.SetPixel(curveX, y, _settings.WaterfallSettings.CurveChar, color);
+                    {
+                        int drawX = curveX + stream.ThicknessOffset;
+                        if (drawX >= 0 && drawX < consoleWidth)
+                            buffer.SetPixel(drawX, y, _settings.WaterfallSettings.CurveChar, color);
+                    }
+                }
             }
+        }
+        private void AddStream(float intensity, VisualizationOrigin origin, int offset)
+        {
+            int effectiveMax = _settings.WaterfallSettings.Mode == WaterfallMode.All
+                ? _settings.WaterfallSettings.MaxStreams * _settings.WaterfallSettings.Thickness
+                : _settings.WaterfallSettings.MaxStreams;
+
+            while (_streams.Count >= effectiveMax)
+                _streams.RemoveAt(0);
+
+            var s = new WaterfallStream(_settings, intensity, origin, _settings.WaterfallSettings.ReverseMode);
+            s.ThicknessOffset = offset;
+            _streams.Add(s);
         }
     }
 }

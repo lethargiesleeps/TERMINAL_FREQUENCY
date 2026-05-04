@@ -30,6 +30,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         public float Intensity;
         public bool IsReversed;
         public VisualizationOrigin Origin;
+        public int ThicknessOffset { get; set; } //-2, -1, - 1, 2
 
         public WaterfallStream(Settings settings, float intensity, VisualizationOrigin origin, bool isReversed = false)
         {

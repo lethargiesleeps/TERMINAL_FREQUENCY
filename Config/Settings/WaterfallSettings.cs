@@ -15,6 +15,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public float Speed { get; set; }                             //speed which waterfall progresses across screen (safe range 1 - 10)
         public float FadeRate { get; set; }                          //life lost per frame where 1 represents full life (safe range 0.001 0.05)
         public int MaxStreams { get; set; }                          //maximum number of waterfall _streams before oldest one disappears, the higher the more cpu intensive and the likelier of losing FPS (safe range 1-25)
+        public int Thickness { get; set; }                           //size of stream
         public float TriggerThreshold { get; set; }                  //minimum volume intensity to spawn new waterfall in percentage (safe range 1% to 30%)
         public bool OnlySpawnOnThreshold { get; set; }               //if true, new waterfall only spawns if volume threshold is met
         public float MidpointChange { get; set; }                    //progress threshold where character pattern changes in percentage (first transition) (safe range 20% - 80%)
@@ -67,6 +68,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             NormalFadeGray = 0.60f;
             NormalFadeDarkGray = 0.85f;
             Color = ConsoleColor.Gray;
+            Thickness = 1;
         }
 
         public void EnforceConstraints()
@@ -102,6 +104,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (NormalFadeWhite > 1f) NormalFadeWhite = 1f;
             if (NormalFadeGray > 1f) NormalFadeGray = 1f;
             if (NormalFadeDarkGray > 1f) NormalFadeDarkGray = 1f;
+            if (Thickness > 10) Thickness = 10;
         }
 
         public void EnforceMandatoryConstraints()
@@ -112,7 +115,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (FadeRate < 0f) FadeRate = 0.001f;
             if (MaxStreams < 1) MaxStreams = 1;
             if (TriggerThreshold < 0f) TriggerThreshold = 0.01f;
-
+            if (Thickness < 1) Thickness = 1;
             if (MidpointChange < 0f) MidpointChange = 0.01f;
             if (EndpointChange < 0f) EndpointChange = 0f;
             if (EndpointChange <= MidpointChange) EndpointChange = MidpointChange + 0.01f;
@@ -137,6 +140,9 @@ namespace TERMINAL_FREQUENCY.Config.Settings
 
             if (VerticalChars is null || VerticalChars.Length == 0) VerticalChars = new char[3] { '█', '▓', '▒' };
             if (HorizontalChars is null || HorizontalChars.Length == 0) HorizontalChars = new char[3] { '█', '▓', '▒' };
+
+            if (Thickness < 1) Thickness = 1;
+            if (Thickness >= MaxStreams) Thickness = MaxStreams - 1;
         }
     }
 }
