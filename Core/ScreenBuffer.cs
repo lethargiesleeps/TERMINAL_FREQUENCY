@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 using TERMINAL_FREQUENCY.Config.Settings;
 
@@ -12,6 +13,7 @@ namespace TERMINAL_FREQUENCY.Core
         private ConsoleColor[,] _currentColor;
         private char[,] _nextChar;
         private ConsoleColor[,] _nextColor;
+
         private ConsoleColor _bgColor;
         private int _dirtyMinX, _dirtyMinY, _dirtyMaxX, _dirtyMaxY; //for dirty buffer
         public int Width { get; private set; }
@@ -76,10 +78,11 @@ namespace TERMINAL_FREQUENCY.Core
             _bgColor = settings.ConsoleSettings.BackgroundColor;
             _currentChar = new char[Height, Width];
             _currentColor = new ConsoleColor[Height, Width];
+
             _nextChar = new char[Height, Width];
             _nextColor = new ConsoleColor[Height, Width];
 
-            if(_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
+            if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
                 _fastBuffer = new CHAR_INFO[Height, Width];
 
             Clear();
@@ -158,7 +161,7 @@ namespace TERMINAL_FREQUENCY.Core
                 _nextChar = new char[Height, Width];
                 _nextColor = new ConsoleColor[Height, Width];
 
-                if(_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
+                if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
                     _fastBuffer = new CHAR_INFO[Height, Width];
 
                 for (int y = 0; y < Height; y++)

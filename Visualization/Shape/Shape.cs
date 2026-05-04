@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -111,8 +112,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
             int thickness = GetEffectiveThickness(1);
 
-            FillShape(buffer, centerX, centerY, radius, thickness, 0); //fill first
-            DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(0));
+            DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
         }
 
         private void DrawVertical(ScreenBuffer buffer)
@@ -137,8 +137,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 maxDimension = (int)(maxDimension * SIZE_BOOST);
                 int radius = (int)(maxDimension * _currentSize / 2);
 
-                FillShape(buffer, centerX, centerY, radius, thickness, i);
-                DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
+                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
 
             }
 
@@ -165,8 +164,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 int maxDimension = Math.Min(buffer.Width / Math.Max(1, count), buffer.Height);
                 int radius = (int)(maxDimension * _currentSize / 2);
 
-                FillShape(buffer, centerX, centerY, radius, thickness, i);
-                DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
+                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
             }
         }
 
@@ -209,8 +207,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     int maxDim = Math.Min(buffer.Width / 3, buffer.Height / 3);
                     int radius = (int)(maxDim * _currentSize / 2);
 
-                    FillShape(buffer, centerX, rowY, radius, thickness, shapeIndex);
-                    DrawShapeAt(buffer, centerX, rowY, radius, thickness, GetColor(shapeIndex));
+                    DrawShapeAt(buffer, centerX, rowY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+
                     shapeIndex++;
                 }
             }
@@ -251,13 +249,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 };
             }
 
-
-
             for (int i = 0; i < indices.Length; i++)
             {
                 int index = indices[i];
-                FillShape(buffer, quads[index].x, quads[index].y, radius, thickness, i);
-                DrawShapeAt(buffer, quads[index].x, quads[index].y, radius, thickness, GetColor(i));
+                DrawShapeAt(buffer, quads[index].x, quads[index].y, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
             }
         }
 
@@ -296,7 +291,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             {
                 int radius = outerRadius - (i * radiusStep);
                 if (radius < 3) radius = 3; //never smaller than a visible circle
-                FillShape(buffer, centerX, centerY, radius, thickness, i); //fill first
                 DrawShapeAt(buffer, centerX, centerY, radius, thickness, GetColor(i));
             }
         }
@@ -332,27 +326,30 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
         private void DrawCircle(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
+            bool isFill = thickness >= radius - 1;
+            float density = isFill ? 1.5f : _settings.ShapeSettings.CircleSegmentDensity;
+            int minSeg = isFill ? 24 : _settings.ShapeSettings.CircleMinSegments;
+            int maxSeg = isFill ?  100 * (int)(_settings.ShapeSettings.MaxSizePercent * 100) : _settings.ShapeSettings.CircleMaxSegments;
+
             int innerRadius = Math.Max(0, radius - thickness);
 
             for (int r = innerRadius; r <= radius; r++)
             {
                 if (r == 0) continue;
 
-                int segments = (int)(2 * Math.PI * r * _settings.ShapeSettings.CircleSegmentDensity);
-                if (segments < _settings.ShapeSettings.CircleMinSegments) segments = _settings.ShapeSettings.CircleMinSegments;
-                if (segments > _settings.ShapeSettings.CircleMaxSegments) segments = _settings.ShapeSettings.CircleMaxSegments;
+                int segments = (int)(2 * Math.PI * r * density);
+                if (segments < minSeg) segments = minSeg;
+                if (segments > maxSeg) segments = maxSeg;
 
                 for (int i = 0; i < segments; i++)
                 {
                     double angle = (i * 2 * Math.PI) / segments;
                     int x = centerX + (int)(Math.Cos(angle) * r);
                     int y = centerY + (int)(Math.Sin(angle) * r * 0.45);
-
                     buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
                 }
             }
 
-            //draw solid center if near min size
             if (radius <= thickness + 1)
             {
                 buffer.SetPixel(centerX, centerY, _settings.ShapeSettings.Character, color);
@@ -366,7 +363,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         private void DrawSquare(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int halfWidth = (int)(radius * _settings.ShapeSettings.SquareWidthRatio);
-            int halfHeight = (int)(radius * _settings.ShapeSettings.SquareHeightRatio * 0.45f); //aspect ratio correction
+            int halfHeight = (int)(radius * _settings.ShapeSettings.SquareHeightRatio * 0.45f);
 
             for (int t = 0; t < thickness; t++)
             {
@@ -375,59 +372,54 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 int left = centerX - halfWidth + t;
                 int right = centerX + halfWidth - t;
 
-                //top edge
-                for (int x = left; x <= right; x++)
-                    buffer.SetPixel(x, top, _settings.ShapeSettings.Character, color);
-
-                //bottom edge
-                for (int x = left; x <= right; x++)
-                    buffer.SetPixel(x, bottom, _settings.ShapeSettings.Character, color);
-
-                //left edge
-                for (int y = top; y <= bottom; y++)
-                    buffer.SetPixel(left, y, _settings.ShapeSettings.Character, color);
-
-                //right edge
-                for (int y = top; y <= bottom; y++)
-                    buffer.SetPixel(right, y, _settings.ShapeSettings.Character, color);
-            }
-
-            //soliud center if small
-            if (radius <= thickness + 1)
-            {
-                for (int dy = -1; dy <= 1; dy++)
-                    for (int dx = -1; dx <= 1; dx++)
-                        buffer.SetPixel(centerX + dx, centerY + dy, _settings.ShapeSettings.Character, color);
+                // If filling (thick), draw solid rows instead of just edges
+                if (thickness >= radius - 1)
+                {
+                    for (int y = top; y <= bottom; y++)
+                        for (int x = left; x <= right; x++)
+                            buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
+                }
+                else
+                {
+                    for (int x = left; x <= right; x++)
+                        buffer.SetPixel(x, top, _settings.ShapeSettings.Character, color);
+                    for (int x = left; x <= right; x++)
+                        buffer.SetPixel(x, bottom, _settings.ShapeSettings.Character, color);
+                    for (int y = top; y <= bottom; y++)
+                        buffer.SetPixel(left, y, _settings.ShapeSettings.Character, color);
+                    for (int y = top; y <= bottom; y++)
+                        buffer.SetPixel(right, y, _settings.ShapeSettings.Character, color);
+                }
             }
         }
 
         private void DrawDiamond(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int halfWidth = radius;
-            int halfHeight = (int)(radius * 0.45f); //correct based on aspect ratio
+            int halfHeight = (int)(radius * 0.45f);
 
+            // Fill mode: use scanline approach
+            if (thickness >= radius - 1)
+            {
+                for (int y = centerY - halfHeight; y <= centerY + halfHeight; y++)
+                {
+                    float rowProgress = Math.Abs(y - centerY) / (float)halfHeight;
+                    int rowHalfWidth = (int)(halfWidth * (1 - rowProgress));
+                    for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x++)
+                        buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
+                }
+                return;
+            }
+
+            // Outline mode: draw edges
             for (int t = 0; t < thickness; t++)
             {
-                int hw = halfWidth - t; //calculated half width
-                int hh = halfHeight - t; //calculated half height
-
-                int topX = centerX;
-                int topY = centerY - hh;
-
-                int rightX = centerX + hw;
-                int rightY = centerY;
-
-                int bottomX = centerX;
-                int bottomY = centerY + hh;
-
-                int leftX = centerX - hw;
-                int leftY = centerY;
-
-                //draw the diamond edges
-                DrawLine(buffer, topX, topY, rightX, rightY, color);    //top to right
-                DrawLine(buffer, rightX, rightY, bottomX, bottomY, color); //right to bottom
-                DrawLine(buffer, bottomX, bottomY, leftX, leftY, color);   //bottom to left
-                DrawLine(buffer, leftX, leftY, topX, topY, color);         //left to top
+                int hw = halfWidth - t;
+                int hh = halfHeight - t;
+                DrawLine(buffer, centerX, centerY - hh, centerX + hw, centerY, color);
+                DrawLine(buffer, centerX + hw, centerY, centerX, centerY + hh, color);
+                DrawLine(buffer, centerX, centerY + hh, centerX - hw, centerY, color);
+                DrawLine(buffer, centerX - hw, centerY, centerX, centerY - hh, color);
             }
         }
 
@@ -463,18 +455,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
         private void DrawPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
-            int sides = _settings.ShapeSettings.PolygonSides;
+            bool isFill = thickness >= radius - 1;
+            int sides = isFill ? Math.Max(_settings.ShapeSettings.PolygonSides, 16) : _settings.ShapeSettings.PolygonSides;
 
-            //pre-calcuating vertices
             (int x, int y)[] vertices = new (int, int)[sides];
             for (int i = 0; i < sides; i++)
             {
-                double angle = (i * 2 * Math.PI) / sides - Math.PI / 2; //start from top
+                double angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
                 vertices[i].x = centerX + (int)(Math.Cos(angle) * radius);
                 vertices[i].y = centerY + (int)(Math.Sin(angle) * radius * 0.45f);
             }
 
-            //draw each thickness layer
             for (int t = 0; t < thickness; t++)
             {
                 float scale = 1f - ((float)t / radius);
@@ -483,21 +474,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 for (int i = 0; i < sides; i++)
                 {
                     int next = (i + 1) % sides;
-
                     int x0 = centerX + (int)((vertices[i].x - centerX) * scale);
                     int y0 = centerY + (int)((vertices[i].y - centerY) * scale);
                     int x1 = centerX + (int)((vertices[next].x - centerX) * scale);
                     int y1 = centerY + (int)((vertices[next].y - centerY) * scale);
-
                     DrawLine(buffer, x0, y0, x1, y1, color);
-                }
-
-                //solid center if very small
-                if (radius <= thickness + 1)
-                {
-                    for (int dy = -1; dy <= 1; dy++)
-                        for (int dx = -1; dx <= 1; dx++)
-                            buffer.SetPixel(centerX + dx, centerY + dy, _settings.ShapeSettings.Character, color);
                 }
             }
         }
@@ -539,174 +520,6 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 DrawLine(buffer, bottomX, bottomY, leftX, leftY, color);
                 DrawLine(buffer, bottomX, bottomY, rightX, rightY, color);
                 DrawLine(buffer, leftX, leftY, rightX, rightY, color);
-            }
-        }
-        #endregion
-
-        #region ShapeFillMethods
-        private void FillShape(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, int shapeIndex)
-        {
-            if (!_settings.ShapeSettings.FillMode) return;
-
-            char fillChar = _settings.ShapeSettings.FillCharacters[shapeIndex % _settings.ShapeSettings.FillCharacters.Length];
-            ConsoleColor fillColor = _settings.ShapeSettings.FillColors[shapeIndex % _settings.ShapeSettings.FillColors.Length];
-            int spacing = _settings.ShapeSettings.FillSpacing + 1; // 0=1=every pixel, 1=2=every other, etc
-
-            int innerLimit = thickness; //start filling from inner edge of outline
-
-            switch (_settings.ShapeSettings.Type)
-            {
-                case ShapeType.Circle:
-                    FillCircle(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-                case ShapeType.Square:
-                    FillSquare(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-                case ShapeType.Diamond:
-                    FillDiamond(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-                case ShapeType.Polygon:
-                    FillPolygon(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-                case ShapeType.TriangleUp:
-                    FillTriangleUp(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-                case ShapeType.TriangleDown:
-                    FillTriangleDown(buffer, centerX, centerY, radius - thickness, fillChar, fillColor, spacing);
-                    break;
-            }
-
-        }
-
-        private void FillCircle(ScreenBuffer buffer, int centerX, int centerY, int maxRadius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            for (int r = 0; r <= maxRadius; r++)
-            {
-                int segments = (int)(2 * Math.PI * r * _settings.ShapeSettings.CircleSegmentDensity);
-                if (segments < _settings.ShapeSettings.CircleMinSegments) segments = _settings.ShapeSettings.CircleMinSegments;
-                if (segments > _settings.ShapeSettings.CircleMaxSegments) segments = _settings.ShapeSettings.CircleMaxSegments;
-
-                for (int i = 0; i < segments; i += spacing)
-                {
-                    double angle = (i * 2 * Math.PI) / segments;
-                    int x = centerX + (int)(Math.Cos(angle) * r);
-                    int y = centerY + (int)(Math.Sin(angle) * r * 0.45);
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-                }
-            }
-        }
-
-        private void FillSquare(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            int halfWidth = (int)(radius * _settings.ShapeSettings.SquareWidthRatio);
-            int halfHeight = (int)(radius * _settings.ShapeSettings.SquareHeightRatio * 0.45f);
-
-            for (int y = centerY - halfHeight + 1; y <= centerY + halfHeight - 1; y += spacing)
-            {
-                for (int x = centerX - halfWidth + 1; x <= centerX + halfWidth - 1; x += spacing)
-                {
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-                }
-            }
-        }
-
-        private void FillDiamond(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            int minRadius = 3; //mybe let user adjust this, but should not go below 3
-            if (radius < minRadius) return;
-
-            int halfWidth = radius;
-            int halfHeight = (int)(radius * 0.45f);
-
-            //increase for biger diamonds
-            int effectiveSpacing = spacing;
-            if (radius > 25) effectiveSpacing += 1;
-            if (radius > 40) effectiveSpacing += 1;
-
-            for (int y = centerY - halfHeight; y <= centerY + halfHeight; y += effectiveSpacing)
-            {
-                //calculate how far from center this row is (0 to 1)
-                float rowProgress = Math.Abs(y - centerY) / (float)halfHeight;
-
-                //width at this row (diamond gets narrower toward top/bottom)
-                int rowHalfWidth = (int)(halfWidth * (1 - rowProgress));
-
-                //fill this row from left to right edge
-                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-
-            }
-        }
-
-        private void FillPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            if (radius < 3) return;
-
-            int sides = _settings.ShapeSettings.PolygonSides;
-            int halfHeight = (int)(radius * 0.45f);
-
-            int effectiveSpacing = spacing;
-            if (radius > 25) effectiveSpacing += 1;
-            if (radius > 40) effectiveSpacing += 1;
-
-            //scan rows top to bottom
-            for (int y = centerY - halfHeight; y <= centerY + halfHeight; y += effectiveSpacing)
-            {
-                float rowProgress = (float)(y - centerY + halfHeight) / (halfHeight * 2);
-
-                //calculate horizontal bounds for this row
-                int rowHalfWidth = CalculatePolygonHalfWidth(radius, sides, rowProgress);
-
-                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-            }
-        }
-
-        private void FillTriangleUp(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            if (radius < 3) return;
-
-            int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
-            int triangleHeight = (int)(sideLength * _settings.ShapeSettings.TriangleHeightMultiplier * _settings.ShapeSettings.TriangleAspectCorrection);
-            int halfWidth = sideLength / 2;
-
-            int effectiveSpacing = spacing;
-            if (radius > 25) effectiveSpacing += 1;
-            if (radius > 40) effectiveSpacing += 1;
-
-            for (int y = centerY - triangleHeight; y <= centerY + triangleHeight; y += effectiveSpacing)
-            {
-                float rowProgress = (float)(y - (centerY - triangleHeight)) / (triangleHeight * 2);
-                int rowHalfWidth = (int)(halfWidth * rowProgress);
-
-                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
-                {
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-                }
-            }
-        }
-
-        private void FillTriangleDown(ScreenBuffer buffer, int centerX, int centerY, int radius, char fillChar, ConsoleColor fillColor, int spacing)
-        {
-            if (radius < 3) return;
-
-            int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
-            int triangleHeight = (int)(sideLength * _settings.ShapeSettings.TriangleHeightMultiplier * _settings.ShapeSettings.TriangleAspectCorrection);
-            int halfWidth = sideLength / 2;
-
-            int effectiveSpacing = spacing;
-            if (radius > 25) effectiveSpacing += 1;
-            if (radius > 40) effectiveSpacing += 1;
-
-            for (int y = centerY - triangleHeight; y <= centerY + triangleHeight; y += effectiveSpacing)
-            {
-                float rowProgress = 1f - (float)(y - (centerY - triangleHeight)) / (triangleHeight * 2);
-                int rowHalfWidth = (int)(halfWidth * rowProgress);
-
-                for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x += effectiveSpacing)
-                {
-                    buffer.SetPixel(x, y, fillChar, fillColor);
-                }
             }
         }
         #endregion

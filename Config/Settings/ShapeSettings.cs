@@ -40,8 +40,6 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public float PyramidRowSpacing { get; set; }                     //space between rows in pyramid layout, higher = more space, lower = less space (safe range 0.08 to 0.3)
         public int PolygonSides { get; set; }                            //can accept 5, 6, 8, 10, 12 anything higher might as well use circle        
         public bool FillMode { get; set; }                               //if true, fills inside the shape with character, super buggy will fix later, you can make THREAD_RATE really low but beware your CPU usage, works best in a smaller console window
-        public char[] FillCharacters { get; set; }                       //one per shape, if 1 shape then always index 0
-        public ConsoleColor[] FillColors { get; set; }                   //same as above but for color
         public int FillSpacing { get; set; }                             //0 = solid, 1 = every other, 2 = every third
 
         public ShapeSettings()
@@ -60,19 +58,19 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             Count = 1;
             ConcentricLayers = 1;
             ConcentricPadding = 2;
-            Thickness = 1;
+            Thickness = 4;
             ThicknessMax = 8;
             QuadrantCentered = false;
             QuadrantIndices = new int[0];
             QuadrantGapDivisor = 8;
-            UseCustomColor = true;
+            UseCustomColor = false;
             UniformColor = ConsoleColor.White;
             CustomColors = new ConsoleColor[] { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue };
             ReverseMode = false;
             ReverseVolumeSensitivity = 0.05f;
             SmoothMode = true;
             LerpFactor = 0.4f;
-            Character = '█';
+            Character = 'O';
             VerticalStack = true;
             CircleSegmentDensity = 0.8f;
             CircleMinSegments = 12;
@@ -85,9 +83,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             PyramidRowSpacing = 0.25f;
             PolygonSides = 5;
             FillMode = false;
-            FillCharacters = new char[] { 'd', 'r', 'u', 'g' };
-            FillColors = new ConsoleColor[] { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray };
-            FillSpacing = 1;
+            FillSpacing = 0;
         }
 
         public void EnforceConstraints()
@@ -168,12 +164,6 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (CustomColors == null || CustomColors.Length == 0)
                 CustomColors = new ConsoleColor[] { ConsoleColor.White, ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue };
 
-            if (FillCharacters == null || FillCharacters.Length == 0)
-                FillCharacters = new char[] { '█', '▓', '▒', '█' };
-
-            if (FillColors == null || FillColors.Length == 0)
-                FillColors = new ConsoleColor[] { ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray, ConsoleColor.DarkGray };
-
             if ((int)Type < 0 || (int)Type > Utility.EnumCount<ShapeType>(true))
                 Type = ShapeType.Circle;
 
@@ -187,9 +177,6 @@ namespace TERMINAL_FREQUENCY.Config.Settings
                 if ((int)CustomColors[i] < 0 || (int)CustomColors[i] > Utility.EnumCount<ConsoleColor>(true))
                     CustomColors[i] = ConsoleColor.White;
 
-            for (int i = 0; i < FillColors.Length; i++)
-                if ((int)FillColors[i] < 0 || (int)FillColors[i] > Utility.EnumCount<ConsoleColor>(true))
-                    FillColors[i] = ConsoleColor.DarkGray;
         }
     }
 }
