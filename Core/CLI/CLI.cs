@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TERMINAL_FREQUENCY.Config.Settings;
 
 namespace TERMINAL_FREQUENCY.Core.CLI
 {
@@ -11,12 +12,12 @@ namespace TERMINAL_FREQUENCY.Core.CLI
     {
         private static bool _isChild = false;
 
-        public static void HandleCliArgs(string[] args)
+        public static void HandleCliArgs(string[] args, GlobalSettings settings)
         {
             _isChild = args.Length > 0 && args[0] == "--child";
             if (!_isChild)
             {
-                for (int i = 1; i < Config.Config.INSTANCES; i++)
+                for (int i = 1; i < settings.ConsoleInstances; i++)
                 {
                     Process.Start(new ProcessStartInfo
                     {

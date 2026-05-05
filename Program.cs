@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using TERMINAL_FREQUENCY.Config;
+using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Core.CLI;
 using TERMINAL_FREQUENCY.Visualization;
@@ -14,12 +15,16 @@ namespace TERMINAL_FREQUENCY
 {
     class Program
     {
-        private static bool _isPaused = false;
-        private static int _currentMode = Config.Config.DEFAULT_MODE;
-        private static bool _isChild = false;
+        private static Settings _settings;
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
-        private static readonly ConsoleColor[] _colors = Config.Config.DEFAULT_COLORS;
+        private static ConsoleColor[] _colors = [];
+        private static int _currentMode;
+        private static bool _exclusiveMode;
+        private static bool _isPaused = false;
+        private static bool _isDebug = Debugger.IsAttached;
+        private static bool _isChild = false;
+        private static bool _isSavingOrLoading = false;
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -33,32 +38,66 @@ namespace TERMINAL_FREQUENCY
 
         static void Main(string[] args)
         {
-            if (Config.Config.ENABLE_THREAD_PRIORITY) Thread.CurrentThread.Priority = Config.Config.THREAD_PRIORITY;
-            ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
-
-            CLI.HandleCliArgs(args);
-
-            //TODO: Handle Dark Mode better
-            if(!Config.Config.DARK_MODE)
+            try
             {
-                Console.BackgroundColor = ConsoleColor.White;
-                Config.Config.SHAPE_UNIFORM_COLOR = ConsoleColor.Black;
-                Config.Config.RING_COLOR_MODE = RingColorMode.Dark;
+                _settings = SettingsManager.Load();
+                _settings.EnforceMandatoryConstraints();
+                SettingsManager.Save(_settings);
+            }
+            catch(Exception e)
+            {
+                _settings = new Settings();
+
+                if(_isDebug)
+                {
+                    Debug.WriteLine(e.Message);
+                    Debug.WriteLine(e.GetType());
+                    Debug.WriteLine(e.StackTrace);
+                }
+            }
+            finally
+            {
+                if (_settings.GlobalSettings.EnableSafeMode) _settings.EnforceConstraints();
+                if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
             }
 
+            _exclusiveMode = _settings.GlobalSettings.EnableExclusiveMode;
+            _currentMode = (int)_settings.GlobalSettings.DefaultMode;
+            _colors = _settings.ConsoleSettings.DefaultColors;
+            Console.BackgroundColor = _settings.ConsoleSettings.BackgroundColor;
+
+            if (_settings.RendererSettings.EnableThreadPriority)
+                Thread.CurrentThread.Priority = _settings.RendererSettings.ThreadPriority;
+
+            Config.Font.Font.SetCustomFont(Config.Font.FontFace.Consolas, 16, false); //always start at default type
+            Config.Font.Font.SaveCurrentFont();
+
+            if((_settings.FontSettings.EnableRasterFont || (_settings.GlobalSettings.EnableRasterOnDirectWrite && _settings.RendererSettings.RendererMode == RenderMode.DirectWrite)))
+                Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+
+            if(_settings.FontSettings.EnableCustomFont)
+            {
+                Config.Font.Font.RestorePreviousFont();
+                Config.Font.Font.SetCustomFont(
+                    _settings.FontSettings.CustomFontFace,
+                    _settings.FontSettings.CustomFontSize,
+                    _settings.FontSettings.CustomFontBold,
+                    _settings.FontSettings.CustomFontFaceOverride
+                );
+                Config.Font.Font.SaveCurrentFont();
+            }
+
+
+            ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
+            CLI.HandleCliArgs(args, _settings.GlobalSettings);
 
             HandleConsoleWindow();
 
             try
             {
-                _visualizations = new List<IVisualization>()
-                {
-                    new Rings(),
-                    new Waterfall(),
-                    new Shape()
-                };
+                _visualizations = Utility.RefreshVisuals(_settings);
 
-                AudioCapture? audioCapture = Config.Config.SPECIFY_AUDIO_DEVICE ? Utility.SelectAudioDevice() : new AudioCapture();
+                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
 
                 if (audioCapture == null)
                 {
@@ -68,7 +107,7 @@ namespace TERMINAL_FREQUENCY
                 }
 
 
-                ScreenBuffer buffer = new ScreenBuffer();
+                ScreenBuffer buffer = new ScreenBuffer(_settings);
                 _currentVisualization = _visualizations[_currentMode];
 
                 //register audio events
@@ -81,8 +120,8 @@ namespace TERMINAL_FREQUENCY
                 {
                     if (_isPaused) return;
 
-                    if (Config.Config.ENABLE_FLASH_ON_BEAT) //doesnt seem to really work
-                        ConsoleWindow.FlashWindowOnBeat(Config.Config.FLASH_ON_BEAT_COUNT);
+                    if (_settings.ConsoleSettings.EnableFlashOnBeat)
+                        ConsoleWindow.FlashWindowOnBeat(_settings.ConsoleSettings.FlashOnBeatCount);
 
                     if (_currentVisualization is Rings rings)
                         rings.OnSpike();
@@ -107,7 +146,7 @@ namespace TERMINAL_FREQUENCY
 
                     if(!_isPaused)
                     {
-                        if(Config.Config.DEBUG_MODE)
+                        if(_settings.GlobalSettings.EnableDebugMode)
                         {
 
                             _framesInWindow++;
@@ -137,52 +176,78 @@ namespace TERMINAL_FREQUENCY
                         _currentVisualization.Draw(buffer);
 
                         //debug bar
-                        if(Config.Config.DEBUG_MODE)
+                        if(_settings.GlobalSettings.EnableDebugMode)
                         {
+                            ConsoleColor debugTextColor = ConsoleColor.Gray;
+                            ConsoleColor fpsColor = ConsoleColor.Gray;
+
+                            if(Console.BackgroundColor == ConsoleColor.Black || Console.BackgroundColor == ConsoleColor.DarkGray)
+                            {
+                                debugTextColor = ConsoleColor.Gray;
+                                fpsColor = ConsoleColor.Yellow;
+                            }
+                            else if(Console.BackgroundColor == ConsoleColor.White || Console.BackgroundColor == ConsoleColor.Gray)
+                            {
+                                debugTextColor = ConsoleColor.DarkGray;
+                                fpsColor = ConsoleColor.DarkBlue;
+                            }
 
                             if (_currentVisualization is Rings)
                             {
-                                string ringsStatus = $"RE[V]ERSE:{(Config.Config.RINGS_REVERSE_MODE ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(Config.Config.RING_COLOR_MODE)} | RANDO[M] CHARS:{(Config.Config.RING_CHAR_RANDOMIZER ? "ON" : "OFF")} | [-/=] RADIUS:{Config.Config.RING_RADIUS_MAX} | [O/P] SEGMENTS:{Config.Config.RING_SEGMENTS}";
-                                buffer.DrawString(0, buffer.Height - 3, ringsStatus, ConsoleColor.Gray);
+                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.RadiusMax} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
+                                buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
                             }
 
-                            if (_currentVisualization is Waterfall)
+                            if (_currentVisualization is Waterfall waterfall)
                             {
-                                string waterfallStatus = $"[R]AINBOW:{(Config.Config.WATERFALL_RAINBOW_MODE ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(Config.Config.WATERFALL_MODE)} | RE[V]ERSE:{(Config.Config.WATERFALL_REVERSE_MODE ? "ON" : "OFF")}";
+                                //controls
+                                string waterfallStatus = $"[R]AINBOW:{(_settings.WaterfallSettings.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.WaterfallSettings.Mode)} | RE[V]ERSE:{(_settings.WaterfallSettings.ReverseMode ? "ON" : "OFF")} | [-/=] THICKNESS: {_settings.WaterfallSettings.Thickness}";
 
-                                if (!Config.Config.WATERFALL_RAINBOW_MODE)
-                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(Config.Config.WATERFALL_COLOR)}";
+                                if (!_settings.WaterfallSettings.RainbowMode)
+                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(_settings.WaterfallSettings.Color)}";
 
-                                if (Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
-                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(Config.Config.WATERFALL_ORIGIN)}";
+                                if (_settings.WaterfallSettings.Mode == WaterfallMode.Normal)
+                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.WaterfallSettings.Origin)}";
 
-                                buffer.DrawString(0, buffer.Height - 3, waterfallStatus, ConsoleColor.Gray);
+                                buffer.DrawString(0, buffer.Height - 3, waterfallStatus, debugTextColor);
+
+                                //data in top left
+                                buffer.DrawString(0, 3, $"STREAMS:{waterfall.StreamCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
+                                
                             }
 
                             if(_currentVisualization is Shape)
                             {
-                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(Config.Config.SHAPE_TYPE)} | LA[Y]OUT:{Utility.FormatEnum(Config.Config.SHAPE_LAYOUT)} | [C]OLOR:{Utility.FormatEnum(Config.Config.SHAPE_UNIFORM_COLOR)} | [F]ILL:{(Config.Config.SHAPE_FILL_MODE ? "ON" : "OFF")} | RE[V]ERSE:{(Config.Config.SHAPE_REVERSE_MODE ? "ON" : "OFF")} | SMOO[T]H:{(Config.Config.SHAPE_SMOOTH_MODE ? "ON" : "OFF")} | [-/=] SIZE:{Config.Config.SHAPE_MAX_SIZE_PERCENT:F2}";
+                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(_settings.ShapeSettings.Type)} | LA[Y]OUT:{Utility.FormatEnum(_settings.ShapeSettings.Layout)} | [C]OLOR:{Utility.FormatEnum(_settings.ShapeSettings.UniformColor)} | [F]ILL:{(_settings.ShapeSettings.FillMode ? "ON" : "OFF")} | RE[V]ERSE:{(_settings.ShapeSettings.ReverseMode ? "ON" : "OFF")} | SMOO[T]H:{(_settings.ShapeSettings.SmoothMode ? "ON" : "OFF")} | [-/=] SIZE:{_settings.ShapeSettings.MaxSizePercent:F2}";
 
-                                if (Config.Config.SHAPE_TYPE == ShapeType.Polygon)
-                                    shapeStatus += $" | [9/0] VERT:{Config.Config.SHAPE_POLYGON_SIDES}";
-                                if(Config.Config.SHAPE_LAYOUT != ShapeLayout.Single)
-                                    shapeStatus += $" | [O/P] COUNT:{Config.Config.SHAPE_COUNT}";
-                                buffer.DrawString(0, buffer.Height - 3, shapeStatus, ConsoleColor.Gray);
+                                if (_settings.ShapeSettings.Type == ShapeType.Polygon)
+                                    shapeStatus += $" | [9/0] VERT:{_settings.ShapeSettings.PolygonSides}";
+                                if(_settings.ShapeSettings.Layout != ShapeLayout.Single && _settings.ShapeSettings.Layout != ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.Count}";
+                                if(_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.ConcentricLayers}";
+
+                                buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
 
                             string modeName = Utility.GetModeName(_currentMode);
-                            string status = $"MODE: {modeName} | VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | LOCK: {(Config.Config.LOCK_CONTROLS ? "ON" : "OFF")}";
-                            buffer.DrawString(0, buffer.Height - 2, status, ConsoleColor.Gray);
+                            string line1 = $"VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | RMS: {audioCapture.RMS:F2}";
+                            string line2 = $"MODE: {modeName}";
+                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
 
-                            if (Config.Config.SHOW_GLOBAL_CONTROLS)
+                            buffer.DrawString(0, 0, line1, fpsColor);
+                            buffer.DrawString(0, 1, line2, fpsColor);
+                            buffer.DrawString(0, 2, line3, fpsColor);
+
+                            if (_settings.GlobalSettings.ShowGlobalControls)
                             {
-                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [ESC] EXIT";
-                                buffer.DrawString(0, buffer.Height - 1, controls, ConsoleColor.DarkGray);
+                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [F1] SAVE | [F2] LOAD | [F3] DEFAULTS | [F5] FULL | [ESC] EXIT";
+                                buffer.DrawString(0, buffer.Height - 1, controls, debugTextColor);
                             }
 
                             //fps stuff
                             int rightX = buffer.Width - 10; //top right corner
-                            buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", ConsoleColor.Yellow);
+                            buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", fpsColor);
                             //buffer.DrawString(rightX, 1, $"TGT:{Config.Config.TARGET_FPS,6}", ConsoleColor.DarkGray);
                             //buffer.DrawString(rightX, 2, $"HIT:{_hitRate,5:F0}%", _hitRate > 90 ? ConsoleColor.Green : _hitRate > 70 ? ConsoleColor.Yellow : ConsoleColor.Red);
                         }
@@ -190,14 +255,14 @@ namespace TERMINAL_FREQUENCY
                         buffer.Render();
 
                         //yield settings
-                        long targetTicks = Stopwatch.Frequency / Config.Config.TARGET_FPS;
+                        long targetTicks = Stopwatch.Frequency / _settings.RendererSettings.TargetFps;
 
-                        if(Config.Config.ENABLE_YIELD)
-                            Thread.Sleep(Config.Config.YIELD_TIMEOUT);
-                        else if(Config.Config.ENABLE_SPIN_WAIT)
+                        if(_settings.RendererSettings.EnableYield)
+                            Thread.Sleep(_settings.RendererSettings.YieldTimeout);
+                        else if(_settings.RendererSettings.EnableSpinWait)
                         {
                             while (_stopWatch.ElapsedTicks - frameStart < targetTicks)
-                                Thread.SpinWait(Config.Config.SPIN_WAIT_ITERATIONS);
+                                Thread.SpinWait(_settings.RendererSettings.SpinWaitIterations);
                         }
                     }
                     else
@@ -236,200 +301,320 @@ namespace TERMINAL_FREQUENCY
                 switch (key)
                 {
                     #region GlobalInputs
+                    //exit
                     case ConsoleKey.Escape:
+                        if (_settings.GlobalSettings.SaveOnExit)
+                            SettingsManager.Save(_settings);
+
                         audioCapture?.Stop();
+
+                        if (_exclusiveMode)
+                            ConsoleWindow.ExclusiveMode(false);
+
                         Environment.Exit(0);
                         break;
 
+                    //pause
                     case ConsoleKey.Spacebar:
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
                         _isPaused = !_isPaused;
                         break;
 
+                    //change visual mode
                     case ConsoleKey.Tab:
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
                         if(!_isPaused)
                             _currentMode = (_currentMode + 1) % _visualizations.Count; //TODO: Make visualization enum
                         break;
 
+                    //toggle debug mode
                     case ConsoleKey.D:
                         if(!_isPaused)
-                            Config.Config.DEBUG_MODE = !Config.Config.DEBUG_MODE;
+                            _settings.GlobalSettings.EnableDebugMode = !_settings.GlobalSettings.EnableDebugMode;
                         break;
 
+                    //lock controls
                     case ConsoleKey.L:
                         if (!_isPaused)
-                            Config.Config.LOCK_CONTROLS = !Config.Config.LOCK_CONTROLS;
+                            _settings.GlobalSettings.EnableControlLock = !_settings.GlobalSettings.EnableControlLock;
+                        break;
+
+                    //save
+                    case ConsoleKey.F1:
+                        {
+                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            string normalConsoleTitle = Console.Title ?? "";
+                            string saveStatusIndicator = "";
+                            _isSavingOrLoading = true;
+                            try
+                            {
+                                SettingsManager.Save(_settings);
+                                saveStatusIndicator = normalConsoleTitle + " [ SAVED ]";
+                            }
+                            catch (Exception e)
+                            {
+                                saveStatusIndicator = normalConsoleTitle + " [ SAVE FAILED ]";
+                            }
+
+                            var messageEndTime = DateTime.UtcNow.AddMilliseconds(500);
+                            while (_isSavingOrLoading)
+                            {
+                                Console.Title = saveStatusIndicator;
+                                ConsoleWindow.FlashWindowOnBeat(5);
+
+                                if (DateTime.UtcNow >= messageEndTime)
+                                    _isSavingOrLoading = false;
+                            }
+                            Console.Title = normalConsoleTitle;
+                            break;
+                        }
+
+                    //load
+                    case ConsoleKey.F2:
+                        {
+                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            #pragma warning disable CA1416 // Validate platform compatibility
+                            string normalConsoleTitle = Console.Title;
+                               #pragma warning restore CA1416 // Validate platform compatibility
+                            string saveStatusIndicator = "";
+                            _isSavingOrLoading = true;
+                            try
+                            {
+                                _settings = SettingsManager.Load();
+                                _visualizations = Utility.RefreshVisuals(_settings);
+                                _currentVisualization = _visualizations[_currentMode];
+                                saveStatusIndicator = normalConsoleTitle + " [ LOADED ]";
+                            }
+                            catch (Exception e)
+                            {
+                                saveStatusIndicator = normalConsoleTitle + " [ LOAD FAILED ]";
+                            }
+
+                            var messageEndTime = DateTime.UtcNow.AddMilliseconds(500);
+                            while (_isSavingOrLoading)
+                            {
+                                Console.Title = saveStatusIndicator;
+                                ConsoleWindow.FlashWindowOnBeat(5);
+
+                                if (DateTime.UtcNow >= messageEndTime)
+                                    _isSavingOrLoading = false;
+                            }
+                            Console.Title = normalConsoleTitle;
+                            break;
+                        }
+                    //restore
+                    case ConsoleKey.F3:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _settings.Restore();
+                        _visualizations = Utility.RefreshVisuals(_settings);
+                        _currentVisualization = _visualizations[_currentMode];
+                        buffer.UpdateBackgroundColor(_settings.ConsoleSettings.BackgroundColor);
+                        break;
+
+                    //full screen
+                    case ConsoleKey.F5:
+                        _exclusiveMode = !_exclusiveMode;
+                        ConsoleWindow.ExclusiveMode(_exclusiveMode);
+                        
                         break;
                     #endregion
 
                     case ConsoleKey.R:
-                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_RAINBOW_MODE = !Config.Config.WATERFALL_RAINBOW_MODE;
+                            _settings.WaterfallSettings.RainbowMode = !_settings.WaterfallSettings.RainbowMode;
                         break;
 
                     case ConsoleKey.M:
                         if(_isPaused)
                         {
                             buffer.CycleRenderMode();
+                            if(_settings.GlobalSettings.EnableRasterOnDirectWrite)
+                            {
+                                if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
+                                    Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+                                else
+                                    Config.Font.Font.RestorePreviousFont();
+                            }
+                            
                             return;
                         }
 
-                        if (Config.Config.LOCK_CONTROLS) return;
+                        if (_settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
-                            Config.Config.RING_CHAR_RANDOMIZER = !Config.Config.RING_CHAR_RANDOMIZER;
+                            _settings.RingsSettings.CharRandomizer = !_settings.RingsSettings.CharRandomizer;
 
                         if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_MODE = Utility.CycleNextEnum(Config.Config.WATERFALL_MODE);
+                            _settings.WaterfallSettings.Mode = Utility.CycleNextEnum(_settings.WaterfallSettings.Mode);
                         break;
 
                     case ConsoleKey.V:
-                        if(_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
-                        if(_currentVisualization is Rings)
-                            Config.Config.RINGS_REVERSE_MODE = !Config.Config.RINGS_REVERSE_MODE;
+                        if (_currentVisualization is Rings)
+                            _settings.RingsSettings.ReverseMode = !_settings.RingsSettings.ReverseMode;
 
-                        if(_currentVisualization is Waterfall)
-                            Config.Config.WATERFALL_REVERSE_MODE = !Config.Config.WATERFALL_REVERSE_MODE;
+                        if (_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.ReverseMode = !_settings.WaterfallSettings.ReverseMode;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_REVERSE_MODE = !Config.Config.SHAPE_REVERSE_MODE;
+                            _settings.ShapeSettings.ReverseMode = !_settings.ShapeSettings.ReverseMode;
                         break;
 
                     case ConsoleKey.C:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark };
-                            Config.Config.RING_COLOR_MODE = Utility.CycleNext(cycle, Config.Config.RING_COLOR_MODE);
+                            RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark, RingColorMode.Dark };
+                            _settings.RingsSettings.ColorMode = Utility.CycleNext(cycle, _settings.RingsSettings.ColorMode);
                         }
 
-                        if(_currentVisualization is Waterfall && !Config.Config.WATERFALL_RAINBOW_MODE)
-                            Config.Config.WATERFALL_COLOR = Utility.CycleNext(_colors, Config.Config.WATERFALL_COLOR);
+                        if(_currentVisualization is Waterfall && !_settings.WaterfallSettings.RainbowMode)
+                            _settings.WaterfallSettings.Color = Utility.CycleNext(_colors, _settings.WaterfallSettings.Color);
 
 
                         if(_currentVisualization is Shape)
-                            Config.Config.SHAPE_UNIFORM_COLOR = Utility.CycleNext(_colors, Config.Config.SHAPE_UNIFORM_COLOR);
+                            _settings.ShapeSettings.UniformColor = Utility.CycleNext(_colors, _settings.ShapeSettings.UniformColor);
                         break;
 
                     case ConsoleKey.F:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_FILL_MODE = !Config.Config.SHAPE_FILL_MODE;
+                            _settings.ShapeSettings.FillMode = !_settings.ShapeSettings.FillMode;
                         break;
 
                     case ConsoleKey.S:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+
+                        if(_currentVisualization is Rings)
+                            _settings.RingsSettings.SolidColor = !_settings.RingsSettings.SolidColor;
 
                         if(_currentVisualization is Shape)
-                            Config.Config.SHAPE_TYPE = Utility.CycleNextEnum(Config.Config.SHAPE_TYPE);
+                            _settings.ShapeSettings.Type = Utility.CycleNextEnum(_settings.ShapeSettings.Type);
                         break;
 
                     case ConsoleKey.Y:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_LAYOUT = Utility.CycleNextEnum(Config.Config.SHAPE_LAYOUT);
+                            _settings.ShapeSettings.Layout = Utility.CycleNextEnum(_settings.ShapeSettings.Layout);
                         break;
 
                     case ConsoleKey.T:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_SMOOTH_MODE = !Config.Config.SHAPE_SMOOTH_MODE;
+                            _settings.ShapeSettings.SmoothMode = !_settings.ShapeSettings.SmoothMode;
                         break;
 
                     case ConsoleKey.O:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            Config.Config.RING_SEGMENTS = Math.Max(8, Config.Config.RING_SEGMENTS - 2);
-                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Max(8, Config.Config.RING_AMBIENT_SEGMENTS - 2);
+                            _settings.RingsSettings.Segments = Math.Max(8, _settings.RingsSettings.Segments - 2);
+                            _settings.RingsSettings.AmbientSegments = Math.Max(8, _settings.RingsSettings.AmbientSegments - 2);
                         }
 
-                        if (_currentVisualization is Waterfall && Config.Config.WATERFALL_MODE == WaterfallMode.Normal)
+                        if (_currentVisualization is Waterfall && _settings.WaterfallSettings.Mode == WaterfallMode.Normal)
                         {
                             VisualizationOrigin[] cycle = { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
-                            Config.Config.WATERFALL_ORIGIN = Utility.CycleNext(cycle, Config.Config.WATERFALL_ORIGIN);
+                            _settings.WaterfallSettings.Origin = Utility.CycleNext(cycle, _settings.WaterfallSettings.Origin);
                         }
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
 
-                            int shapeCount = Math.Max(1, Config.Config.SHAPE_COUNT - 1);
-                            Config.Config.SHAPE_COUNT = shapeCount;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                            {
+                                int layerCount = Math.Max(1, _settings.ShapeSettings.ConcentricLayers - 1);
+                                _settings.ShapeSettings.ConcentricLayers = layerCount;
+                                return;
+                            }
+
+                            int shapeCount = Math.Max(1, _settings.ShapeSettings.Count - 1);
+                            _settings.ShapeSettings.Count = shapeCount;
                         }
                         break;
 
                     case ConsoleKey.P:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            Config.Config.RING_SEGMENTS = Math.Min(100, Config.Config.RING_SEGMENTS + 2);
-                            Config.Config.RING_AMBIENT_SEGMENTS = Math.Min(80, Config.Config.RING_AMBIENT_SEGMENTS + 2);
+                            _settings.RingsSettings.Segments = Math.Min(100, _settings.RingsSettings.Segments + 2);
+                            _settings.RingsSettings.AmbientSegments = Math.Min(80, _settings.RingsSettings.AmbientSegments + 2);
                         }
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_LAYOUT == ShapeLayout.Single) return;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
 
-                            int shapeCount = Math.Min(4, Config.Config.SHAPE_COUNT + 1);
-                            Config.Config.SHAPE_COUNT = shapeCount;
+                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                            {
+                                int layerCount = Math.Min(10, _settings.ShapeSettings.ConcentricLayers + 1);
+                                _settings.ShapeSettings.ConcentricLayers = layerCount;
+                                return;
+                            }
+                            int shapeCount = Math.Min(4, _settings.ShapeSettings.Count + 1);
+                            _settings.ShapeSettings.Count = shapeCount;
                         }
                         break;
 
                     case ConsoleKey.OemMinus:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            Config.Config.RING_RADIUS_MAX = Math.Max(Config.Config.RING_RADIUS_MIN + 5, Config.Config.RING_RADIUS_MAX - 5);
+                            _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.RadiusMin + 5, _settings.RingsSettings.RadiusMax - 5);
+
+                        if(_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.Thickness = Math.Max(1, _settings.WaterfallSettings.Thickness - 1);
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Max(0.05f, Config.Config.SHAPE_MAX_SIZE_PERCENT - 0.02f);
-
+                            _settings.ShapeSettings.MaxSizePercent = Math.Max(0.05f, _settings.ShapeSettings.MaxSizePercent - 0.02f);
                         break;
 
                     case ConsoleKey.OemPlus:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            Config.Config.RING_RADIUS_MAX = Math.Min(200, Config.Config.RING_RADIUS_MAX + 5);
+                            _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 5);
+
+                        if (_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.Thickness = Math.Min(10, _settings.WaterfallSettings.Thickness + 1);
 
                         if (_currentVisualization is Shape)
-                            Config.Config.SHAPE_MAX_SIZE_PERCENT = Math.Min(1.0f, Config.Config.SHAPE_MAX_SIZE_PERCENT + 0.02f);
+                            _settings.ShapeSettings.MaxSizePercent = Math.Min(1.0f, _settings.ShapeSettings.MaxSizePercent + 0.02f);
                         break;
 
                     case ConsoleKey.D9:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CyclePrevious(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
+                            _settings.ShapeSettings.PolygonSides = Utility.CyclePrevious(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
                         break;
 
                     case ConsoleKey.D0:
-                        if (_isPaused || Config.Config.LOCK_CONTROLS) return;
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
                         {
-                            if (Config.Config.SHAPE_TYPE != ShapeType.Polygon) return;
+                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            Config.Config.SHAPE_POLYGON_SIDES = Utility.CycleNext(validSides, Config.Config.SHAPE_POLYGON_SIDES, true);
+                            _settings.ShapeSettings.PolygonSides = Utility.CycleNext(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
                         break;
                 }
@@ -437,59 +622,63 @@ namespace TERMINAL_FREQUENCY
         }
         static void HandleConsoleWindow()
         {
+
+            if (_settings.ConsoleSettings.DisableCursor)
+                Console.CursorVisible = false;
+
             //manage window features
-            if (Config.Config.DISABLE_TITLE_BAR)
+            if (_settings.ConsoleSettings.DisableTitleBar && !_exclusiveMode)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border
 
-            if(Config.Config.DISABLE_SCROLL_BARS)
+            if(_settings.ConsoleSettings.DisableScrollBars && !_exclusiveMode)
                 ConsoleWindow.DisableScrollBars();
 
 
 
-            ConsoleWindow.SetAlwaysOnTop(Config.Config.ALWAYS_ON_TOP);
-            ConsoleWindow.SetOpacity(Config.Config.WINDOW_OPACITY);
-            ConsoleWindow.SetClickThrough(Config.Config.ENABLE_CLICK_THROUGH);
+            ConsoleWindow.SetAlwaysOnTop(_settings.ConsoleSettings.AlwaysOnTop);
+            ConsoleWindow.SetOpacity((byte)_settings.ConsoleSettings.WindowOpacity);
+            ConsoleWindow.SetClickThrough(_settings.ConsoleSettings.EnableClickThrough);
 
-            if (Config.Config.ENABLE_WINDOW_VIBRANCY)
-                ConsoleWindow.SetWindowVibrancy(Config.Config.WINDOW_VIBRANCY_R, Config.Config.WINDOW_VIBRANCY_G, Config.Config.WINDOW_VIBRANCY_B, Config.Config.WINDOW_VIBRANCY_A);
-            else if (Config.Config.ENABLE_WINDOW_BLUR)
-                ConsoleWindow.SetWindowBlur(Config.Config.ENABLE_WINDOW_BLUR);
+            if (_settings.ConsoleSettings.EnableWindowVibrancy)
+                ConsoleWindow.SetWindowVibrancy(
+                    (byte)_settings.ConsoleSettings.WindowVibrancyR,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyG,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyB,
+                    (byte)_settings.ConsoleSettings.WindowVibrancyA
+                );
+            else if (_settings.ConsoleSettings.EnableWindowBlur)
+                ConsoleWindow.SetWindowBlur(_settings.ConsoleSettings.EnableWindowBlur);
 
-            //seems to not work
-            if (Config.Config.ENABLE_WINDOW_GLOW)
-                ConsoleWindow.SetWindowGlow(Config.Config.WINDOW_GLOW_RADIUS, (byte)Config.Config.WINDOW_GLOW_R, (byte)Config.Config.WINDOW_GLOW_G, (byte)Config.Config.WINDOW_GLOW_B);
-            
             //size
-            if (Config.Config.LAUNCH_FULL_SCREEN)
+            if (_exclusiveMode)
+                ConsoleWindow.ExclusiveMode(true);
+            else if (_settings.ConsoleSettings.LaunchMaximized)
                 ConsoleWindow.SetFullScreen();
-            else if (Config.Config.ENABLE_CUSTOM_WINDOW_SIZE)
-                ConsoleWindow.SetScreenSize(Config.Config.CUSTOM_WINDOW_WIDTH, Config.Config.CUSTOM_WINDOW_HEIGHT);
+            else if (_settings.ConsoleSettings.EnableCustomWindowSize)
+                ConsoleWindow.SetScreenSize(_settings.ConsoleSettings.CustomWindowWidth, _settings.ConsoleSettings.CustomWindowHeight);
 
             //position
-            if (!Config.Config.LAUNCH_FULL_SCREEN)
+            if (!_settings.ConsoleSettings.LaunchMaximized && !_exclusiveMode)
             {
-                if (Config.Config.LAUNCH_AT && Config.Config.LAUNCH_AT_X >= 0 && Config.Config.LAUNCH_AT_Y >= 0)
-                    ConsoleWindow.LaunchConsoleAt(Config.Config.LAUNCH_AT_X, Config.Config.LAUNCH_AT_Y);
-                else if (Config.Config.LAUNCH_IN_CENTER)
+                if (_settings.ConsoleSettings.LaunchAt && _settings.ConsoleSettings.LaunchAtX >= 0 && _settings.ConsoleSettings.LaunchAtY >= 0)
+                    ConsoleWindow.LaunchConsoleAt(_settings.ConsoleSettings.LaunchAtX, _settings.ConsoleSettings.LaunchAtY);
+                else if (_settings.ConsoleSettings.LaunchInCenter)
                     ConsoleWindow.LaunchConsoleCenter();
             }
 
-            if (Config.Config.DISABLE_WINDOW_RESIZE)
+            if (_settings.ConsoleSettings.DisableWindowResize)
                 ConsoleWindow.DisableResize();
 
-            Console.CursorVisible = false;
-
             //manage process title
-            if (Config.Config.DISABLE_APP_TITLE)
+            if (_settings.ConsoleSettings.DisableAppTitle)
                 Console.Title = string.Empty;
-            else if (!string.IsNullOrEmpty(Config.Config.CUSTOM_TITLE))
-                Console.Title = Config.Config.CUSTOM_TITLE;
+            else if (!string.IsNullOrEmpty(_settings.ConsoleSettings.CustomTitle))
+                Console.Title = _settings.ConsoleSettings.CustomTitle;
             else
                 Console.Title = _isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
 
-            if (!Config.Config.BYPASS_STARTUP)
+            if (!_settings.GlobalSettings.BypassStartupScreen)
                 Utility.PrintStartup();
-
         }
     }
 }

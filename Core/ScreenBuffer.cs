@@ -1,21 +1,23 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using TERMINAL_FREQUENCY.Config.Settings;
 
+#nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
 {
     public class ScreenBuffer
     {
+        private Settings _settings;
         private char[,] _currentChar;
         private ConsoleColor[,] _currentColor;
         private char[,] _nextChar;
         private ConsoleColor[,] _nextColor;
+
         private ConsoleColor _bgColor;
         private int _dirtyMinX, _dirtyMinY, _dirtyMaxX, _dirtyMaxY; //for dirty buffer
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public RenderMode RendererMode { get; private set; }
 
         #region Kernel32
         //all configs for DirectWrite
@@ -66,23 +68,25 @@ namespace TERMINAL_FREQUENCY.Core
         private CHAR_INFO[,] _fastBuffer;
 
         #endregion
-        public ScreenBuffer()
+        public ScreenBuffer(Settings settings)
         {
-            //SetConsoleOutputCP(437);
+            _settings = settings;
+
             Width = Console.WindowWidth;
             Height = Console.WindowHeight;
-            RendererMode = Config.Config.RENDERER_MODE;
 
-            _bgColor = Config.Config.DARK_MODE ? ConsoleColor.Black : ConsoleColor.White;
+            _bgColor = settings.ConsoleSettings.BackgroundColor;
             _currentChar = new char[Height, Width];
             _currentColor = new ConsoleColor[Height, Width];
+
             _nextChar = new char[Height, Width];
             _nextColor = new ConsoleColor[Height, Width];
 
-            if(this.RendererMode == RenderMode.DirectWrite)
+            if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
                 _fastBuffer = new CHAR_INFO[Height, Width];
 
             Clear();
+            Console.Clear();
 
             //force full redraw on first frame
             for (int y = 0; y < Height; y++)
@@ -116,7 +120,7 @@ namespace TERMINAL_FREQUENCY.Core
             _nextChar[y, x] = c;
             _nextColor[y, x] = color;
 
-            if (RendererMode != RenderMode.DirtyRect) return;
+            if (_settings.RendererSettings.RendererMode != RenderMode.DirtyRect) return;
 
             if (x < _dirtyMinX) _dirtyMinX = x;
             if (x > _dirtyMaxX) _dirtyMaxX = x;
@@ -145,6 +149,17 @@ namespace TERMINAL_FREQUENCY.Core
             }
         }
 
+        public void UpdateBackgroundColor(ConsoleColor newColor)
+        {
+            _bgColor = newColor;
+            Console.BackgroundColor = _bgColor;
+            Console.Clear();
+
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    _currentChar[y, x] = '\0';
+        }
+
         public void Render()
         {
             //handle console resize
@@ -158,7 +173,7 @@ namespace TERMINAL_FREQUENCY.Core
                 _nextChar = new char[Height, Width];
                 _nextColor = new ConsoleColor[Height, Width];
 
-                if(RendererMode == RenderMode.DirectWrite)
+                if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
                     _fastBuffer = new CHAR_INFO[Height, Width];
 
                 for (int y = 0; y < Height; y++)
@@ -170,7 +185,7 @@ namespace TERMINAL_FREQUENCY.Core
                 return;
             }
 
-            switch(RendererMode)
+            switch(_settings.RendererSettings.RendererMode)
             {
                 case RenderMode.DirectWrite:
                     RenderDirectWrite(); 
@@ -194,9 +209,10 @@ namespace TERMINAL_FREQUENCY.Core
             }
         }
 
+        public string GetRendererMode() => _settings.RendererSettings.RendererMode.ToString();
         public void CycleRenderMode()
         {
-            RendererMode = Utility.CycleNextEnum(RendererMode);
+            _settings.RendererSettings.RendererMode = Utility.CycleNextEnum(_settings.RendererSettings.RendererMode);
             ResetRenderState();
         }
 
@@ -214,7 +230,7 @@ namespace TERMINAL_FREQUENCY.Core
             _dirtyMaxY = int.MinValue;
 
             //re-alloc fast buffer if switching to Fast mode
-            if (RendererMode == RenderMode.DirectWrite && _fastBuffer == null)
+            if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite && _fastBuffer == null)
                 _fastBuffer = new CHAR_INFO[Height, Width];
         }
 
@@ -276,7 +292,7 @@ namespace TERMINAL_FREQUENCY.Core
 
         private void RenderRowBatched()
         {
-            ConsoleColor fgColor = Config.Config.ROW_BATCH_COLOR;
+            ConsoleColor fgColor = _settings.RendererSettings.RowBatchColor;
             StringBuilder sb = new StringBuilder();
             bool anyRowChanged = false;
 

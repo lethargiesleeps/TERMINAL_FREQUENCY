@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,12 @@ namespace TERMINAL_FREQUENCY.Config
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern int FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         [DllImport("user32.dll")]
@@ -30,15 +37,6 @@ namespace TERMINAL_FREQUENCY.Config
 
         [DllImport("user32.dll")]
         private static extern int GetSystemMetrics(int nIndex);
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetStdHandle(int nStdHandle);
-
-        [DllImport("kernel32.dll")]
-        private static extern bool SetCurrentConsoleFontEx(IntPtr consoleOutput, bool maximumWindow, ref CONSOLE_FONT_INFO_EX consoleCurrentFont);
-
-        [DllImport("kernel32.dll")]
-        private static extern bool GetCurrentConsoleFontEx(IntPtr consoleOutput, bool maximumWindow, ref CONSOLE_FONT_INFO_EX consoleCurrentFont);
 
         [DllImport("user32.dll")]
         private static extern bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
@@ -69,7 +67,6 @@ namespace TERMINAL_FREQUENCY.Config
         private const uint SWP_NOZORDER = 0x0004;
         private const uint SWP_NOMOVE = 0x0002;
         private const uint SWP_NOSIZE = 0x0001;
-        private const int STD_OUTPUT_HANDLE = -11;
         private const int GWL_EXSTYLE = -20;
         private const int WS_EX_LAYERED = 0x00080000;
         private const uint LWA_ALPHA = 0x00000002;
@@ -77,6 +74,8 @@ namespace TERMINAL_FREQUENCY.Config
         private const uint WCA_ACCENT_POLICY = 19;
         private const uint FLASHW_ALL = 0x00000003;
         private const uint FLASHW_TIMERNOFG = 0x0000000C;
+        private const int SW_HIDE = 0;
+        private const int SW_SHOW = 5;
         private const uint DWMWA_BORDER_COLOR = 34;
         private const uint DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
@@ -94,25 +93,6 @@ namespace TERMINAL_FREQUENCY.Config
         private struct RECT
         {
             public int Left, Top, Right, Bottom;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct CONSOLE_FONT_INFO_EX
-        {
-            public uint cbSize;
-            public uint nFont;
-            public COORD dwFontSize;
-            public int FontFamily;
-            public int FontWeight;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string FaceName;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct COORD
-        {
-            public short X;
-            public short Y;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -342,6 +322,43 @@ namespace TERMINAL_FREQUENCY.Config
                 Console.SetBufferSize(maxWidth, maxHeight);
             }
         }
+        public static void ExclusiveMode(bool enable)
+        {
+            IntPtr handle = GetConsoleWindow();
+            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
+
+            if (enable)
+            {
+                ShowWindow(taskbarHandle, SW_HIDE);
+
+                int style = GetWindowLong(handle, GWL_STYLE);
+                style &= ~(WS_CAPTION | WS_THICKFRAME);
+                SetWindowLong(handle, GWL_STYLE, style);
+                ApplyStyle(handle);
+
+                ShowWindow(handle, 3); // SW_MAXIMIZE
+                Thread.Sleep(100);
+                Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+                SetWindowPos(handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
+                SetForegroundWindow(handle);
+            }
+            else
+            {
+                ShowWindow(handle, 1); // SW_NORMAL
+                Thread.Sleep(100);
+
+                int style = GetWindowLong(handle, GWL_STYLE);
+                style |= WS_CAPTION | WS_THICKFRAME;
+                SetWindowLong(handle, GWL_STYLE, style);
+                ApplyStyle(handle);
+
+                ShowWindow(taskbarHandle, SW_SHOW);
+                Console.SetWindowSize(115, 35);
+                Console.SetBufferSize(115, 35);
+                Console.Clear();
+                SetWindowPos(handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
+            }
+        }
 
         public static void FlashWindowOnBeat(int flashCount = 2)
         {
@@ -376,38 +393,6 @@ namespace TERMINAL_FREQUENCY.Config
             //make the extended frame transparent to create glow illusion
             int useDarkMode = 1;
             DwmSetWindowAttribute(handle, 20, ref useDarkMode, sizeof(int)); // 20 = immersive dark mode
-        }
-        //TODO: implement properly
-        private static void SetFont(int width, int height, bool isBold, string faceName = "Consolas")
-        {
-
-
-            IntPtr handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            CONSOLE_FONT_INFO_EX fontInfo = new CONSOLE_FONT_INFO_EX();
-            fontInfo.cbSize = (uint)Marshal.SizeOf(fontInfo);
-
-            fontInfo.FaceName = faceName;
-            fontInfo.dwFontSize.X = (short)width;
-            fontInfo.dwFontSize.Y = (short)height;
-            fontInfo.FontWeight = isBold ? 700 : 400; // 400 = normal, 700 = bold
-
-            SetCurrentConsoleFontEx(handle, false, ref fontInfo);
-        }
-
-        private static void DebugFontInfo()
-        {
-            IntPtr handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            CONSOLE_FONT_INFO_EX fontInfo = new CONSOLE_FONT_INFO_EX();
-            fontInfo.cbSize = (uint)Marshal.SizeOf(fontInfo);
-
-            if (GetCurrentConsoleFontEx(handle, false, ref fontInfo))
-            {
-                Debug.WriteLine($"Font: {fontInfo.FaceName}, Size: {fontInfo.dwFontSize.X}x{fontInfo.dwFontSize.Y}, Weight: {fontInfo.FontWeight}, Family: {fontInfo.FontFamily}");
-            }
-            else
-            {
-                Debug.WriteLine("Failed to get font info");
-            }
         }
 
         //TODO: function that launches app on specific monitor if there are multiple monitors

@@ -1,17 +1,11 @@
-﻿#nullable disable warnings
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Visualization;
-using TERMINAL_FREQUENCY.Core;
+﻿using TERMINAL_FREQUENCY.Visualization;
 using NAudio.Wave;
 using TERMINAL_FREQUENCY.Visualization.Shape;
-using System.Diagnostics;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
+using TERMINAL_FREQUENCY.Config.Settings;
 
+#nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
 {
     /// <summary>
@@ -20,13 +14,14 @@ namespace TERMINAL_FREQUENCY.Core
     /// </summary>
     public static class Utility
     {
+        public const string VERSION_NUMBER = "v0.7";
         /// <summary>
         /// String data and console methods for the program launch screen.
         /// </summary>
         public static void PrintStartup()
         {
             Console.Clear();
-            Console.ForegroundColor = Config.Config.DARK_MODE ? ConsoleColor.DarkMagenta : ConsoleColor.DarkCyan;
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(@"
     ╔════════════════════════════════════════════════════════╗
     ║                                                        ║
@@ -46,17 +41,17 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v1.0           ║
+    ║               Terminal Audio Visualizer v0.7           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
-            Console.ForegroundColor = Config.Config.DARK_MODE ?  ConsoleColor.Gray : ConsoleColor.DarkGray;
-            Console.WriteLine("\nControls:");
-            Console.WriteLine("  TAB: Cycle visualization modes");
-            Console.WriteLine("  D: Toggle Debug");
-            Console.WriteLine("  SPACE: Pause/Resume");
-            Console.WriteLine("  L: Freeze Controls");
-            Console.WriteLine("  ESC: Exit");
+
+            Console.WriteLine("\nCONTROLS:");
+            Console.WriteLine("  [TAB] CHANGE VISUALIZATION");
+            Console.WriteLine("  [D]EBUG ON/OFF");
+            Console.WriteLine("  [SPACE] PAUSE/RESUME | [L]OCK CONTROLS | [F5]FULL SCREEN");
+            Console.WriteLine("  [F1] SAVE | [F2] LOAD | [F3] RESTORE DEFAULTS");
+            Console.WriteLine("  [ESC] EXIT");
             Console.WriteLine("--------------------------------");
             Console.WriteLine("  Modify the JSON file to change settings");
             Console.WriteLine("  Press any key to continue :)");
@@ -86,7 +81,7 @@ namespace TERMINAL_FREQUENCY.Core
                 "║                                                                                          ║",
                 "║                    [SPACE] Resume  [ESC] Exit  [M] CHANGE RENDERING MODE                 ║",
                 "╚══════════════════════════════════════════════════════════════════════════════════════════╝",
-                $"CURRENT MODE: {modeName} RENDERER: {buffer.RendererMode}"
+                $"CURRENT MODE: {modeName} RENDERER: {buffer.GetRendererMode()}"
 
             };
 
@@ -101,6 +96,7 @@ namespace TERMINAL_FREQUENCY.Core
                     if (startX + x < buffer.Width && startY + y < buffer.Height)
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
+
 
         /// <summary>
         /// Allows user to select audio device/interface to capture.
@@ -135,20 +131,20 @@ namespace TERMINAL_FREQUENCY.Core
             if (string.IsNullOrWhiteSpace(input))
             {
                 Console.WriteLine("Using default device...");
-                return new AudioCapture(); // Use default device
+                return new AudioCapture(new Config.Settings.Settings()); // Use default device
             }
 
             if (int.TryParse(input, out selectedIndex) && selectedIndex >= 0 && selectedIndex < devices.Count)
             {
                 Console.WriteLine($"Selected: {devices[selectedIndex]}");
-                return new AudioCapture(); //TODO: Let user select audio device
+                return new AudioCapture(new Config.Settings.Settings()); //TODO: Let user select audio device
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Invalid selection. Using default device...");
                 Console.ResetColor();
-                return new AudioCapture();
+                return new AudioCapture(new Config.Settings.Settings());
             }
         }
 
@@ -163,6 +159,19 @@ namespace TERMINAL_FREQUENCY.Core
                 // 3 => "EQUALIZER",
                 _ => "UNKNOWN"
             };
+        }
+
+        public static int ByteConstraintsCheck(int value)
+        {
+            if (value < byte.MinValue) return byte.MinValue;
+            else if (value > byte.MaxValue) return byte.MaxValue;
+            else return value;
+        }
+        public static int EnumCount<T>(bool returnLastIndex = false) where T : Enum
+        {
+            return returnLastIndex
+                ? Enum.GetValues(typeof(T)).Length - 1 
+                : Enum.GetValues(typeof (T)).Length;
         }
 
         /// <summary>
@@ -284,6 +293,13 @@ namespace TERMINAL_FREQUENCY.Core
             //fallback
             return value.ToString().ToUpper();
         }
+
+        public static List<IVisualization> RefreshVisuals(Settings settings) => new List<IVisualization>() 
+        { 
+            new Rings(settings), 
+            new Waterfall(settings), 
+            new Shape(settings) 
+        };
 
         /// <summary>
         /// Uses WASAPI to get a list of all audio devices on a system.
