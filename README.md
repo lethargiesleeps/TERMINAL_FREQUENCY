@@ -1,11 +1,11 @@
-!(Terminal Frequency Splash)[https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/tree/main/img/splash.jpg]
+![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/tree/main/img/splash.jpg)
 
 # TERMINAL__FREQUENCY
 *v0.8a*
 
 ## ABOUT
 A Windows console program for audio visualizations. Captures any audio playing from your computer automatically. Features a robust settings API to endlessly customize the look and feel of the available visuals.
-!(Terminal Frequency Demo Sampler)[https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/tree/main/img/demo.gif]
+![Terminal Frequency Demo Sampler](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/tree/main/img/demo.gif)
 
 ### BUILT WITH
 - .NET 8.0
@@ -24,7 +24,7 @@ Currently, the program only registers the first audio device that is outputting 
 The first official release will let you select which audio interface to capture.
 For the time being, an external tool can be used to route other audio so the default device is captured (if using an external audio interface or DJ controller).
 
-Voicemeeter (Banana)[https://vb-audio.com/Voicemeeter/banana.htm] and (Potato)[https://vb-audio.com/Voicemeeter/potato.htm] are free-to-use donationware that can temporarily fix this limitation.
+Voicemeeter [Banana](https://vb-audio.com/Voicemeeter/banana.htm) and [Potato](https://vb-audio.com/Voicemeeter/potato.htm) are free-to-use donationware that can temporarily fix this limitation.
 ### CONTROLS
 **GLOBAL:**
 - TAB: Change visuals
