@@ -19,6 +19,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
+        public int StreamCount
+        {
+            get
+            {
+                lock (_streamLock)
+                {
+                    return _streams.Count;
+                }
+            }
+        }
 
         public Waterfall(Settings settings)
         {

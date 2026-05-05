@@ -22,7 +22,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public int ConsoleInstances { get; set; }                      //how many independent window processes to launch
         public bool SaveOnExit { get; set; }                           //if true, saves settings file on program exit
         public bool EnableRasterOnDirectWrite { get; set; }            //if true, switches to raster font when using DirectWrite
-
+        public bool EnableExclusiveMode { get; set; }                  //full screen mode, not taskbar and all that
         public GlobalSettings()
         {
             Restore();
@@ -40,6 +40,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ConsoleInstances = 1;
             SaveOnExit = true;
             EnableRasterOnDirectWrite = true;
+            EnableExclusiveMode = false;
         }
 
         public void EnforceConstraints()

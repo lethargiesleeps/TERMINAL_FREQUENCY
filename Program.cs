@@ -20,11 +20,11 @@ namespace TERMINAL_FREQUENCY
         private static IVisualization _currentVisualization;
         private static ConsoleColor[] _colors = [];
         private static int _currentMode;
+        private static bool _exclusiveMode;
         private static bool _isPaused = false;
         private static bool _isDebug = Debugger.IsAttached;
         private static bool _isChild = false;
         private static bool _isSavingOrLoading = false;
-
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -61,6 +61,7 @@ namespace TERMINAL_FREQUENCY
                 if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
             }
 
+            _exclusiveMode = _settings.GlobalSettings.EnableExclusiveMode;
             _currentMode = (int)_settings.GlobalSettings.DefaultMode;
             _colors = _settings.ConsoleSettings.DefaultColors;
             Console.BackgroundColor = _settings.ConsoleSettings.BackgroundColor;
@@ -197,9 +198,10 @@ namespace TERMINAL_FREQUENCY
                                 buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
                             }
 
-                            if (_currentVisualization is Waterfall)
+                            if (_currentVisualization is Waterfall waterfall)
                             {
-                                string waterfallStatus = $"[R]AINBOW:{(_settings.WaterfallSettings.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.WaterfallSettings.Mode)} | RE[V]ERSE:{(_settings.WaterfallSettings.ReverseMode ? "ON" : "OFF")}";
+                                //controls
+                                string waterfallStatus = $"[R]AINBOW:{(_settings.WaterfallSettings.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.WaterfallSettings.Mode)} | RE[V]ERSE:{(_settings.WaterfallSettings.ReverseMode ? "ON" : "OFF")} | [-/=] THICKNESS: {_settings.WaterfallSettings.Thickness}";
 
                                 if (!_settings.WaterfallSettings.RainbowMode)
                                     waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(_settings.WaterfallSettings.Color)}";
@@ -208,6 +210,10 @@ namespace TERMINAL_FREQUENCY
                                     waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.WaterfallSettings.Origin)}";
 
                                 buffer.DrawString(0, buffer.Height - 3, waterfallStatus, debugTextColor);
+
+                                //data in top left
+                                buffer.DrawString(0, 3, $"STREAMS:{waterfall.StreamCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
+                                
                             }
 
                             if(_currentVisualization is Shape)
@@ -235,7 +241,7 @@ namespace TERMINAL_FREQUENCY
 
                             if (_settings.GlobalSettings.ShowGlobalControls)
                             {
-                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [1] SAVE | [2] LOAD | [3] DEFAULTS | [ESC] EXIT";
+                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [F1] SAVE | [F2] LOAD | [F3] DEFAULTS | [F5] FULL | [ESC] EXIT";
                                 buffer.DrawString(0, buffer.Height - 1, controls, debugTextColor);
                             }
 
@@ -295,36 +301,46 @@ namespace TERMINAL_FREQUENCY
                 switch (key)
                 {
                     #region GlobalInputs
+                    //exit
                     case ConsoleKey.Escape:
                         if (_settings.GlobalSettings.SaveOnExit)
                             SettingsManager.Save(_settings);
+
                         audioCapture?.Stop();
+
+                        if (_exclusiveMode)
+                            ConsoleWindow.ExclusiveMode(false);
+
                         Environment.Exit(0);
                         break;
 
+                    //pause
                     case ConsoleKey.Spacebar:
                         if (_settings.GlobalSettings.EnableControlLock) return;
                         _isPaused = !_isPaused;
                         break;
 
+                    //change visual mode
                     case ConsoleKey.Tab:
                         if (_settings.GlobalSettings.EnableControlLock) return;
                         if(!_isPaused)
                             _currentMode = (_currentMode + 1) % _visualizations.Count; //TODO: Make visualization enum
                         break;
 
+                    //toggle debug mode
                     case ConsoleKey.D:
                         if(!_isPaused)
                             _settings.GlobalSettings.EnableDebugMode = !_settings.GlobalSettings.EnableDebugMode;
                         break;
 
+                    //lock controls
                     case ConsoleKey.L:
                         if (!_isPaused)
                             _settings.GlobalSettings.EnableControlLock = !_settings.GlobalSettings.EnableControlLock;
                         break;
 
                     //save
-                    case ConsoleKey.D1:
+                    case ConsoleKey.F1:
                         {
                             if (_settings.GlobalSettings.EnableControlLock) return;
                             string normalConsoleTitle = Console.Title ?? "";
@@ -354,7 +370,7 @@ namespace TERMINAL_FREQUENCY
                         }
 
                     //load
-                    case ConsoleKey.D2:
+                    case ConsoleKey.F2:
                         {
                             if (_settings.GlobalSettings.EnableControlLock) return;
                             #pragma warning disable CA1416 // Validate platform compatibility
@@ -387,12 +403,19 @@ namespace TERMINAL_FREQUENCY
                             break;
                         }
                     //restore
-                    case ConsoleKey.D3:
+                    case ConsoleKey.F3:
                         if (_settings.GlobalSettings.EnableControlLock) return;
                         _settings.Restore();
                         _visualizations = Utility.RefreshVisuals(_settings);
                         _currentVisualization = _visualizations[_currentMode];
                         buffer.UpdateBackgroundColor(_settings.ConsoleSettings.BackgroundColor);
+                        break;
+
+                    //full screen
+                    case ConsoleKey.F5:
+                        _exclusiveMode = !_exclusiveMode;
+                        ConsoleWindow.ExclusiveMode(_exclusiveMode);
+                        
                         break;
                     #endregion
 
@@ -549,9 +572,11 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Rings)
                             _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.RadiusMin + 5, _settings.RingsSettings.RadiusMax - 5);
 
+                        if(_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.Thickness = Math.Max(1, _settings.WaterfallSettings.Thickness - 1);
+
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.MaxSizePercent = Math.Max(0.05f, _settings.ShapeSettings.MaxSizePercent - 0.02f);
-
                         break;
 
                     case ConsoleKey.OemPlus:
@@ -559,6 +584,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Rings)
                             _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 5);
+
+                        if (_currentVisualization is Waterfall)
+                            _settings.WaterfallSettings.Thickness = Math.Min(10, _settings.WaterfallSettings.Thickness + 1);
 
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.MaxSizePercent = Math.Min(1.0f, _settings.ShapeSettings.MaxSizePercent + 0.02f);
@@ -599,10 +627,10 @@ namespace TERMINAL_FREQUENCY
                 Console.CursorVisible = false;
 
             //manage window features
-            if (_settings.ConsoleSettings.DisableTitleBar)
+            if (_settings.ConsoleSettings.DisableTitleBar && !_exclusiveMode)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border
 
-            if(_settings.ConsoleSettings.DisableScrollBars)
+            if(_settings.ConsoleSettings.DisableScrollBars && !_exclusiveMode)
                 ConsoleWindow.DisableScrollBars();
 
 
@@ -622,13 +650,15 @@ namespace TERMINAL_FREQUENCY
                 ConsoleWindow.SetWindowBlur(_settings.ConsoleSettings.EnableWindowBlur);
 
             //size
-            if (_settings.ConsoleSettings.LaunchMaximized)
+            if (_exclusiveMode)
+                ConsoleWindow.ExclusiveMode(true);
+            else if (_settings.ConsoleSettings.LaunchMaximized)
                 ConsoleWindow.SetFullScreen();
             else if (_settings.ConsoleSettings.EnableCustomWindowSize)
                 ConsoleWindow.SetScreenSize(_settings.ConsoleSettings.CustomWindowWidth, _settings.ConsoleSettings.CustomWindowHeight);
 
             //position
-            if (!_settings.ConsoleSettings.LaunchMaximized)
+            if (!_settings.ConsoleSettings.LaunchMaximized && !_exclusiveMode)
             {
                 if (_settings.ConsoleSettings.LaunchAt && _settings.ConsoleSettings.LaunchAtX >= 0 && _settings.ConsoleSettings.LaunchAtY >= 0)
                     ConsoleWindow.LaunchConsoleAt(_settings.ConsoleSettings.LaunchAtX, _settings.ConsoleSettings.LaunchAtY);
@@ -638,8 +668,6 @@ namespace TERMINAL_FREQUENCY
 
             if (_settings.ConsoleSettings.DisableWindowResize)
                 ConsoleWindow.DisableResize();
-
-            Console.CursorVisible = false;
 
             //manage process title
             if (_settings.ConsoleSettings.DisableAppTitle)
@@ -651,7 +679,6 @@ namespace TERMINAL_FREQUENCY
 
             if (!_settings.GlobalSettings.BypassStartupScreen)
                 Utility.PrintStartup();
-
         }
     }
 }

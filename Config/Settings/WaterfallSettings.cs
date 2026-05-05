@@ -49,7 +49,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             EndWidthPercent = 0.9f;
             Speed = 1.0f;
             FadeRate = 0.005f;
-            MaxStreams = 10;
+            MaxStreams = 15;
             TriggerThreshold = 0.08f;
             OnlySpawnOnThreshold = false;
             MidpointChange = 0.5f;
@@ -83,7 +83,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (FadeRate < 0.001f) FadeRate = 0.001f;
             if (FadeRate > 0.05f) FadeRate = 0.05f;
             if (MaxStreams < 1) MaxStreams = 1;
-            if (MaxStreams > 25) MaxStreams = 25;
+            if (MaxStreams > 30) MaxStreams = 30;
+
             if (TriggerThreshold < 0.01f) TriggerThreshold = 0.01f;
             if (TriggerThreshold > 0.30f) TriggerThreshold = 0.30f;
             if (MidpointChange < 0.20f) MidpointChange = 0.20f;
@@ -115,7 +116,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (FadeRate < 0f) FadeRate = 0.001f;
             if (MaxStreams < 1) MaxStreams = 1;
             if (TriggerThreshold < 0f) TriggerThreshold = 0.01f;
-            if (Thickness < 1) Thickness = 1;
+
             if (MidpointChange < 0f) MidpointChange = 0.01f;
             if (EndpointChange < 0f) EndpointChange = 0f;
             if (EndpointChange <= MidpointChange) EndpointChange = MidpointChange + 0.01f;

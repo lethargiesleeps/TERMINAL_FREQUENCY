@@ -46,11 +46,11 @@ namespace TERMINAL_FREQUENCY.Core
     ╚════════════════════════════════════════════════════════╝
     ");
 
-            Console.WriteLine("\nControls:");
+            Console.WriteLine("\nCONTROLS:");
             Console.WriteLine("  [TAB] CHANGE VISUALIZATION");
             Console.WriteLine("  [D]EBUG ON/OFF");
-            Console.WriteLine("  [SPACE] PAUSE/RESUME | [L]OCK");
-            Console.WriteLine("  [1] SAVE | [2] LOAD | [3] RESTORE DEFAULTS");
+            Console.WriteLine("  [SPACE] PAUSE/RESUME | [L]OCK CONTROLS | [F5]FULL SCREEN");
+            Console.WriteLine("  [F1] SAVE | [F2] LOAD | [F3] RESTORE DEFAULTS");
             Console.WriteLine("  [ESC] EXIT");
             Console.WriteLine("--------------------------------");
             Console.WriteLine("  Modify the JSON file to change settings");

@@ -10,7 +10,8 @@
     "DefaultMode": "Rings",
     "ConsoleInstances": 1,
     "SaveOnExit": true,
-    "EnableRasterOnDirectWrite": true
+    "EnableRasterOnDirectWrite": true,
+    "EnableExclusiveMode": false
   },
   "FontSettings": {
     "EnableRasterFont": true,
@@ -131,7 +132,7 @@
     "EndWidthPercent": 0.9,
     "Speed": 1.0,
     "FadeRate": 0.005,
-    "MaxStreams": 10,
+    "MaxStreams": 15,
     "Thickness": 1,
     "TriggerThreshold": 0.08,
     "OnlySpawnOnThreshold": false,

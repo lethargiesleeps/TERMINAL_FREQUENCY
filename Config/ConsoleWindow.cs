@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,12 @@ namespace TERMINAL_FREQUENCY.Config
 
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern int FindWindow(string lpClassName, string lpWindowName);
 
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
@@ -67,6 +74,8 @@ namespace TERMINAL_FREQUENCY.Config
         private const uint WCA_ACCENT_POLICY = 19;
         private const uint FLASHW_ALL = 0x00000003;
         private const uint FLASHW_TIMERNOFG = 0x0000000C;
+        private const int SW_HIDE = 0;
+        private const int SW_SHOW = 5;
         private const uint DWMWA_BORDER_COLOR = 34;
         private const uint DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
@@ -311,6 +320,43 @@ namespace TERMINAL_FREQUENCY.Config
                 int maxHeight = Console.LargestWindowHeight;
                 Console.SetWindowSize(maxWidth, maxHeight);
                 Console.SetBufferSize(maxWidth, maxHeight);
+            }
+        }
+        public static void ExclusiveMode(bool enable)
+        {
+            IntPtr handle = GetConsoleWindow();
+            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
+
+            if (enable)
+            {
+                ShowWindow(taskbarHandle, SW_HIDE);
+
+                int style = GetWindowLong(handle, GWL_STYLE);
+                style &= ~(WS_CAPTION | WS_THICKFRAME);
+                SetWindowLong(handle, GWL_STYLE, style);
+                ApplyStyle(handle);
+
+                ShowWindow(handle, 3); // SW_MAXIMIZE
+                Thread.Sleep(100);
+                Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+                SetWindowPos(handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
+                SetForegroundWindow(handle);
+            }
+            else
+            {
+                ShowWindow(handle, 1); // SW_NORMAL
+                Thread.Sleep(100);
+
+                int style = GetWindowLong(handle, GWL_STYLE);
+                style |= WS_CAPTION | WS_THICKFRAME;
+                SetWindowLong(handle, GWL_STYLE, style);
+                ApplyStyle(handle);
+
+                ShowWindow(taskbarHandle, SW_SHOW);
+                Console.SetWindowSize(115, 35);
+                Console.SetBufferSize(115, 35);
+                Console.Clear();
+                SetWindowPos(handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
             }
         }
 
