@@ -1,7 +1,7 @@
 ![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/splash.jpg)
 
 # TERMINAL__FREQUENCY
-*v0.8a*
+*v0.7a*
 
 ## ABOUT
 A Windows console program for audio visualizations. Captures any audio playing from your computer automatically. Features a robust settings API to endlessly customize the look and feel of the available visuals.
@@ -14,8 +14,8 @@ A Windows console program for audio visualizations. Captures any audio playing f
 - WIN32/KERNEL32 API
 
 ## GETTING STARTED
-Coming soon
-
+Download the [Latest Release](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/releases/tag/alpha) `.zip` file. Extract the archive and run the application from within the extracted folder.
+The `settings` file should be in whatever folder the application is launched from. If one does not exist, it will be auto-generated.
 ## USAGE
 More stuff coming soon
 
