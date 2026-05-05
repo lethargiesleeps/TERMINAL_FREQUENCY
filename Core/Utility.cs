@@ -3,6 +3,7 @@ using NAudio.Wave;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
+using TERMINAL_FREQUENCY.Config.Settings;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
@@ -13,6 +14,7 @@ namespace TERMINAL_FREQUENCY.Core
     /// </summary>
     public static class Utility
     {
+        public const string VERSION_NUMBER = "v0.7";
         /// <summary>
         /// String data and console methods for the program launch screen.
         /// </summary>
@@ -39,7 +41,7 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v1.0           ║
+    ║               Terminal Audio Visualizer v0.7           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
@@ -47,8 +49,8 @@ namespace TERMINAL_FREQUENCY.Core
             Console.WriteLine("\nControls:");
             Console.WriteLine("  [TAB] CHANGE VISUALIZATION");
             Console.WriteLine("  [D]EBUG ON/OFF");
-            Console.WriteLine("  [SPACE] PAUSE/RESUME");
-            Console.WriteLine("  [L]OCK");
+            Console.WriteLine("  [SPACE] PAUSE/RESUME | [L]OCK");
+            Console.WriteLine("  [1] SAVE | [2] LOAD | [3] RESTORE DEFAULTS");
             Console.WriteLine("  [ESC] EXIT");
             Console.WriteLine("--------------------------------");
             Console.WriteLine("  Modify the JSON file to change settings");
@@ -94,6 +96,7 @@ namespace TERMINAL_FREQUENCY.Core
                     if (startX + x < buffer.Width && startY + y < buffer.Height)
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
+
 
         /// <summary>
         /// Allows user to select audio device/interface to capture.
@@ -290,6 +293,13 @@ namespace TERMINAL_FREQUENCY.Core
             //fallback
             return value.ToString().ToUpper();
         }
+
+        public static List<IVisualization> RefreshVisuals(Settings settings) => new List<IVisualization>() 
+        { 
+            new Rings(settings), 
+            new Waterfall(settings), 
+            new Shape(settings) 
+        };
 
         /// <summary>
         /// Uses WASAPI to get a list of all audio devices on a system.

@@ -41,27 +41,31 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             switch (_settings.RingsSettings.ColorMode)
             {
                 case RingColorMode.Light:
-                    if (normalizedLife > 0.6f) return ConsoleColor.White;
+                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.White;
                     if (normalizedLife > 0.3f) return ConsoleColor.Gray;
                     return ConsoleColor.DarkGray;
                 case RingColorMode.Dark: //use if console bg colour not black
-                    if (normalizedLife > 0.6f) return ConsoleColor.Black;
+                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.Black;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkGray;
                     return ConsoleColor.Gray;
                 case RingColorMode.Red:
+                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Red;
+                    if (normalizedLife > 0.9f) return ConsoleColor.Magenta;
                     if (normalizedLife > 0.6f) return ConsoleColor.Red;
-                    if (normalizedLife > 0.3f) return ConsoleColor.DarkRed;
-                    return ConsoleColor.DarkGray;
+                    if (normalizedLife > 0.3f) return ConsoleColor.DarkMagenta;
+                    return ConsoleColor.DarkRed;
                 case RingColorMode.Green:
-                    if (normalizedLife > 0.6f) return ConsoleColor.Green;
+                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.Green;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkGreen;
                     return ConsoleColor.DarkGray;
                 case RingColorMode.Blue:
+                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Blue;
                     if (normalizedLife > 0.9f) return ConsoleColor.Cyan;
                     if (normalizedLife > 0.6f) return ConsoleColor.Blue;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkCyan;
                     return ConsoleColor.DarkBlue;
                 case RingColorMode.Yellow:
+                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Yellow;
                     if (normalizedLife > 0.6f) return ConsoleColor.White;
                     if (normalizedLife > 0.3f) return ConsoleColor.Yellow;
                     return ConsoleColor.DarkYellow;

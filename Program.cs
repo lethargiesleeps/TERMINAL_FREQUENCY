@@ -15,13 +15,16 @@ namespace TERMINAL_FREQUENCY
 {
     class Program
     {
-        private static Settings _settings = new Settings();
-        private static bool _isPaused = false;
-        private static int _currentMode = (int)_settings.GlobalSettings.DefaultMode;
-        private static bool _isChild = false;
+        private static Settings _settings;
         private static List<IVisualization> _visualizations;
         private static IVisualization _currentVisualization;
-        private static readonly ConsoleColor[] _colors = _settings.ConsoleSettings.DefaultColors;
+        private static ConsoleColor[] _colors = [];
+        private static int _currentMode;
+        private static bool _isPaused = false;
+        private static bool _isDebug = Debugger.IsAttached;
+        private static bool _isChild = false;
+        private static bool _isSavingOrLoading = false;
+
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -35,21 +38,54 @@ namespace TERMINAL_FREQUENCY
 
         static void Main(string[] args)
         {
+            try
+            {
+                _settings = SettingsManager.Load();
+                _settings.EnforceMandatoryConstraints();
+                SettingsManager.Save(_settings);
+            }
+            catch(Exception e)
+            {
+                _settings = new Settings();
+
+                if(_isDebug)
+                {
+                    Debug.WriteLine(e.Message);
+                    Debug.WriteLine(e.GetType());
+                    Debug.WriteLine(e.StackTrace);
+                }
+            }
+            finally
+            {
+                if (_settings.GlobalSettings.EnableSafeMode) _settings.EnforceConstraints();
+                if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
+            }
+
+            _currentMode = (int)_settings.GlobalSettings.DefaultMode;
+            _colors = _settings.ConsoleSettings.DefaultColors;
+            Console.BackgroundColor = _settings.ConsoleSettings.BackgroundColor;
+
             if (_settings.RendererSettings.EnableThreadPriority)
                 Thread.CurrentThread.Priority = _settings.RendererSettings.ThreadPriority;
 
             Config.Font.Font.SetCustomFont(Config.Font.FontFace.Consolas, 16, false); //always start at default type
             Config.Font.Font.SaveCurrentFont();
 
-            if(_settings.FontSettings.EnableRasterFont)
+            if((_settings.FontSettings.EnableRasterFont || (_settings.GlobalSettings.EnableRasterOnDirectWrite && _settings.RendererSettings.RendererMode == RenderMode.DirectWrite)))
                 Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
-            else if(_settings.FontSettings.EnableCustomFont)
+
+            if(_settings.FontSettings.EnableCustomFont)
+            {
+                Config.Font.Font.RestorePreviousFont();
                 Config.Font.Font.SetCustomFont(
-                    _settings.FontSettings.CustomFontFace, 
-                    _settings.FontSettings.CustomFontSize, 
-                    _settings.FontSettings.CustomFontBold, 
+                    _settings.FontSettings.CustomFontFace,
+                    _settings.FontSettings.CustomFontSize,
+                    _settings.FontSettings.CustomFontBold,
                     _settings.FontSettings.CustomFontFaceOverride
-                    );
+                );
+                Config.Font.Font.SaveCurrentFont();
+            }
+
 
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
             CLI.HandleCliArgs(args, _settings.GlobalSettings);
@@ -58,12 +94,7 @@ namespace TERMINAL_FREQUENCY
 
             try
             {
-                _visualizations = new List<IVisualization>()
-                {
-                    new Rings(_settings),
-                    new Waterfall(_settings),
-                    new Shape(_settings)
-                };
+                _visualizations = Utility.RefreshVisuals(_settings);
 
                 AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
 
@@ -146,11 +177,24 @@ namespace TERMINAL_FREQUENCY
                         //debug bar
                         if(_settings.GlobalSettings.EnableDebugMode)
                         {
+                            ConsoleColor debugTextColor = ConsoleColor.Gray;
+                            ConsoleColor fpsColor = ConsoleColor.Gray;
+
+                            if(Console.BackgroundColor == ConsoleColor.Black || Console.BackgroundColor == ConsoleColor.DarkGray)
+                            {
+                                debugTextColor = ConsoleColor.Gray;
+                                fpsColor = ConsoleColor.Yellow;
+                            }
+                            else if(Console.BackgroundColor == ConsoleColor.White || Console.BackgroundColor == ConsoleColor.Gray)
+                            {
+                                debugTextColor = ConsoleColor.DarkGray;
+                                fpsColor = ConsoleColor.DarkBlue;
+                            }
 
                             if (_currentVisualization is Rings)
                             {
-                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.RadiusMax} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
-                                buffer.DrawString(0, buffer.Height - 3, ringsStatus, ConsoleColor.Gray);
+                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.RadiusMax} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
+                                buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
                             }
 
                             if (_currentVisualization is Waterfall)
@@ -163,7 +207,7 @@ namespace TERMINAL_FREQUENCY
                                 if (_settings.WaterfallSettings.Mode == WaterfallMode.Normal)
                                     waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.WaterfallSettings.Origin)}";
 
-                                buffer.DrawString(0, buffer.Height - 3, waterfallStatus, ConsoleColor.Gray);
+                                buffer.DrawString(0, buffer.Height - 3, waterfallStatus, debugTextColor);
                             }
 
                             if(_currentVisualization is Shape)
@@ -177,22 +221,27 @@ namespace TERMINAL_FREQUENCY
                                 if(_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
                                     shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.ConcentricLayers}";
 
-                                buffer.DrawString(0, buffer.Height - 3, shapeStatus, ConsoleColor.Gray);
+                                buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
 
                             string modeName = Utility.GetModeName(_currentMode);
-                            string status = $"MODE: {modeName} | VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
-                            buffer.DrawString(0, buffer.Height - 2, status, ConsoleColor.Gray);
+                            string line1 = $"VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | RMS: {audioCapture.RMS:F2}";
+                            string line2 = $"MODE: {modeName}";
+                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
+
+                            buffer.DrawString(0, 0, line1, fpsColor);
+                            buffer.DrawString(0, 1, line2, fpsColor);
+                            buffer.DrawString(0, 2, line3, fpsColor);
 
                             if (_settings.GlobalSettings.ShowGlobalControls)
                             {
-                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [ESC] EXIT";
-                                buffer.DrawString(0, buffer.Height - 1, controls, ConsoleColor.DarkGray);
+                                string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [1] SAVE | [2] LOAD | [3] DEFAULTS | [ESC] EXIT";
+                                buffer.DrawString(0, buffer.Height - 1, controls, debugTextColor);
                             }
 
                             //fps stuff
                             int rightX = buffer.Width - 10; //top right corner
-                            buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", ConsoleColor.Yellow);
+                            buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", fpsColor);
                             //buffer.DrawString(rightX, 1, $"TGT:{Config.Config.TARGET_FPS,6}", ConsoleColor.DarkGray);
                             //buffer.DrawString(rightX, 2, $"HIT:{_hitRate,5:F0}%", _hitRate > 90 ? ConsoleColor.Green : _hitRate > 70 ? ConsoleColor.Yellow : ConsoleColor.Red);
                         }
@@ -247,6 +296,8 @@ namespace TERMINAL_FREQUENCY
                 {
                     #region GlobalInputs
                     case ConsoleKey.Escape:
+                        if (_settings.GlobalSettings.SaveOnExit)
+                            SettingsManager.Save(_settings);
                         audioCapture?.Stop();
                         Environment.Exit(0);
                         break;
@@ -271,6 +322,78 @@ namespace TERMINAL_FREQUENCY
                         if (!_isPaused)
                             _settings.GlobalSettings.EnableControlLock = !_settings.GlobalSettings.EnableControlLock;
                         break;
+
+                    //save
+                    case ConsoleKey.D1:
+                        {
+                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            string normalConsoleTitle = Console.Title ?? "";
+                            string saveStatusIndicator = "";
+                            _isSavingOrLoading = true;
+                            try
+                            {
+                                SettingsManager.Save(_settings);
+                                saveStatusIndicator = normalConsoleTitle + " [ SAVED ]";
+                            }
+                            catch (Exception e)
+                            {
+                                saveStatusIndicator = normalConsoleTitle + " [ SAVE FAILED ]";
+                            }
+
+                            var messageEndTime = DateTime.UtcNow.AddMilliseconds(500);
+                            while (_isSavingOrLoading)
+                            {
+                                Console.Title = saveStatusIndicator;
+                                ConsoleWindow.FlashWindowOnBeat(5);
+
+                                if (DateTime.UtcNow >= messageEndTime)
+                                    _isSavingOrLoading = false;
+                            }
+                            Console.Title = normalConsoleTitle;
+                            break;
+                        }
+
+                    //load
+                    case ConsoleKey.D2:
+                        {
+                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            #pragma warning disable CA1416 // Validate platform compatibility
+                            string normalConsoleTitle = Console.Title;
+                               #pragma warning restore CA1416 // Validate platform compatibility
+                            string saveStatusIndicator = "";
+                            _isSavingOrLoading = true;
+                            try
+                            {
+                                _settings = SettingsManager.Load();
+                                _visualizations = Utility.RefreshVisuals(_settings);
+                                _currentVisualization = _visualizations[_currentMode];
+                                saveStatusIndicator = normalConsoleTitle + " [ LOADED ]";
+                            }
+                            catch (Exception e)
+                            {
+                                saveStatusIndicator = normalConsoleTitle + " [ LOAD FAILED ]";
+                            }
+
+                            var messageEndTime = DateTime.UtcNow.AddMilliseconds(500);
+                            while (_isSavingOrLoading)
+                            {
+                                Console.Title = saveStatusIndicator;
+                                ConsoleWindow.FlashWindowOnBeat(5);
+
+                                if (DateTime.UtcNow >= messageEndTime)
+                                    _isSavingOrLoading = false;
+                            }
+                            Console.Title = normalConsoleTitle;
+                            break;
+                        }
+                    //restore
+                    case ConsoleKey.D3:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _settings.Restore();
+                        _visualizations = Utility.RefreshVisuals(_settings);
+                        _currentVisualization = _visualizations[_currentMode];
+                        buffer.UpdateBackgroundColor(_settings.ConsoleSettings.BackgroundColor);
+                        break;
                     #endregion
 
                     case ConsoleKey.R:
@@ -284,6 +407,14 @@ namespace TERMINAL_FREQUENCY
                         if(_isPaused)
                         {
                             buffer.CycleRenderMode();
+                            if(_settings.GlobalSettings.EnableRasterOnDirectWrite)
+                            {
+                                if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
+                                    Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+                                else
+                                    Config.Font.Font.RestorePreviousFont();
+                            }
+                            
                             return;
                         }
 
@@ -314,7 +445,7 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Rings)
                         {
-                            RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark };
+                            RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark, RingColorMode.Dark };
                             _settings.RingsSettings.ColorMode = Utility.CycleNext(cycle, _settings.RingsSettings.ColorMode);
                         }
 
@@ -335,6 +466,9 @@ namespace TERMINAL_FREQUENCY
 
                     case ConsoleKey.S:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+
+                        if(_currentVisualization is Rings)
+                            _settings.RingsSettings.SolidColor = !_settings.RingsSettings.SolidColor;
 
                         if(_currentVisualization is Shape)
                             _settings.ShapeSettings.Type = Utility.CycleNextEnum(_settings.ShapeSettings.Type);
@@ -460,6 +594,7 @@ namespace TERMINAL_FREQUENCY
         }
         static void HandleConsoleWindow()
         {
+
             if (_settings.ConsoleSettings.DisableCursor)
                 Console.CursorVisible = false;
 

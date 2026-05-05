@@ -13,6 +13,7 @@ public class RingsSettings : IConfigurable
     public float Speed { get; set; }                              //how many character units the ring expands outward each update frame, higher = expands faster (safe range 0.1 - 5)
     public float FadeRate { get; set; }                           //amount of life subtracted each update frame. Higher values = rings die faster (CANNOT BE 0)
     public RingColorMode ColorMode { get; set; }                  //modes of colour of the rings, see ColorMode enum
+    public bool SolidColor { get; set; }                          //if true, colour is always the same unless in rainbow mode
     public char[] Characters { get; set; }                        //default characters used in rings
     public bool CharRandomizer { get; set; }                      //if true, randomly renders a character from RING_CHAR_RANDOMIZER_CHARSET instead of using RING_CHARACTERS
     public string CharRandomizerCharset { get; set; }             //see above
@@ -65,6 +66,7 @@ public class RingsSettings : IConfigurable
         CrosshairCharOutter = '.';
         Offset = 2;
         FireworksMode = false;
+        SolidColor = true;
     }
 
     public void EnforceConstraints()

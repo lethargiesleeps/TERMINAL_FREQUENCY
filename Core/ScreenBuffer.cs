@@ -86,6 +86,7 @@ namespace TERMINAL_FREQUENCY.Core
                 _fastBuffer = new CHAR_INFO[Height, Width];
 
             Clear();
+            Console.Clear();
 
             //force full redraw on first frame
             for (int y = 0; y < Height; y++)
@@ -146,6 +147,17 @@ namespace TERMINAL_FREQUENCY.Core
                 if (i < Width - 1 && i < text.Length)
                     SetPixel(i, Height - 1, text[i], ConsoleColor.Cyan);
             }
+        }
+
+        public void UpdateBackgroundColor(ConsoleColor newColor)
+        {
+            _bgColor = newColor;
+            Console.BackgroundColor = _bgColor;
+            Console.Clear();
+
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    _currentChar[y, x] = '\0';
         }
 
         public void Render()

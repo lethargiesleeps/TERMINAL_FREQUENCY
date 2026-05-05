@@ -78,7 +78,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
                 ConsoleColor.Blue, ConsoleColor.Yellow, ConsoleColor.Cyan,
                 ConsoleColor.Magenta, ConsoleColor.Gray, ConsoleColor.DarkRed,
                 ConsoleColor.DarkGreen, ConsoleColor.DarkBlue, ConsoleColor.DarkYellow,
-                ConsoleColor.DarkCyan, ConsoleColor.DarkMagenta, ConsoleColor.DarkGray
+                ConsoleColor.DarkCyan, ConsoleColor.DarkMagenta, ConsoleColor.DarkGray, ConsoleColor.Black
             };
         }
 

@@ -53,12 +53,12 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             Layout = ShapeLayout.Single;
             VolumeSensitivity = 0.3f;
             TriggerThreshold = 0.15f;
-            MaxSizePercent = 0.8f;
+            MaxSizePercent = 0.5f;
             MinSizePercent = 0.02f;
             Count = 1;
             ConcentricLayers = 1;
             ConcentricPadding = 2;
-            Thickness = 4;
+            Thickness = 1;
             ThicknessMax = 8;
             QuadrantCentered = false;
             QuadrantIndices = new int[0];
@@ -70,7 +70,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ReverseVolumeSensitivity = 0.05f;
             SmoothMode = true;
             LerpFactor = 0.4f;
-            Character = 'O';
+            Character = '█';
             VerticalStack = true;
             CircleSegmentDensity = 0.8f;
             CircleMinSegments = 12;
