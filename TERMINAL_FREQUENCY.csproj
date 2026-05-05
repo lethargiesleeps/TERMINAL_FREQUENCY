@@ -12,22 +12,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="img\**" />
-		<None Remove="fx.txt" />
-		<None Remove=".gitignore" />
-		<None Remove="README.md" />
-		<None Remove="settings.json" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Remove="img\**" />
-		<Content Remove="fx.txt" />
-		<Content Remove=".gitignore" />
-		<Content Remove="README.md" />
-		<Content Remove="settings.json" />
-	</ItemGroup>	
-	
-	<ItemGroup>
 		<PackageReference Include="NAudio" Version="2.2.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
