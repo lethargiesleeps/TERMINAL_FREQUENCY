@@ -82,9 +82,7 @@ public class RingsSettings : IConfigurable
 
         if (Speed < 0.1f) Speed = 0.1f;
         if (Speed > 5f) Speed = 5f;
-
         if (FadeRate <= 0f) FadeRate = 0.01f;
-        if (MaxRings < 1) MaxRings = 1;
         if (MaxRings > 15) MaxRings = 15;
         if (Segments < 5 ) Segments = 5;
         if (Segments > 100) Segments = 100;

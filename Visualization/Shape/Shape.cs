@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Config.Settings;
-using TERMINAL_FREQUENCY.Core;
+using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Shape
 {

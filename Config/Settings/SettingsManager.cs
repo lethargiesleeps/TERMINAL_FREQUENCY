@@ -4,7 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace TERMINAL_FREQUENCY.Config
+namespace TERMINAL_FREQUENCY.Config.Settings
 {
     public static class SettingsManager
     {
@@ -35,7 +35,7 @@ namespace TERMINAL_FREQUENCY.Config
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DefaultFileName);
         }
 
-        public static void Save(Settings.Settings settings, string? filePath = null)
+        public static void Save(Settings settings, string? filePath = null)
         {
             filePath ??= GetDefaultPath();
 
@@ -49,10 +49,10 @@ namespace TERMINAL_FREQUENCY.Config
             File.WriteAllText(filePath, json);
         }
 
-        public static Settings.Settings Load(string? filePath = null)
+        public static Settings Load(string? filePath = null)
         {
             filePath ??= GetDefaultPath();
-            var defaults = new Settings.Settings();
+            var defaults = new Settings();
 
             if (!File.Exists(filePath))
                 Save(defaults, filePath);
@@ -63,7 +63,7 @@ namespace TERMINAL_FREQUENCY.Config
             };
 
             string json = File.ReadAllText(filePath);
-            return JsonConvert.DeserializeObject<Settings.Settings>(json, jsonSettings) ?? defaults;
+            return JsonConvert.DeserializeObject<Settings>(json, jsonSettings) ?? defaults;
         }
     }
 }

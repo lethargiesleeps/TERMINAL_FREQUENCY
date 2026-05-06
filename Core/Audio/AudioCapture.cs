@@ -3,7 +3,7 @@ using System;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Config.Settings;
 
-namespace TERMINAL_FREQUENCY.Core
+namespace TERMINAL_FREQUENCY.Core.Audio
 {
     public class AudioCapture
     {
@@ -26,7 +26,7 @@ namespace TERMINAL_FREQUENCY.Core
         public AudioCapture(Settings settings, int deviceIndex)
         {
             _settings = settings;
-            _deviceIndex = (deviceIndex < 0) ? -1 : deviceIndex;
+            _deviceIndex = deviceIndex < 0 ? -1 : deviceIndex;
         }
         public void Start()
         {

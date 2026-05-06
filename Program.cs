@@ -5,7 +5,9 @@ using System.Threading;
 using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
+using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.CLI;
+using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
@@ -30,10 +32,8 @@ namespace TERMINAL_FREQUENCY
         private static Stopwatch _stopWatch;
         private static long _sampleWindowStart = 0;
         private static int _framesInWindow = 0;
-        private static int _hitsInWindow = 0;
         private static float _currentFps = 0;
-        private static float _hitRate = 0;
-        private static int _frameCount = 0;
+
         private const float SAMPLE_DURATION_SECONDS = 1.0f;
 
         static void Main(string[] args)
@@ -192,10 +192,12 @@ namespace TERMINAL_FREQUENCY
                                 fpsColor = ConsoleColor.DarkBlue;
                             }
 
-                            if (_currentVisualization is Rings)
+                            if (_currentVisualization is Rings rings)
                             {
-                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.RadiusMax} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
+                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.Radius} | [9/0] MAX RINGS:{_settings.RingsSettings.MaxRings} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
                                 buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
+                                //data in top left
+                                buffer.DrawString(0, 3, $"STREAMS:{rings.RingCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
                             }
 
                             if (_currentVisualization is Waterfall waterfall)
@@ -248,8 +250,6 @@ namespace TERMINAL_FREQUENCY
                             //fps stuff
                             int rightX = buffer.Width - 10; //top right corner
                             buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", fpsColor);
-                            //buffer.DrawString(rightX, 1, $"TGT:{Config.Config.TARGET_FPS,6}", ConsoleColor.DarkGray);
-                            //buffer.DrawString(rightX, 2, $"HIT:{_hitRate,5:F0}%", _hitRate > 90 ? ConsoleColor.Green : _hitRate > 70 ? ConsoleColor.Yellow : ConsoleColor.Red);
                         }
 
                         buffer.Render();
@@ -570,9 +570,12 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.RadiusMin + 5, _settings.RingsSettings.RadiusMax - 5);
+                        {
+                            _settings.RingsSettings.Radius = Math.Max(1, _settings.RingsSettings.Radius - 2);
+                            _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.Radius + 2, _settings.RingsSettings.RadiusMax - 2);
+                        }
 
-                        if(_currentVisualization is Waterfall)
+                        if (_currentVisualization is Waterfall)
                             _settings.WaterfallSettings.Thickness = Math.Max(1, _settings.WaterfallSettings.Thickness - 1);
 
                         if (_currentVisualization is Shape)
@@ -583,7 +586,12 @@ namespace TERMINAL_FREQUENCY
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 5);
+                        {
+                            _settings.RingsSettings.Radius = Math.Min(195, _settings.RingsSettings.Radius + 2);
+                            _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 2);
+                            if (_settings.RingsSettings.RadiusMax <= _settings.RingsSettings.Radius)
+                                _settings.RingsSettings.RadiusMax = _settings.RingsSettings.Radius + 2;
+                        }
 
                         if (_currentVisualization is Waterfall)
                             _settings.WaterfallSettings.Thickness = Math.Min(10, _settings.WaterfallSettings.Thickness + 1);
@@ -594,6 +602,9 @@ namespace TERMINAL_FREQUENCY
 
                     case ConsoleKey.D9:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+
+                        if (_currentVisualization is Rings)
+                            _settings.RingsSettings.MaxRings = Math.Max(3, _settings.RingsSettings.MaxRings - 1);
 
                         if (_currentVisualization is Shape)
                         {
@@ -607,6 +618,10 @@ namespace TERMINAL_FREQUENCY
 
                     case ConsoleKey.D0:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+
+                        if(_currentVisualization is Rings)
+                            if (_currentVisualization is Rings)
+                                _settings.RingsSettings.MaxRings = Math.Min(20, _settings.RingsSettings.MaxRings + 1);
 
                         if (_currentVisualization is Shape)
                         {

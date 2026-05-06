@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using TERMINAL_FREQUENCY.Config.Settings;
-using TERMINAL_FREQUENCY.Core;
+using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
@@ -17,6 +18,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
 
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
+
+        public int RingCount
+        {
+            get
+            {
+                lock (_ringLock)
+                {
+                    return _rings.Count;
+                }
+            }
+        }
 
         public Rings(Settings settings)
         {

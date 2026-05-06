@@ -4,6 +4,8 @@ using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
 using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Core.Audio;
+using TERMINAL_FREQUENCY.Core.Rendering;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
