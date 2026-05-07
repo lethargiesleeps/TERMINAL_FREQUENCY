@@ -9,6 +9,7 @@ using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.CLI;
 using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Equalizer;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
@@ -98,7 +99,6 @@ namespace TERMINAL_FREQUENCY
                 _visualizations = Utility.RefreshVisuals(_settings);
 
                 AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
-
                 if (audioCapture == null)
                 {
                     Console.WriteLine("\nNo audio device selected. Exiting...");
@@ -113,7 +113,7 @@ namespace TERMINAL_FREQUENCY
                 //register audio events
                 audioCapture.OnVolumeUpdated += (volume) =>
                 {
-                    if (!_isPaused) _currentVisualization.Update(volume);
+                    if (!_isPaused && _currentVisualization is IVolumeReactive visualization) visualization.Update(volume);
                 };
 
                 audioCapture.OnVolumeSpike += (volume) =>
@@ -123,13 +123,14 @@ namespace TERMINAL_FREQUENCY
                     if (_settings.ConsoleSettings.EnableFlashOnBeat)
                         ConsoleWindow.FlashWindowOnBeat(_settings.ConsoleSettings.FlashOnBeatCount);
 
-                    if (_currentVisualization is Rings rings)
-                        rings.OnSpike();
-                    else if(_currentVisualization is Waterfall waterfall)
-                        waterfall.OnSpike(volume);
-                    else if(_currentVisualization is Shape shape)
-                        shape.OnSpike();
+                    if (_currentVisualization is ISpikeReactive visualization) visualization.OnSpike(volume);
                 };
+
+                audioCapture.OnFrequencyData += (bands) =>
+                {
+                    if (_currentVisualization is IFrequencyReactive visualization) visualization.OnFrequencyData(bands);
+                };
+
 
                 //capture the audio
                 audioCapture.Start();
@@ -155,21 +156,13 @@ namespace TERMINAL_FREQUENCY
                             if (elapsedSinceSample >= SAMPLE_DURATION_SECONDS && _framesInWindow > 0)
                             {
                                 _currentFps = _framesInWindow / elapsedSinceSample;
-
-                                //hit rate: was the average FPS over this second on target?
-                                //TODO: Fix the hit ratio calc
-                                /**
-                                if (_currentFps >= Config.Config.TARGET_FPS * 0.98f)
-                                    _hitsInWindow++;
-
-                                _hitRate = (float)_hitsInWindow / _framesInWindow * 100f;
-                                */
                                 _sampleWindowStart = _stopWatch.ElapsedTicks;
                                 _framesInWindow = 0;
                             }
                         }
 
                         _currentVisualization = _visualizations[_currentMode];
+                        audioCapture.UpdateCurrentVisualization(_currentVisualization); //update in case FFT needed
 
                         //redraw
                         buffer.Clear();
@@ -197,7 +190,7 @@ namespace TERMINAL_FREQUENCY
                                 string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.Radius} | [9/0] MAX RINGS:{_settings.RingsSettings.MaxRings} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
                                 buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
                                 //data in top left
-                                buffer.DrawString(0, 3, $"STREAMS:{rings.RingCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
+                                buffer.DrawString(0, 3, $"RINGS:{rings.RingCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
                             }
 
                             if (_currentVisualization is Waterfall waterfall)
@@ -230,6 +223,27 @@ namespace TERMINAL_FREQUENCY
                                     shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.ConcentricLayers}";
 
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
+                            }
+
+                            if (_currentVisualization is Equalizer)
+                            {
+                                try
+                                {
+                                    int debugBufferHeight = 3; //start pos for printing eq data
+                                    string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
+                                    bool mirrorMode = _settings.EqualizerSettings.Direction == EqDirection.Mirror;
+
+                                    for (int i = 0; i < (!mirrorMode ? frequencyData.Length : frequencyData.Length / 2); i++)
+                                    {
+                                        //in the top left
+                                        buffer.DrawString(0, debugBufferHeight, frequencyData[i], fpsColor);
+                                        debugBufferHeight++;
+                                    }
+                                }
+                                catch(Exception ex)
+                                {
+                                    buffer.DrawString(0, 3, "NO FREQUENCY DATA", debugTextColor);
+                                }
                             }
 
                             string modeName = Utility.GetModeName(_currentMode);
@@ -324,7 +338,7 @@ namespace TERMINAL_FREQUENCY
                     case ConsoleKey.Tab:
                         if (_settings.GlobalSettings.EnableControlLock) return;
                         if(!_isPaused)
-                            _currentMode = (_currentMode + 1) % _visualizations.Count; //TODO: Make visualization enum
+                            _currentMode = (_currentMode + 1) % _visualizations.Count;
                         break;
 
                     //toggle debug mode
@@ -381,8 +395,10 @@ namespace TERMINAL_FREQUENCY
                             try
                             {
                                 _settings = SettingsManager.Load();
+                                audioCapture.UpdateSettings(_settings);
                                 _visualizations = Utility.RefreshVisuals(_settings);
                                 _currentVisualization = _visualizations[_currentMode];
+
                                 saveStatusIndicator = normalConsoleTitle + " [ LOADED ]";
                             }
                             catch (Exception e)
@@ -406,6 +422,7 @@ namespace TERMINAL_FREQUENCY
                     case ConsoleKey.F3:
                         if (_settings.GlobalSettings.EnableControlLock) return;
                         _settings.Restore();
+                        audioCapture.UpdateSettings(_settings);
                         _visualizations = Utility.RefreshVisuals(_settings);
                         _currentVisualization = _visualizations[_currentMode];
                         buffer.UpdateBackgroundColor(_settings.ConsoleSettings.BackgroundColor);

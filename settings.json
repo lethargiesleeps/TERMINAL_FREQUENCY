@@ -91,6 +91,14 @@
     "SpikeVolumeMinimum": 0.05,
     "SpikeRatio": 1.15
   },
+  "FftSettings": {
+    "BandCount": 8,
+    "Sensitivity": 1.0,
+    "DedicatedBassBand": true,
+    "HighPass": 30.0,
+    "LowPass": 18000.0,
+    "BassCutoff": 150.0
+  },
   "RingsSettings": {
     "ReverseMode": false,
     "RadiusMin": 50.0,
@@ -202,5 +210,27 @@
     "PolygonSides": 5,
     "FillMode": false,
     "FillSpacing": 0
+  },
+  "EqualizerSettings": {
+    "Origin": "Bottom",
+    "ColorMode": "Uniform",
+    "UniformColor": "White",
+    "ColorPattern": [
+      "White",
+      "Green"
+    ],
+    "GradientColors": [
+      "Green",
+      "Yellow",
+      "Red"
+    ],
+    "SolidBars": true,
+    "SmoothMode": true,
+    "LerpFactor": 0.4,
+    "Direction": "LowToHigh",
+    "BarCharacter": "█",
+    "BarSpacing": 1,
+    "MaxBarHeightPercent": 0.99,
+    "MinBarHeightPercent": 0.01
   }
 }

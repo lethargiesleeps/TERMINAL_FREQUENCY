@@ -20,7 +20,7 @@ Displays extra debug information including visualization controls, volume levels
 #### true/false | bool
 If true, clamps setting values to their safe ranges when loading from JSON.
 
-### EnableErrorMode
+### EnableErrorMode [NOT IMPLEMENTED]
 #### true/false | bool
 If true, prints all errors for values outside safe ranges to the console and pauses for input.
 
@@ -843,3 +843,22 @@ If true, fills the interior of the shape with the shape's color. The outline sti
 #### whole number | int
 Spacing between fill characters. 0 creates solid fill. 1 fills every other pixel. Higher values create sparse dithering effects.
 Safe Mode Range: 0 - 3
+
+## EqualizerSettings
+
+### BandCount
+#### whole number | int
+How many bars appear in the Equalizer. The higher, the more the bands might get smaller as the volume is divided by how many frequency bands there are during FFT processing.
+Safe Mode Range: 3 - 32
+
+### Origin
+#### VisualizationOrigin
+Where the Equalizer is positioned in the window. Center will position an Equalizer on every side of the window.
+**Accepted Values:**
+```
+Top
+Right
+Bottom
+Left
+Center
+```

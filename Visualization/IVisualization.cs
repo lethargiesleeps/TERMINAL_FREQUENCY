@@ -11,7 +11,6 @@ namespace TERMINAL_FREQUENCY.Visualization
     {
         public string Name { get; }
         public int ModeIndex { get; }
-        void Update(float volume);
         void Draw(ScreenBuffer buffer);
     }
 }

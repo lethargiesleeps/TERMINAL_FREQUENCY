@@ -9,7 +9,7 @@ using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Shape
 {
-    public class Shape : IVisualization
+    public class Shape : IVolumeReactive, ISpikeReactive
     {
         private string _name = "SHAPE";
         private int _modeIndex = 2;
@@ -84,6 +84,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             _targetSize = IsReversed ? GetMinSize() : GetEffectiveMaxSize();
             if (!IsSmoothingEnabled) _currentSize = _targetSize;
         }
+
+        public void OnSpike(float intensity) => OnSpike();
         #endregion
 
         #region LayoutMethods

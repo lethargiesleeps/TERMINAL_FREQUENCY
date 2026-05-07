@@ -29,7 +29,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         {
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                string devPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", DefaultFileName);
+                string devPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", DefaultFileName);
                 return Path.GetFullPath(devPath);
             }
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DefaultFileName);

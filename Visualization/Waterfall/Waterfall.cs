@@ -4,7 +4,7 @@ using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
-    public class Waterfall : IVisualization
+    public class Waterfall : IVolumeReactive, ISpikeReactive
     {
         private Settings _settings;
         private string _name = "WATERFALL";
@@ -91,6 +91,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                 }
             }
         }
+
+        public void OnSpike() => OnSpike(0f);
 
         public void Draw(ScreenBuffer buffer)
         {
