@@ -44,7 +44,7 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v0.7           ║
+    ║               Terminal Audio Visualizer v0.8           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");

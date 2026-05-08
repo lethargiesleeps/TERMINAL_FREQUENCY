@@ -231,6 +231,7 @@
     "BandCharacter": "█",
     "BandSpacing": 1,
     "MaxBandHeightPercent": 0.99,
-    "MinBandHeightPercent": 0.01
+    "MinBandHeightPercent": 0.01,
+    "HorizontalWhenCentered": false
   }
 }

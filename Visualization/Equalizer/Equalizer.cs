@@ -52,7 +52,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int displayBands = _settings.FftSettings.BandCount;
             int dataBands = eq.Direction == EqDirection.Mirror ? displayBands / 2 : displayBands;
             int barSpacing = eq.BandSpacing;
-            bool isHorizontal = eq.Origin == VisualizationOrigin.Left || eq.Origin == VisualizationOrigin.Right;
+
+            bool isCentered = eq.Origin == VisualizationOrigin.Center;
+            bool useHorizontal = isCentered && eq.HorizontalWhenCentered;
+            bool isHorizontal = eq.Origin == VisualizationOrigin.Left || eq.Origin == VisualizationOrigin.Right || useHorizontal;
 
             float[] bands = GetOrderedBands(dataBands);
 
@@ -70,10 +73,24 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int usedWidth = displayBands * barWidth + totalSpacing;
             int startX = (buffer.Width - usedWidth) / 2;
 
+            bool isCentered = eq.Origin == VisualizationOrigin.Center;
             int maxHeight = (int)(buffer.Height * eq.MaxBandHeightPercent);
+            if (isCentered) maxHeight /= 2;
             int minHeight = (int)(buffer.Height * eq.MinBandHeightPercent);
-            int baseY = eq.Origin == VisualizationOrigin.Top ? minHeight + 1 : buffer.Height - 2;
-            bool fromTop = eq.Origin == VisualizationOrigin.Top;
+
+            int baseY;
+            bool fromTop;
+
+            if (isCentered)
+            {
+                baseY = buffer.Height / 2;
+                fromTop = true;
+            }
+            else
+            {
+                baseY = eq.Origin == VisualizationOrigin.Top ? minHeight + 1 : buffer.Height - 2;
+                fromTop = eq.Origin == VisualizationOrigin.Top;
+            }
 
             for (int i = 0; i < displayBands; i++)
             {
@@ -86,7 +103,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
                 int barX = startX + i * (barWidth + barSpacing);
 
                 ConsoleColor color = GetBandColor(dataIndex);
-                DrawBar(buffer, barX, baseY, barWidth, barHeight, color, fromTop);
+
+                if (isCentered)
+                {
+                    DrawBar(buffer, barX, baseY, barWidth, barHeight, color, fromTop: true);
+                    DrawBar(buffer, barX, baseY - 1, barWidth, barHeight, color, fromTop: false);
+                }
+                else
+                {
+                    DrawBar(buffer, barX, baseY, barWidth, barHeight, color, fromTop);
+                }
             }
         }
 
@@ -98,10 +124,24 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int usedHeight = displayBands * barHeight + totalSpacing;
             int startY = (buffer.Height - usedHeight) / 2;
 
+            bool isCentered = eq.Origin == VisualizationOrigin.Center;
             int maxLength = (int)(buffer.Width * eq.MaxBandHeightPercent);
+            if (isCentered) maxLength /= 2;
             int minLength = (int)(buffer.Width * eq.MinBandHeightPercent);
-            int baseX = eq.Origin == VisualizationOrigin.Left ? minLength + 1 : buffer.Width - 2;
-            bool fromLeft = eq.Origin == VisualizationOrigin.Left;
+
+            int baseX;
+            bool fromLeft;
+
+            if (isCentered)
+            {
+                baseX = buffer.Width / 2;
+                fromLeft = true;
+            }
+            else
+            {
+                baseX = eq.Origin == VisualizationOrigin.Left ? minLength + 1 : buffer.Width - 2;
+                fromLeft = eq.Origin == VisualizationOrigin.Left;
+            }
 
             for (int i = 0; i < displayBands; i++)
             {
@@ -115,13 +155,29 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
 
                 ConsoleColor color = GetBandColor(dataIndex);
 
-                for (int h = 0; h < barHeight; h++)
+                if (isCentered)
                 {
-                    for (int l = 0; l < barLength; l++)
-                    {
-                        int drawX = fromLeft ? baseX + l : baseX - l;
-                        buffer.SetPixel(drawX, barY + h, eq.BandCharacter, color);
-                    }
+                    DrawHorizontalBar(buffer, baseX, barY, barLength, barHeight, color, fromLeft: true);
+                    DrawHorizontalBar(buffer, baseX - 1, barY, barLength, barHeight, color, fromLeft: false);
+                }
+                else
+                {
+                    DrawHorizontalBar(buffer, baseX, barY, barLength, barHeight, color, fromLeft);
+                }
+            }
+        }
+
+        private void DrawHorizontalBar(ScreenBuffer buffer, int baseX, int y, int length, int height, ConsoleColor color, bool fromLeft)
+        {
+            for (int h = 0; h < height; h++)
+            {
+                for (int l = 0; l < length; l++)
+                {
+                    int drawX = fromLeft ? baseX + l : baseX - l;
+                    bool isEdge = !_settings.EqualizerSettings.SolidBands && (l == 0 || l == length - 1 || h == 0 || h == height - 1);
+
+                    if (_settings.EqualizerSettings.SolidBands || isEdge)
+                        buffer.SetPixel(drawX, y + h, _settings.EqualizerSettings.BandCharacter, color);
                 }
             }
         }

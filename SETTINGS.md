@@ -1,4 +1,5 @@
 # SETTINGS
+*v0.8.0*
 Documentation for all avaialable settings.
 Can be modified in the `settings.json` file.
 **NOTE:** Values that would cause the program to crash may be clamped to the nearest acceptable value or set to a default. Please let me know of any values that cause a crash to be hotfixed :)
@@ -13,6 +14,23 @@ DefaultMode: 0
 An incorrect number value will result in the default being used.
 ```
 
+**GENERAL SETTINGS:**
+- [Global](#global)
+- [Font](#font)
+- [Rendering](#rendering)
+- [Window](#window)
+
+**AUDIO SPECIFIC SETTINGS:**
+- [AudioCapture](#audiocapture)
+- [FFT](#fft)
+
+**VISUAL SPECIFIC SETTINGS:**
+- [Rings](#rings)
+- [Waterfall](#waterfall)
+- [Shape](#shape)
+- [Equalizer](#equalizer)
+
+---
 
 ## Global
 Global settings can be used to adjust program launch behaviour.
@@ -936,7 +954,7 @@ Safe Mode Range: 0 - 3
 The following settings are used to manipulate the output when using the Equalizer visualizer.
 
 ### Origin
-#### VisualizationOrigin
+#### VisualizationOrigin | enum
 Where the Equalizer is positioned in the window. `Center`` will position an Equalizer in the center of the window with the bands moving the same both ways (like a waveform).
 **Accepted Values:**
 ```
@@ -1020,3 +1038,7 @@ Safe Mode Range: 0.5 - 1.0
 #### decimal | float
 Decimal percentage of how high a band can get relative to 0% of available space, where 0% is not visible at all. Cannot be lower than 0 or greater than MaxBandHeightPercent.
 Safe Mode Range: 0.00 - 0.49
+
+### HorizontalWhenCentered
+#### true/false | bool
+If Origin is Center, and this value is true then bands will react horizontally instead of vertically.

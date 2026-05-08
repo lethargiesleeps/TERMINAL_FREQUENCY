@@ -227,12 +227,12 @@ namespace TERMINAL_FREQUENCY
 
                             if (_currentVisualization is IFrequencyReactive)
                             {
+                                //draw frequency data
                                 try
                                 {
                                     int debugBufferHeight = 4;
                                     int debugBufferWidth = 0;
                                     string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
-                                    bool mirrorMode = _settings.EqualizerSettings.Direction == EqDirection.Mirror;
                                     int bandsPerColumn = frequencyData.Length > 16 ? 8 : 4;
                                     
                                     for (int i = 0; i < frequencyData.Length; i++)
@@ -252,23 +252,30 @@ namespace TERMINAL_FREQUENCY
                                     buffer.DrawString(0, 4, "NO FREQUENCY DATA", debugTextColor);
                                 }
 
+                                //global frequency controls
                                 var controls = new List<string>
                                 {
-                                    $"[-/+] BANDS: {_settings.FftSettings.BandCount}",
-                                    $"[9/0] SENSITIVITY: {_settings.FftSettings.Sensitivity:F1}",
+                                    $"[-/+] BANDS:{_settings.FftSettings.BandCount}",
+                                    $"[9/0] SENSITIVITY:{_settings.FftSettings.Sensitivity:F1}",
                                 };
 
+                                //equalizer specific
                                 if (_currentVisualization is Equalizer)
                                 {
-                                    controls.Add($"[C] COLOR MODE: {_settings.EqualizerSettings.ColorMode.ToString().ToUpper()}");
-                                    controls.Add($"[D] DIRECTION: {_settings.EqualizerSettings.Direction.ToString().ToUpper()}");
-                                    controls.Add($"[O] ORIGIN: {_settings.EqualizerSettings.Origin.ToString().ToUpper()}");
+                                    controls.Add($"[C]OLOR MODE:{_settings.EqualizerSettings.ColorMode.ToString().ToUpper()}");
+                                    controls.Add($"DIREC[T]ION:{_settings.EqualizerSettings.Direction.ToString().ToUpper()}");
+                                    controls.Add($"[S]OLID:{(_settings.EqualizerSettings.SolidBands ? "ON" : "OFF")}");
+                                    controls.Add($"[O]RIGIN: {_settings.EqualizerSettings.Origin.ToString().ToUpper()}");
+
+                                    if(_settings.EqualizerSettings.Origin == VisualizationOrigin.Center)
+                                        controls.Add($"HO[R]IZONTAL: {(_settings.EqualizerSettings.HorizontalWhenCentered ? "ON" : "OFF")}");
                                 }
 
+                                //draw controls, below FPS
                                 int startY = 2;
                                 for (int i = 0; i < controls.Count; i++)
                                 {
-                                    buffer.DrawString(buffer.Width - 25, startY + i, controls[i], fpsColor);
+                                    buffer.DrawString(buffer.Width - 28, startY + i, controls[i], fpsColor);
                                 }
 
                             }
@@ -469,6 +476,10 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Waterfall)
                             _settings.WaterfallSettings.RainbowMode = !_settings.WaterfallSettings.RainbowMode;
+
+                        if (_currentVisualization is Equalizer)
+                            if (_settings.EqualizerSettings.Origin == VisualizationOrigin.Center)
+                                _settings.EqualizerSettings.HorizontalWhenCentered = !_settings.EqualizerSettings.HorizontalWhenCentered;
                         break;
 
                     case ConsoleKey.M:
@@ -523,6 +534,9 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Shape)
                             _settings.ShapeSettings.UniformColor = Utility.CycleNext(_colors, _settings.ShapeSettings.UniformColor);
+
+                        if (_currentVisualization is Equalizer)
+                            _settings.EqualizerSettings.ColorMode = Utility.CycleNextEnum(_settings.EqualizerSettings.ColorMode);
                         break;
 
                     case ConsoleKey.F:
@@ -540,6 +554,9 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Shape)
                             _settings.ShapeSettings.Type = Utility.CycleNextEnum(_settings.ShapeSettings.Type);
+
+                        if (_currentVisualization is Equalizer)
+                            _settings.EqualizerSettings.SolidBands = !_settings.EqualizerSettings.SolidBands;
                         break;
 
                     case ConsoleKey.Y:
@@ -554,6 +571,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.SmoothMode = !_settings.ShapeSettings.SmoothMode;
+
+                        if(_currentVisualization is Equalizer)
+                            _settings.EqualizerSettings.Direction = Utility.CycleNextEnum(_settings.EqualizerSettings.Direction);
                         break;
 
                     case ConsoleKey.O:
@@ -585,6 +605,9 @@ namespace TERMINAL_FREQUENCY
                             int shapeCount = Math.Max(1, _settings.ShapeSettings.Count - 1);
                             _settings.ShapeSettings.Count = shapeCount;
                         }
+
+                        if(_currentVisualization is Equalizer)
+                            _settings.EqualizerSettings.Origin = Utility.CycleNextEnum(_settings.EqualizerSettings.Origin);
                         break;
 
                     case ConsoleKey.P:
@@ -625,6 +648,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.MaxSizePercent = Math.Max(0.05f, _settings.ShapeSettings.MaxSizePercent - 0.02f);
+
+                        if (_currentVisualization is IFrequencyReactive)
+                            _settings.FftSettings.BandCount = Math.Max(4, _settings.FftSettings.BandCount - 2);
                         break;
 
                     case ConsoleKey.OemPlus:
@@ -643,6 +669,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.MaxSizePercent = Math.Min(1.0f, _settings.ShapeSettings.MaxSizePercent + 0.02f);
+
+                        if (_currentVisualization is IFrequencyReactive)
+                            _settings.FftSettings.BandCount = Math.Min(32, _settings.FftSettings.BandCount  + 2);
                         break;
 
                     case ConsoleKey.D9:
@@ -659,6 +688,9 @@ namespace TERMINAL_FREQUENCY
 
                             _settings.ShapeSettings.PolygonSides = Utility.CyclePrevious(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
+
+                        if (_currentVisualization is IFrequencyReactive)
+                            _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
                         break;
 
                     case ConsoleKey.D0:
@@ -676,6 +708,9 @@ namespace TERMINAL_FREQUENCY
 
                             _settings.ShapeSettings.PolygonSides = Utility.CycleNext(validSides, _settings.ShapeSettings.PolygonSides, true);
                         }
+
+                        if (_currentVisualization is IFrequencyReactive)
+                            _settings.FftSettings.Sensitivity = Math.Min(3.0f, _settings.FftSettings.Sensitivity + 0.05f);
                         break;
                 }
             }

@@ -24,6 +24,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public int BandSpacing { get; set; }
         public float MaxBandHeightPercent { get; set; }
         public float MinBandHeightPercent { get; set; }
+        public bool HorizontalWhenCentered { get; set; }
 
         public EqualizerSettings()
         {
@@ -78,6 +79,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             BandSpacing = 1;
             MaxBandHeightPercent = 0.99f;
             MinBandHeightPercent = 0.01f;
+            HorizontalWhenCentered = false;
         }
     }
 }
