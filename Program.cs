@@ -225,25 +225,52 @@ namespace TERMINAL_FREQUENCY
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
 
-                            if (_currentVisualization is Equalizer)
+                            if (_currentVisualization is IFrequencyReactive)
                             {
                                 try
                                 {
-                                    int debugBufferHeight = 3; //start pos for printing eq data
+                                    int debugBufferHeight = 4;
+                                    int debugBufferWidth = 0;
                                     string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
                                     bool mirrorMode = _settings.EqualizerSettings.Direction == EqDirection.Mirror;
-
-                                    for (int i = 0; i < (!mirrorMode ? frequencyData.Length : frequencyData.Length / 2); i++)
+                                    int bandsPerColumn = frequencyData.Length > 16 ? 8 : 4;
+                                    
+                                    for (int i = 0; i < frequencyData.Length; i++)
                                     {
-                                        //in the top left
-                                        buffer.DrawString(0, debugBufferHeight, frequencyData[i], fpsColor);
+                                        if (i > 0 && i % bandsPerColumn == 0)
+                                        {
+                                            debugBufferWidth += 35; //shift to the right
+                                            debugBufferHeight = 4;
+                                        }
+
+                                        buffer.DrawString(debugBufferWidth, debugBufferHeight, frequencyData[i], fpsColor);
                                         debugBufferHeight++;
                                     }
                                 }
                                 catch(Exception ex)
                                 {
-                                    buffer.DrawString(0, 3, "NO FREQUENCY DATA", debugTextColor);
+                                    buffer.DrawString(0, 4, "NO FREQUENCY DATA", debugTextColor);
                                 }
+
+                                var controls = new List<string>
+                                {
+                                    $"[-/+] BANDS: {_settings.FftSettings.BandCount}",
+                                    $"[9/0] SENSITIVITY: {_settings.FftSettings.Sensitivity:F1}",
+                                };
+
+                                if (_currentVisualization is Equalizer)
+                                {
+                                    controls.Add($"[C] COLOR MODE: {_settings.EqualizerSettings.ColorMode.ToString().ToUpper()}");
+                                    controls.Add($"[D] DIRECTION: {_settings.EqualizerSettings.Direction.ToString().ToUpper()}");
+                                    controls.Add($"[O] ORIGIN: {_settings.EqualizerSettings.Origin.ToString().ToUpper()}");
+                                }
+
+                                int startY = 2;
+                                for (int i = 0; i < controls.Count; i++)
+                                {
+                                    buffer.DrawString(buffer.Width - 25, startY + i, controls[i], fpsColor);
+                                }
+
                             }
 
                             string modeName = Utility.GetModeName(_currentMode);
@@ -251,9 +278,10 @@ namespace TERMINAL_FREQUENCY
                             string line2 = $"MODE: {modeName}";
                             string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
 
-                            buffer.DrawString(0, 0, line1, fpsColor);
-                            buffer.DrawString(0, 1, line2, fpsColor);
-                            buffer.DrawString(0, 2, line3, fpsColor);
+                            buffer.DrawString(0, 0, line2, debugTextColor);
+                            buffer.DrawString(0, 1, line3, debugTextColor);
+                            buffer.DrawString(0, 2, line1, ConsoleColor.Green);
+
 
                             if (_settings.GlobalSettings.ShowGlobalControls)
                             {

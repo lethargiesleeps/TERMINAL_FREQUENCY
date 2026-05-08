@@ -29,8 +29,6 @@
             if (LowPass > 20000f) LowPass = 20000f;
             if (LowPass <= HighPass || (DedicatedBassBand && HighPass <= BassCutoff)) LowPass = 18000f;
             if (BassCutoff <= HighPass || BassCutoff >= LowPass) BassCutoff = 150f;
-
-
         }
 
         public void Restore()

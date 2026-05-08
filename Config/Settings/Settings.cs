@@ -1,16 +1,37 @@
-﻿namespace TERMINAL_FREQUENCY.Config.Settings
+﻿using Newtonsoft.Json;
+
+namespace TERMINAL_FREQUENCY.Config.Settings
 {
     public class Settings : IConfigurable
     {
+        [JsonProperty("Global")]
         public GlobalSettings GlobalSettings { get; private set; }
+
+        [JsonProperty("Font")]
         public FontSettings FontSettings { get; private set; }
+
+        [JsonProperty("Rendering")]
         public RendererSettings RendererSettings { get; private set; }
+
+        [JsonProperty("Window")]
         public ConsoleSettings ConsoleSettings { get; private set; }
+
+        [JsonProperty("AudioCapture")]
         public AudioCaptureSettings AudioCaptureSettings { get; private set; }
+
+        [JsonProperty("FFT")]
         public FftSettings FftSettings { get; private set; }
+
+        [JsonProperty("Rings")]
         public RingsSettings RingsSettings { get; private set; }
+
+        [JsonProperty("Waterfall")]
         public WaterfallSettings WaterfallSettings { get; private set; }
+
+        [JsonProperty("Shape")]
         public ShapeSettings ShapeSettings { get; private set; }
+
+        [JsonProperty("Equalizer")]
         public EqualizerSettings EqualizerSettings { get; private set; }
 
         public Settings()

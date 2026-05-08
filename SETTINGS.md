@@ -1,8 +1,21 @@
 # SETTINGS
 Documentation for all avaialable settings.
 Can be modified in the `settings.json` file.
+**NOTE:** Values that would cause the program to crash may be clamped to the nearest acceptable value or set to a default. Please let me know of any values that cause a crash to be hotfixed :)
+**NOTE:** Any enum accepted value is in order, instead of text a zero-indexed integer can be used to select the desired setting starting:
+```
+DefaultMode: "Rings"
 
-## GlobalSettings
+is the same as 
+
+DefaultMode: 0
+
+An incorrect number value will result in the default being used.
+```
+
+
+## Global
+Global settings can be used to adjust program launch behaviour.
 
 ### BypassStartupScreen
 #### true/false | bool
@@ -33,13 +46,14 @@ Locks all keyboard controls except Debug Mode, Exit, and Unlock. Prevents accide
 Displays global keyboard control hints in the debug bar.
 
 ### DefaultMode
-#### VisualizationMode
+#### VisualizationMode | enum
 The visualization displayed at program launch.
 **Accepted Values:**
 ```
 Rings
 Waterfall
 Shape
+Equalizer
 ```
 
 ### ConsoleInstances
@@ -60,14 +74,17 @@ Switches to a raster font when using DirectWrite render mode. Fixes block charac
 #### true/false | bool
 Launches in exclusive fullscreen mode, hiding the taskbar and title bar.
 
-## FontSettings
+## Font
+Font settings dictate which type is displayed when rendering characters. Only 1 font can be rendered at a time. Fonts may vary from system to system, the default font will always be Consolas (default font on most systems).
+Some fonts can introduce character encoding issues. Enabling raster font usage can alleviate some of these encoding issues but not all.
+Raster fonts are the default when using the DirectWrite renderer, otherwise the Consolas TrueType font is used.
 
 ### EnableRasterFont
 #### true/false | bool
 If true, uses a raster font instead of TrueType. Raster fonts can fix character encoding issues.
 
 ### RasterFontType
-#### RasterFontType
+#### RasterFontType | enum
 The raster font size to use when EnableRasterFont is true.
 **Accepted Values:**
 ```
@@ -89,7 +106,7 @@ TenByTwenty
 If true, uses the custom TrueType font specified below instead of the default console font.
 
 ### CustomFontFace
-#### FontFace
+#### FontFace | enum
 The TrueType font face to use when EnableCustomFont is true. Falls back to Consolas if unavailable on system.
 **Accepted Values:**
 ```
@@ -117,7 +134,9 @@ Safe Mode Range: 8 - 48
 #### true/false | bool
 If true, renders the custom font in bold weight (700). If false, uses normal weight (400).
 
-## RendererSettings
+## Rendering
+Rendering settings can be used to set the active Rendering Mode (see RendererMode), dedicate more CPU usage to the program if needed or introduce deliberate slowdowns to achieve certain effects (see EnableYield/EnableSpinWait).
+FPS can be seen with debug features enabled. Some rendering modes' FPS craters depending on screen size, but offer certain effects that may be desired.
 
 ### TargetFps
 #### whole number | int
@@ -147,7 +166,7 @@ Safe Mode Range: 1 - 1000
 If true, sets the program's thread priority at launch. Recommended to leave false unless running on a slow computer or alongside heavy audio software.
 
 ### ThreadPriority
-#### ThreadPriority
+#### ThreadPriority | enum
 Thread priority level when EnableThreadPriority is true.
 **Accepted Values:**
 ```
@@ -159,18 +178,23 @@ Highest
 ```
 
 ### RendererMode
-#### RenderMode
-The rendering method used to draw to the console. DirectWrite is fastest for most cases. To change during runtime, unpause then cycle with M key.
+#### RenderMode | enum
+The rendering method used to draw to the console. DirectWrite is fastest for most cases and is the default mode. To change during runtime, unpause then cycle with M key.
 **Accepted Values:**
 ```
-PerPixel     //Renders visual buffer one pixel at a time - slowest
-DirtyRect    //Renders on changed values in the visual buffer
-RowBatched   //Renders buffer one row at a time, very fast but only one color can be used
-DirectWrite  //Renders entire visual buffer at once, has character encoding limitations, recommend to use RasterFont - fastest
+PerPixel     
+DirtyRect    
+RowBatched   
+DirectWrite  
 ```
 
+- **PerPixel:** Renders visual buffer one pixel at a time - slowest
+- **DirtyRect:** Renders on changed values in the visual buffer
+- **RowBatched:** Renders buffer one row at a time, very fast but only one color can be used
+- **DirectWrite:** Renders entire visual buffer at once, has character encoding limitations, recommend to use RasterFont - fastest
+- 
 ### RowBatchColor
-#### ConsoleColor
+#### ConsoleColor | enum
 Foreground color used when RendererMode is set to RowBatched. All text on screen will use this single color. Accepts any ConsoleColor value.
 **Accepted Values:**
 ```
@@ -192,11 +216,18 @@ Yellow
 White
 ```
 
-## ConsoleSettings
+## Window
+Window settings can be used to modify the program's window behaviour. Via these you can; 
+- Force the window to always be on top of other windows 
+- Launch full screen 
+- Launch at specific sizes or certain positions
+- Change the default background color
+- 
+The background color of the window can also be set here via BackgroundColor
 
 ### BackgroundColor
 #### ConsoleColor
-Background color of the console window. Accepts any ConsoleColor value.
+Background color of the console window. Accepts any ConsoleColor value (same as the acceptable colors above in RowBatchColor).
 
 ### DisableCursor
 #### true/false | bool
@@ -310,7 +341,13 @@ Safe Mode Range: 1 - 10
 #### ConsoleColor[]
 Array of default ConsoleColor values used throughout the program for cycling and fallback colors. Accepts any ConsoleColor values in any order. Must contain at least one entry.
 
-## AudioCaptureSettings
+## AudioCapture
+Specific audio parameters can be set here, including; 
+- Selecting default audio device 
+- Enabling microphone input,
+- Adjusting calculated volume when using at low volume 
+- Ignore audio data below a certain threshold.
+
 
 ### SpecifyAudioDevice
 #### true/false | bool
@@ -361,7 +398,44 @@ Safe Mode Range: 0.01 - 0.2
 How much louder than the average volume a spike must be to trigger. Lower values are more sensitive (1.0 = any increase triggers). Higher values require a more pronounced beat.
 Safe Mode Range: 1.0 - 2.5
 
-## RingsSettings
+## FFT
+FFT settings can be used to adjust frequency analysis for certain visuals that use frequencies.
+Frequency enabled visualizers include:
+- Equalizer
+
+### BandCount
+#### whole number | int
+How many seperate bands the frequency spectrum gets divided into. If an odd number is set, BandCount will clamp to the next highest even number.
+Safe Mode Range: 4 - 32
+
+### Sensitivity
+#### decimal | float
+Can be adjusted if frequency dependent visualizations are too reactive or not reactive enough. The higher the value the more reactive the bandwidths will be.
+Safe Mode Range: 0.3 - 5.0
+
+### DedicatedBassBand
+#### true/false | bool
+If true, the first band in a frequency sensitive visualization is always dedicated to the lowend. The rest of the bandwidths are programatically calculated accordingly.
+The first band will always be between HighPass (Hz) and BassCutoff (Hz). Keep this off if lower frequency bands aren't receiving enough data to seem reactive. Always enabled by default.
+
+### HighPass
+#### decimal | float
+Ignores any frequency data (Hz) **below** the set value. Set to 30Hz by default. Cannot be greater than LowPass or BassCutoff if DedicatedBassBand is enabled.
+Safe Mode Range: 20.0 - 50.0
+
+### LowPass
+#### decimal | float
+Ignores any frequency data (Hz) **above** the set value. Set to 18k Hz by default. Cannot be lower than HighPass or BassCutoff if DedicatedBassBand is enabled.
+Safe Mode Range: 16500.0 - 20000.0
+
+### BassCutoff
+#### decimal | float
+If DedicatedBassBand is enabled, this value is the max amount (Hz) dedicated to the first band. Cannot be lower than HighPass and cannot be greater than LowPass.
+Safe Mode Range: 100.0 - 300.0
+
+## Rings
+*Sensitivity Type: Volume, Peak, RMS*
+The following settings are used to manipulate the output when using the Rings visualizer.
 
 ### ReverseMode
 #### true/false | bool
@@ -402,7 +476,7 @@ Safe Mode Range: 0.001 - 0.05
 If true, rings render in a single solid color based on their position in the color gradient. If false, rings display a gradient fade effect from bright to dark as they expand.
 
 ### ColorMode
-#### RingColorMode
+#### RingColorMode | enum
 Color scheme for the rings. Rings transition from bright to dark shades as they age. All and Random are not yet implemented.
 **Accepted Values:**
 ```
@@ -419,7 +493,7 @@ Random
 ```
 
 ### Characters
-#### text[] | char[]
+#### text list | char[]
 Characters used to draw the rings. Each character in the array appears at different positions around the ring. Only the first three characters are used; any additional characters are ignored. Example: ['O', 'o', '.'] draws 'O' at cardinal points, 'o' at half-cardinal points, and '.' elsewhere.
 
 ### CharRandomizer
@@ -499,12 +573,14 @@ Safe Mode Range: 1 - 10
 #### true/false | bool
 Not yet implemented. Intended to randomize the ring origin point on each spike.
 
-## WaterfallSettings
+## Waterfall
+*Sensitivity Type: Volume, Peak, RMS*
+The following settings are used to manipulate the output when using the Waterfall visualizer.
 
 ### Origin
-#### VisualizationOrigin
+#### VisualizationOrigin | enum
 **Accepted Values:**
-Edge of the screen where waterfall streams start from. Center defaults to Top.
+Edge of the screen where waterfall streams start from. Center defaults to Top in this mode.
 ```
 Top
 Bottom
@@ -518,7 +594,7 @@ Center
 If true, streams start at the center of the screen and flow outward toward the Origin edge instead of flowing from the edge to the opposite side.
 
 ### Mode
-#### WaterfallMode
+#### WaterfallMode | enum
 **Accepted Values:**
 Controls how streams are directed across the screen.
 ```
@@ -530,6 +606,13 @@ LeftRight
 All
 ```
 
+- **Normal:** Waterfall starts at VisualizationOrigin and ends in the opposite direction
+- **Clockwise:** First waterfall starts at VisualizationOrigin, then every subsequent waterfall follows a clockwise order.
+- **AntiClockwise:** Same as Clockwise but in reverse order.
+- **TopBottom:** Waterfalls shoot from the top and bottom only.
+- **LeftRight:** Waterfalls shoot from the left and right only.
+- **All:** Waterfalls shoot from all directions simultaneously.
+- 
 ### StartWidthPercent
 #### decimal | float
 Width of the waterfall stream at its origin point, as a percentage of the console width or height depending on flow direction.
@@ -580,11 +663,11 @@ Progress threshold where the character pattern changes a second time. The stream
 Safe Mode Range: 0.40 - 0.95
 
 ### VerticalChars
-#### text[] | char[]
+#### text list | char[]
 Characters rendered on vertical streams (Top/Bottom origin). Index 0 appears at the origin, index 1 at the midpoint, and index 2 near the end. Must contain at least 3 characters.
 
 ### HorizontalChars
-#### text[] | char[]
+#### text list | char[]
 Characters rendered on horizontal streams (Left/Right origin). Index 0 appears at the origin, index 1 at the midpoint, and index 2 near the end. Must contain at least 3 characters.
 
 ### CurveIntensityVertical
@@ -642,9 +725,11 @@ Safe Mode Range: 0.0 - 1.0
 
 ### Color
 #### ConsoleColor
-Default color for streams when RainbowMode is false. Cannot be Black. Accepts any ConsoleColor value.
+Default color for streams when RainbowMode is false. Accepts any ConsoleColor value.
 
-## ShapeSettings
+## Shape
+*Sensitivity Type: Volume, RMS*
+The following settings are used to manipulate the output when using the Shape visualizer.
 
 ### Type
 #### ShapeType
@@ -654,9 +739,9 @@ The shape to render. All shapes respond to the same volume and layout settings.
 Circle
 Square
 Diamond
-TriangleUp
-TriangleDown
-Polygon
+TriangleUp    //Triangle faces towards top of window
+TriangleDown  //Triangle faces towards bottom of window
+Polygon       //Type of polygon can be adjusted via PolygonSide
 ```
 
 ### Layout
@@ -671,6 +756,8 @@ Pyramid
 Quadrant
 Concentric
 ```
+
+**Concentric:** In this mode, shapes layer inside each other (If using circle, using concentric mode and having a count of 3 or higher would look like a dart board, see ConcentricLayers).
 #### Shape Layout Reference
 
 | Layout      | Count 1     | Count 2          | Count 3              | Count 4              |
@@ -739,7 +826,7 @@ Safe Mode Range: 1 - 20
 If true and Count is 4, shapes cluster around the center of the screen instead of the corners. Only applies to Quadrant layout.
 
 ### QuadrantIndices
-#### whole number[] | int[]
+#### whole number list | int[]
 Manual quadrant positions when Layout is Quadrant. 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right. Leave empty for automatic placement based on Count.
 
 ### QuadrantGapDivisor
@@ -756,7 +843,7 @@ If true, each shape uses a different color from the CustomColors array. If false
 Default color for all shapes when UseCustomColor is false. Accepts any ConsoleColor value.
 
 ### CustomColors
-#### ConsoleColor[]
+#### ConsoleColor[] | list
 Array of colors used when UseCustomColor is true. Each shape index uses the corresponding color in this array. Wraps around if there are more shapes than colors.
 
 ### ReverseMode
@@ -845,15 +932,12 @@ Spacing between fill characters. 0 creates solid fill. 1 fills every other pixel
 Safe Mode Range: 0 - 3
 
 ## EqualizerSettings
-
-### BandCount
-#### whole number | int
-How many bars appear in the Equalizer. The higher, the more the bands might get smaller as the volume is divided by how many frequency bands there are during FFT processing.
-Safe Mode Range: 3 - 32
+*Sensitivity Type: Frequency Spectrum**
+The following settings are used to manipulate the output when using the Equalizer visualizer.
 
 ### Origin
 #### VisualizationOrigin
-Where the Equalizer is positioned in the window. Center will position an Equalizer on every side of the window.
+Where the Equalizer is positioned in the window. `Center`` will position an Equalizer in the center of the window with the bands moving the same both ways (like a waveform).
 **Accepted Values:**
 ```
 Top
@@ -862,3 +946,77 @@ Bottom
 Left
 Center
 ```
+
+### ColorMode
+#### EqColorMode | enum
+**Accepted Values:**
+```
+Uniform  //Every band on the screen is the same colour, configured via UniformColor
+Pattern  //Cycles through ColorPattern.
+Gradient //Each band is 3 seperate colours based on volume, can be set via GradientColors.
+```
+
+### UniformColor
+#### ConsoleColor
+Color of all bands if using Uniform color mode.
+
+### ColorPattern
+#### list of ConsoleColors | ConsoleColor[]
+When using Pattern color mode, cycles through this list for each band.
+(ex): Colors are "Red", "Green", "Blue". There are 8 bands. Bands 1, 4 and 7 will be Red. Bands 2, 5, 8 will be Green. Bands 3 and 6 will be Blue.
+Ignores any colors that would exceed the count of bands (via FFT settings/BandCount)
+
+### GradientColors
+#### list of ConsoleColors[] | ConsoleColor[]
+Accepts 3 colors to be used when in Gradient color mode. In this mode, each band is rendered with a volume-sensitive color:
+- Color 1 represents lower volume.
+- Color 2 represents mid-volume.
+- Color 3 represents high-volume peaks and clips.
+
+If more than 3 colors provided, only the first 3 will ever be used.
+
+### SolidBands
+#### true/false | bool
+If true, fills the inside of band with BandCharacter. If false, only renders outline of the band.
+
+### SmoothMode
+#### true/false | bool
+If true, uses LerpFactor to prevent the band visuals from snapping to the next value.
+
+### LerpFactor
+#### decimal | float
+Can be adjusted to determine how much smoothing is applied. Cannot be greater than 1.0, which is essentially the same as having smoothing disabled.
+Safe Mode Range: 0.01 - 1.0
+
+### Direction
+#### EqDirection | enum
+What order the Equalizer is rendered in.
+
+**AcceptedValues:**
+```
+LowToHigh
+HighToLow
+Mirror
+```
+
+- **LowToHigh:** Lower frequencies to the left, higher to the right.
+- **HighToLow:** Opposite of LowToHigh
+- **Mirror:** The first band is the same as the last band. Second is the same as second last, so on and so forth. Cuts the FFT BandCount (see FFT) in half for the effect *(If BandCount is 8, only 4 bands of data are registered)*
+
+### BandCharacter
+#### text | char
+Text character used when rendering bands, including the fill via SolidBands.
+
+### BandSpacing
+#### whole number | int
+Increase or decrease to adjust space between bands. Increasing doesn't actually create space but rather shrinks the bands to fit the width/height of the window.
+
+### MaxBandHeightPercent
+#### decimal | float
+Decimal percentage of how high a band can get relative to 100% of available space. Cannot be greater than 1.0 (100%) or lower than MinBandHeightPercent.
+Safe Mode Range: 0.5 - 1.0
+
+### MaxBandHeightPercent
+#### decimal | float
+Decimal percentage of how high a band can get relative to 0% of available space, where 0% is not visible at all. Cannot be lower than 0 or greater than MaxBandHeightPercent.
+Safe Mode Range: 0.00 - 0.49

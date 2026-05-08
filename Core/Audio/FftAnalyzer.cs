@@ -110,7 +110,7 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         public string[] GetBandFrequencyData(int bandCount)
         {
             if (FrequencyBands == null || FrequencyBands.Length == 0)
-                return new string[] { "No data" };
+                return new string[] { "NO FREQUENCY DATA" };
 
             string[] data = new string[bandCount];
 

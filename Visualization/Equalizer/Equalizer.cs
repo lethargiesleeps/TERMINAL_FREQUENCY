@@ -51,7 +51,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             EqualizerSettings eq = _settings.EqualizerSettings;
             int displayBands = _settings.FftSettings.BandCount;
             int dataBands = eq.Direction == EqDirection.Mirror ? displayBands / 2 : displayBands;
-            int barSpacing = eq.BarSpacing;
+            int barSpacing = eq.BandSpacing;
             bool isHorizontal = eq.Origin == VisualizationOrigin.Left || eq.Origin == VisualizationOrigin.Right;
 
             float[] bands = GetOrderedBands(dataBands);
@@ -70,8 +70,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int usedWidth = displayBands * barWidth + totalSpacing;
             int startX = (buffer.Width - usedWidth) / 2;
 
-            int maxHeight = (int)(buffer.Height * eq.MaxBarHeightPercent);
-            int minHeight = (int)(buffer.Height * eq.MinBarHeightPercent);
+            int maxHeight = (int)(buffer.Height * eq.MaxBandHeightPercent);
+            int minHeight = (int)(buffer.Height * eq.MinBandHeightPercent);
             int baseY = eq.Origin == VisualizationOrigin.Top ? minHeight + 1 : buffer.Height - 2;
             bool fromTop = eq.Origin == VisualizationOrigin.Top;
 
@@ -98,8 +98,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int usedHeight = displayBands * barHeight + totalSpacing;
             int startY = (buffer.Height - usedHeight) / 2;
 
-            int maxLength = (int)(buffer.Width * eq.MaxBarHeightPercent);
-            int minLength = (int)(buffer.Width * eq.MinBarHeightPercent);
+            int maxLength = (int)(buffer.Width * eq.MaxBandHeightPercent);
+            int minLength = (int)(buffer.Width * eq.MinBandHeightPercent);
             int baseX = eq.Origin == VisualizationOrigin.Left ? minLength + 1 : buffer.Width - 2;
             bool fromLeft = eq.Origin == VisualizationOrigin.Left;
 
@@ -120,7 +120,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
                     for (int l = 0; l < barLength; l++)
                     {
                         int drawX = fromLeft ? baseX + l : baseX - l;
-                        buffer.SetPixel(drawX, barY + h, eq.BarCharacter, color);
+                        buffer.SetPixel(drawX, barY + h, eq.BandCharacter, color);
                     }
                 }
             }
@@ -165,10 +165,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
                 for (int h = 0; h < height; h++)
                 {
                     int drawY = fromTop ? baseY + h : baseY - h;
-                    bool isEdge = !_settings.EqualizerSettings.SolidBars && (h == 0 || h == height - 1 || w == 0 || w == width - 1);
+                    bool isEdge = !_settings.EqualizerSettings.SolidBands && (h == 0 || h == height - 1 || w == 0 || w == width - 1);
 
-                    if (_settings.EqualizerSettings.SolidBars || isEdge)
-                        buffer.SetPixel(x + w, drawY, _settings.EqualizerSettings.BarCharacter, color);
+                    if (_settings.EqualizerSettings.SolidBands || isEdge)
+                        buffer.SetPixel(x + w, drawY, _settings.EqualizerSettings.BandCharacter, color);
                 }
             }
         }

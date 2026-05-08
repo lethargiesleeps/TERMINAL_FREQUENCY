@@ -5,6 +5,6 @@
         Rings,
         Waterfall,
         Shape,
-        EQ
+        Equalizer
     }
 }
