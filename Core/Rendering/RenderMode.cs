@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TERMINAL_FREQUENCY.Core
+namespace TERMINAL_FREQUENCY.Core.Rendering
 {
     //in order of slow to fast
     public enum RenderMode

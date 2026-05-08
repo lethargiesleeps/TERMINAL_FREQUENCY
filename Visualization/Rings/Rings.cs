@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using TERMINAL_FREQUENCY.Config.Settings;
-using TERMINAL_FREQUENCY.Core;
+using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
-    public class Rings : IVisualization
+    public class Rings : IVolumeReactive, ISpikeReactive
     {
         private Settings _settings;
         private List<Ring> _rings = new List<Ring>();
@@ -18,11 +19,23 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
 
+        public int RingCount
+        {
+            get
+            {
+                lock (_ringLock)
+                {
+                    return _rings.Count;
+                }
+            }
+        }
+
         public Rings(Settings settings)
         {
             _settings = settings;
             _maxRings = _settings.RingsSettings.MaxRings;
         }
+
         public void Update(float volume)
         {
             _smoothedVolume = volume;
@@ -49,6 +62,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
                 _rings.Add(new Ring(_settings));
             }
         }
+
+        public void OnSpike(float intensity) => OnSpike();
 
         public void Draw(ScreenBuffer buffer)
         {

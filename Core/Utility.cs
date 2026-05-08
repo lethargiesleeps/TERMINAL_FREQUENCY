@@ -1,9 +1,12 @@
-﻿using TERMINAL_FREQUENCY.Visualization;
-using NAudio.Wave;
+﻿using NAudio.Wave;
+using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Core.Audio;
+using TERMINAL_FREQUENCY.Core.Rendering;
+using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
-using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Visualization.Equalizer;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
@@ -41,7 +44,7 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v0.7           ║
+    ║               Terminal Audio Visualizer v0.8           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
@@ -156,7 +159,7 @@ namespace TERMINAL_FREQUENCY.Core
                 0 => "RINGS",
                 1 => "WATERFALL",
                 2 => "SHAPE",
-                // 3 => "EQUALIZER",
+                3 => "EQ",
                 _ => "UNKNOWN"
             };
         }
@@ -298,7 +301,8 @@ namespace TERMINAL_FREQUENCY.Core
         { 
             new Rings(settings), 
             new Waterfall(settings), 
-            new Shape(settings) 
+            new Shape(settings) ,
+            new Equalizer(settings)
         };
 
         /// <summary>

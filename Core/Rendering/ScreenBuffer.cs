@@ -4,7 +4,7 @@ using System.Text;
 using TERMINAL_FREQUENCY.Config.Settings;
 
 #nullable disable warnings
-namespace TERMINAL_FREQUENCY.Core
+namespace TERMINAL_FREQUENCY.Core.Rendering
 {
     public class ScreenBuffer
     {
@@ -24,14 +24,14 @@ namespace TERMINAL_FREQUENCY.Core
 
         //imports
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetStdHandle(int nStdHandle);
+        private static extern nint GetStdHandle(int nStdHandle);
 
         [DllImport("kernel32.dll")]
         private static extern bool SetConsoleOutputCP(uint codePage);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private static extern bool WriteConsoleOutput(
-            IntPtr hConsoleOutput,
+            nint hConsoleOutput,
             CHAR_INFO[,] lpBuffer,
             COORD dwBufferSize,
             COORD dwBufferCoord,
@@ -64,7 +64,7 @@ namespace TERMINAL_FREQUENCY.Core
 
         //vars
         private const int STD_OUTPUT_HANDLE = -11;
-        private static readonly IntPtr ConsoleOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+        private static readonly nint ConsoleOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
         private CHAR_INFO[,] _fastBuffer;
 
         #endregion
@@ -341,7 +341,7 @@ namespace TERMINAL_FREQUENCY.Core
                     {
                         anyChanged = true;
                         _fastBuffer[y, x].UnicodeChar = _nextChar[y, x];
-                        _fastBuffer[y, x].Attributes = (short)((int)_nextColor[y, x] | ((int)_bgColor << 4));
+                        _fastBuffer[y, x].Attributes = (short)((int)_nextColor[y, x] | (int)_bgColor << 4);
 
                         _currentChar[y, x] = _nextChar[y, x];
                         _currentColor[y, x] = _nextColor[y, x];
