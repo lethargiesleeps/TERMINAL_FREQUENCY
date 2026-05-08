@@ -1,7 +1,7 @@
 ![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/splash.jpg)
 
 # TERMINAL__FREQUENCY
-*v0.7a*
+*v0.8.0*
 
 ## ABOUT
 A Windows console program for audio visualizations. Captures any audio playing from your computer automatically. Features a robust settings API to endlessly customize the look and feel of the available visuals.
@@ -47,6 +47,7 @@ As of this version, the Visual Modes are:
 - Rings
 - Waterfall
 - Shape
+- Equalizer
 
 ### USER CONFIGURATION
 In the built package, there is a `settings.json` with all the configurable settings for maximum customization. Once saved, you can press F2 in the visualizr to load the settings (you don't need to close the settings file).
@@ -78,8 +79,8 @@ This is the default mode, and raster fonts are used by default in this mode. All
 ## ROADMAP
 ### v1.0a
 *v1.0a* is planned to include the following features:
-- 3-5 additional dynamic visualizations
-- 2-4 static visualizations (visuals that don't react to audio)
+- 2 additional dynamic visualizations
+- 2 static visualizations (visuals that don't react to audio)
 - Audio interface selection
 - Background manipulation (change colour on beat, change colour every Nth minute)
 - Trigger on audio frequency (right now it triggers based on volume parameters)
