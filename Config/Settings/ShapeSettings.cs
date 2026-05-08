@@ -106,8 +106,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (QuadrantGapDivisor > 20) QuadrantGapDivisor = 20;
             if (ReverseVolumeSensitivity < 0.01f) ReverseVolumeSensitivity = 0.01f;
             if (ReverseVolumeSensitivity > 0.05f) ReverseVolumeSensitivity = 0.05f;
-            if (LerpFactor < 0.01f) LerpFactor = 0.01f;
-            if (LerpFactor > 1f) LerpFactor = 1f;
+
             if (CircleSegmentDensity < 0.3f) CircleSegmentDensity = 0.3f;
             if (CircleSegmentDensity > 1.5f) CircleSegmentDensity = 1.5f;
             if (CircleMinSegments < 6) CircleMinSegments = 6;
@@ -146,6 +145,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             if (QuadrantGapDivisor < 1) QuadrantGapDivisor = 1;
             if (ReverseVolumeSensitivity < 0f) ReverseVolumeSensitivity = 0.01f;
             if (LerpFactor < 0f) LerpFactor = 0.01f;
+            if (LerpFactor > 1f) LerpFactor = 1f;
             if (CircleSegmentDensity < 0f) CircleSegmentDensity = 0.01f;
             if (CircleMinSegments < 1) CircleMinSegments = 1;
             if (CircleMaxSegments < 1) CircleMaxSegments = 1;
