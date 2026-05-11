@@ -38,7 +38,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ShowGlobalControls = true;
             DefaultMode = VisualizationMode.Rings;
             ConsoleInstances = 1;
-            SaveOnExit = true;
+            SaveOnExit = false;
             EnableRasterOnDirectWrite = true;
             EnableExclusiveMode = false;
         }

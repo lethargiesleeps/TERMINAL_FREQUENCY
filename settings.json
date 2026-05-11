@@ -9,7 +9,7 @@
     "ShowGlobalControls": true,
     "DefaultMode": "Rings",
     "ConsoleInstances": 1,
-    "SaveOnExit": true,
+    "SaveOnExit": false,
     "EnableRasterOnDirectWrite": true,
     "EnableExclusiveMode": false
   },
