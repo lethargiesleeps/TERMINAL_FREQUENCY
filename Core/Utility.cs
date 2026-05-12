@@ -1,12 +1,13 @@
-﻿using NAudio.Wave;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
-using TERMINAL_FREQUENCY.Visualization.Shape;
-using TERMINAL_FREQUENCY.Visualization.Rings;
-using TERMINAL_FREQUENCY.Visualization.Waterfall;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
+using TERMINAL_FREQUENCY.Visualization.Rings;
+using TERMINAL_FREQUENCY.Visualization.Shape;
+using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
@@ -62,6 +63,7 @@ namespace TERMINAL_FREQUENCY.Core
 
         }
 
+
         /// <summary>
         /// String data for when the user paused the screen.
         /// </summary>
@@ -100,56 +102,6 @@ namespace TERMINAL_FREQUENCY.Core
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
 
-
-        /// <summary>
-        /// Allows user to select audio device/interface to capture.
-        /// </summary>
-        /// <returns>The selected audio device/interface.</returns>
-        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
-        public static AudioCapture? SelectAudioDevice()
-        {
-            Console.WriteLine("\nPlease select an audio device to capture...");
-            Console.WriteLine("--------------------------------");
-            Console.WriteLine("\nAvailable Audio Input Devices:\n");
-            Console.WriteLine("--------------------------------");
-
-            var devices = GetAvailableDevices();
-
-            if (devices.Count == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No audio input devices found");
-                Console.ResetColor();
-                return null;
-            }
-
-            for (int i = 0; i < devices.Count; i++)
-                Console.WriteLine($"  [{i}] {devices[i]}");
-            
-
-            Console.WriteLine("\nSelect device number (or press ENTER for default): ");
-            string input = Console.ReadLine();
-
-            int selectedIndex = -1;
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                Console.WriteLine("Using default device...");
-                return new AudioCapture(new Config.Settings.Settings()); // Use default device
-            }
-
-            if (int.TryParse(input, out selectedIndex) && selectedIndex >= 0 && selectedIndex < devices.Count)
-            {
-                Console.WriteLine($"Selected: {devices[selectedIndex]}");
-                return new AudioCapture(new Config.Settings.Settings()); //TODO: Let user select audio device
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Invalid selection. Using default device...");
-                Console.ResetColor();
-                return new AudioCapture(new Config.Settings.Settings());
-            }
-        }
 
 
         public static string GetModeName(int modeIndex)
@@ -305,24 +257,65 @@ namespace TERMINAL_FREQUENCY.Core
             new Equalizer(settings)
         };
 
+        public static int SelectAudioDevice()
+        {
+            var devices = GetAvailableDevices();
+
+            Console.Clear();
+            Console.WriteLine(@"
+╔════════════════════════════════════════════════════════╗
+║                                                        ║
+║            T E R M I N A L   F R E Q U E N C Y         ║
+║                                                        ║
+╚════════════════════════════════════════════════════════╝
+║ SELECT AUDIO DEVICE:                                   ║
+╚════════════════════════════════════════════════════════╝
+");
+            for (int i = 0; i < devices.Count; i++)
+                Console.WriteLine($"  [{i}] {devices[i]}");
+
+            Console.Write("\nEnter device index (0-{0}): ", devices.Count - 1);
+
+            while (true)
+            {
+                string input = Console.ReadLine();
+
+                if (!int.TryParse(input, out int index))
+                {
+                    Console.Write("Invalid input. Please enter a whole number: ");
+                    continue;
+                }
+
+                if (index < 0 || index >= devices.Count)
+                {
+                    Console.Write($"Index out of range. Please enter 0-{devices.Count - 1}: ");
+                    continue;
+                }
+
+                return index;
+            }
+        }
         /// <summary>
         /// Uses WASAPI to get a list of all audio devices on a system.
         /// </summary>
         /// <returns>A list of string containing all the available audio devices.</returns>
-        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
         public static List<string> GetAvailableDevices()
         {
             List<string> devices = new List<string>();
             try
             {
-                for (int i = 0; i < WaveInEvent.DeviceCount; i++)
-                    devices.Add($"{WaveInEvent.GetCapabilities(i).ProductName}");
+                var enumerator = new MMDeviceEnumerator();
+                var endpoints = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+                for (int i = 0; i < endpoints.Count; i++)
+                {
+                    string type = endpoints[i].DataFlow == DataFlow.Capture ? "INPUT " : "OUTPUT";
+                    devices.Add($"DEVICE INDEX - [{i}] : [{type}] {endpoints[i].FriendlyName}");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error enumerating devices: {ex.Message}");
             }
-
             return devices;
         }
 

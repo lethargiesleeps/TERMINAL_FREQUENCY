@@ -1,59 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
+
 #pragma warning disable SYSLIB1054 // Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time
-namespace TERMINAL_FREQUENCY.Config
+namespace TERMINAL_FREQUENCY.Core.Rendering
 {
     public static class ConsoleWindow
     {
         [DllImport("kernel32.dll")]
-        private static extern IntPtr GetConsoleWindow();
+        private static extern nint GetConsoleWindow();
 
         [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        private static extern bool ShowWindow(nint hWnd, int nCmdShow);
 
         [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
+        private static extern bool SetForegroundWindow(nint hWnd);
 
         [DllImport("user32.dll")]
         private static extern int FindWindow(string lpClassName, string lpWindowName);
 
         [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        private static extern int SetWindowLong(nint hWnd, int nIndex, int dwNewLong);
 
         [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        private static extern int GetWindowLong(nint hWnd, int nIndex);
 
         [DllImport("user32.dll")]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+        private static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll")]
-        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+        private static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
 
         [DllImport("user32.dll")]
         private static extern int GetSystemMetrics(int nIndex);
 
         [DllImport("user32.dll")]
-        private static extern bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+        private static extern bool SetLayeredWindowAttributes(nint hWnd, uint crKey, byte bAlpha, uint dwFlags);
 
         [DllImport("user32.dll")]
-        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
+        private static extern int SetWindowCompositionAttribute(nint hwnd, ref WindowCompositionAttributeData data);
         [DllImport("user32.dll")]
         private static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
 
         [DllImport("dwmapi.dll")]
-        private static extern void DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS margins);
+        private static extern void DwmExtendFrameIntoClientArea(nint hWnd, ref MARGINS margins);
 
         [DllImport("dwmapi.dll")]
-        private static extern int DwmSetWindowAttribute(IntPtr hwnd, uint dwAttribute, ref int pvAttribute, int cbAttribute);
+        private static extern int DwmSetWindowAttribute(nint hwnd, uint dwAttribute, ref int pvAttribute, int cbAttribute);
 
-        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-        private static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
+        private static readonly nint HWND_TOPMOST = new nint(-1);
+        private static readonly nint HWND_NOTOPMOST = new nint(-2);
         private const int SM_CXSCREEN = 0;
         private const int SM_CYSCREEN = 1;
         private const int GWL_STYLE = -16;
@@ -99,7 +93,7 @@ namespace TERMINAL_FREQUENCY.Config
         private struct WindowCompositionAttributeData
         {
             public uint Attribute;
-            public IntPtr Data;
+            public nint Data;
             public int SizeOfData;
         }
 
@@ -116,7 +110,7 @@ namespace TERMINAL_FREQUENCY.Config
         private struct FLASHWINFO
         {
             public uint cbSize;
-            public IntPtr hwnd;
+            public nint hwnd;
             public uint dwFlags;
             public uint uCount;
             public uint dwTimeout;
@@ -130,13 +124,13 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void SetWindowBlur(bool enable)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
 
             var accent = new AccentPolicy();
             accent.AccentState = enable ? AccentState.ACCENT_ENABLE_BLURBEHIND : AccentState.ACCENT_DISABLED;
 
             var accentStructSize = Marshal.SizeOf(accent);
-            IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+            nint accentPtr = Marshal.AllocHGlobal(accentStructSize);
             Marshal.StructureToPtr(accent, accentPtr, false);
 
             var data = new WindowCompositionAttributeData();
@@ -149,7 +143,7 @@ namespace TERMINAL_FREQUENCY.Config
         }
         public static void SetClickThrough(bool enable)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int exStyle = GetWindowLong(handle, GWL_EXSTYLE);
 
             //always keep the layered style
@@ -165,15 +159,15 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void SetWindowVibrancy(byte r, byte g, byte b, byte alpha = 0x99)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
 
             var accent = new AccentPolicy();
             accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
             accent.AccentFlags = 2;
-            accent.GradientColor = (alpha << 24) | (r << 16) | (g << 8) | b;
+            accent.GradientColor = alpha << 24 | r << 16 | g << 8 | b;
 
             var accentStructSize = Marshal.SizeOf(accent);
-            IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+            nint accentPtr = Marshal.AllocHGlobal(accentStructSize);
             Marshal.StructureToPtr(accent, accentPtr, false);
 
             var data = new WindowCompositionAttributeData();
@@ -190,7 +184,7 @@ namespace TERMINAL_FREQUENCY.Config
             if (opacity < 0) opacity = 0;
             else if (opacity > 255) opacity = 255;
 
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
 
             // Enable layered window
             int exStyle = GetWindowLong(handle, GWL_EXSTYLE);
@@ -201,26 +195,26 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void SetAlwaysOnTop(bool enable)
         {
-            IntPtr handle = GetConsoleWindow();
-            IntPtr position = enable ? HWND_TOPMOST : HWND_NOTOPMOST;
+            nint handle = GetConsoleWindow();
+            nint position = enable ? HWND_TOPMOST : HWND_NOTOPMOST;
             SetWindowPos(handle, position, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         }
 
         public static void DisableTitleBar()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style &= ~(WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
             SetWindowLong(handle, GWL_STYLE, style);
             ApplyStyle(handle);
             GetWindowRect(handle, out RECT rect);
             int newHeight = rect.Bottom - rect.Top + 60; //reclaim top
-            SetWindowPos(handle, IntPtr.Zero, rect.Left, rect.Top - 4, rect.Right - rect.Left, newHeight, SWP_NOZORDER);
+            SetWindowPos(handle, nint.Zero, rect.Left, rect.Top - 4, rect.Right - rect.Left, newHeight, SWP_NOZORDER);
         }
 
         public static void EnableTitleBar()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style |= WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
             SetWindowLong(handle, GWL_STYLE, style);
@@ -230,7 +224,7 @@ namespace TERMINAL_FREQUENCY.Config
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static void DisableScrollBars()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style &= ~(WS_HSCROLL | WS_VSCROLL);
             SetWindowLong(handle, GWL_STYLE, style);
@@ -240,7 +234,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void EnableScrollBars()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style |= WS_HSCROLL | WS_VSCROLL;
             SetWindowLong(handle, GWL_STYLE, style);
@@ -249,7 +243,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void DisableResize()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
             SetWindowLong(handle, GWL_STYLE, style);
@@ -258,7 +252,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void EnableResize()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int style = GetWindowLong(handle, GWL_STYLE);
             style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
             SetWindowLong(handle, GWL_STYLE, style);
@@ -268,7 +262,7 @@ namespace TERMINAL_FREQUENCY.Config
         //launch positioning
         public static void LaunchConsoleCenter()
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int screenWidth = GetSystemMetrics(SM_CXSCREEN);
             int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
@@ -279,12 +273,12 @@ namespace TERMINAL_FREQUENCY.Config
             int x = (screenWidth - windowWidth) / 2;
             int y = (screenHeight - windowHeight) / 2;
 
-            SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+            SetWindowPos(handle, nint.Zero, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
         }
 
         public static void LaunchConsoleAt(int x, int y)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
             int screenWidth = GetSystemMetrics(SM_CXSCREEN);
             int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
@@ -296,7 +290,7 @@ namespace TERMINAL_FREQUENCY.Config
             x = Math.Max(-windowWidth + 50, Math.Min(x, screenWidth - 50));
             y = Math.Max(0, Math.Min(y, screenHeight - 50));
 
-            SetWindowPos(handle, IntPtr.Zero, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+            SetWindowPos(handle, nint.Zero, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
         }
 
         //composite functions that use the individual ones
@@ -324,8 +318,8 @@ namespace TERMINAL_FREQUENCY.Config
         }
         public static void ExclusiveMode(bool enable)
         {
-            IntPtr handle = GetConsoleWindow();
-            IntPtr taskbarHandle = FindWindow("Shell_TrayWnd", null);
+            nint handle = GetConsoleWindow();
+            nint taskbarHandle = FindWindow("Shell_TrayWnd", null);
 
             if (enable)
             {
@@ -362,7 +356,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void FlashWindowOnBeat(int flashCount = 2)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
 
             FLASHWINFO flashInfo = new FLASHWINFO();
             flashInfo.cbSize = (uint)Marshal.SizeOf(flashInfo);
@@ -376,7 +370,7 @@ namespace TERMINAL_FREQUENCY.Config
 
         public static void SetWindowGlow(int radius, byte r, byte g, byte b)
         {
-            IntPtr handle = GetConsoleWindow();
+            nint handle = GetConsoleWindow();
 
             //extend frame
             MARGINS margins = new MARGINS();
@@ -387,7 +381,7 @@ namespace TERMINAL_FREQUENCY.Config
             DwmExtendFrameIntoClientArea(handle, ref margins);
 
             //st the border color to create glow color
-            int color = (r << 16) | (g << 8) | b;
+            int color = r << 16 | g << 8 | b;
             DwmSetWindowAttribute(handle, 34, ref color, sizeof(int)); // 34 = DWMWA_BORDER_COLOR
 
             //make the extended frame transparent to create glow illusion
@@ -416,9 +410,9 @@ namespace TERMINAL_FREQUENCY.Config
         //TODO: HotKeys(Dictionary<Keys, Action>) global hotkeys thatwork even if window isnt focused
         //TODO: MirrorMode() just flip the whole thing
         //TODO: ReactiveWindowSize() the whole window reacts via OnSpike hook
-        private static void ApplyStyle(IntPtr handle)
+        private static void ApplyStyle(nint handle)
         {
-            SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0,
+            SetWindowPos(handle, nint.Zero, 0, 0, 0, 0,
                 SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
         }
     }

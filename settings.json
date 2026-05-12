@@ -81,6 +81,8 @@
   },
   "AudioCapture": {
     "SpecifyAudioDevice": false,
+    "UserSelectedDevice": true,
+    "AudioDeviceIndex": 0,
     "AudioSampleResolution": 4,
     "RmsMultiplier": 100.0,
     "NoiseGateFloor": 0.3,
