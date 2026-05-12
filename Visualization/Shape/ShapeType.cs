@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TERMINAL_FREQUENCY.Visualization.Shape
+﻿namespace TERMINAL_FREQUENCY.Visualization.Shape
 {
+    /// <summary>
+    /// Enum for the type of shape visualized when in Shape mode
+    /// </summary>
+    /// <see cref="Shape"/>
     public enum ShapeType
     {
         Circle,

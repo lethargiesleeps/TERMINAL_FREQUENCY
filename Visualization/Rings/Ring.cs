@@ -1,18 +1,28 @@
-﻿using System;
-using System.Diagnostics;
-using TERMINAL_FREQUENCY.Config.Settings;
-using TERMINAL_FREQUENCY.Core;
+﻿using TERMINAL_FREQUENCY.Config.Settings;
 
 namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
+    /// <summary>
+    /// Represents a single expanding or shrinking ring with configurable radius, color, and character.
+    /// Supports reverse mode (shrink inward), solid color mode, rainbow color cycling, and
+    /// character randomization. Each ring tracks its own lifecycle from spawn to death.
+    /// </summary>
     public class Ring
     {
+        /// <summary>Current radius of the ring in character units.</summary>
         public float Radius { get; set; }
-        public float Life { get; set; } //1 is full life, 0 is dead
+
+        /// <summary>Remaining lifespan. 1 = full life, 0 = dead.</summary>
+        public float Life { get; set; }
 
         private readonly Random _rnd;
         private Settings _settings;
 
+        /// <summary>
+        /// Creates a new ring. Starting radius depends on <see cref="RingsSettings.ReverseMode"/>:
+        /// normal starts at <see cref="RingsSettings.Radius"/>, reverse starts at <see cref="RingsSettings.RadiusMax"/>.
+        /// </summary>
+        /// <param name="settings">The application settings containing ring configuration.</param>
         public Ring(Settings settings)
         {
             _settings = settings;
@@ -21,16 +31,32 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             _rnd = new Random();
         }
 
+        /// <summary>
+        /// Advances the ring's radius by speed (outward in normal mode, inward in reverse)
+        /// and reduces life by fadeRate. Called each frame by <see cref="Rings.Update"/>.
+        /// </summary>
+        /// <param name="speed">How many character units to expand per frame.</param>
+        /// <param name="fadeRate">Life subtracted per frame. Higher values make rings die faster.</param>
         public void Update(float speed = 0.7f, float fadeRate = 0.02f)
         {
             Radius += _settings.RingsSettings.ReverseMode ? -speed : speed;
             Life -= fadeRate;
         }
 
+        /// <summary>
+        /// Returns true if the ring is still visible. In normal mode, alive while below <see cref="RingsSettings.RadiusMax"/>.
+        /// In reverse mode, alive while above <see cref="RingsSettings.RadiusMin"/>.
+        /// </summary>
         public bool IsAlive => _settings.RingsSettings.ReverseMode
         ? Life > 0 && Radius >= _settings.RingsSettings.RadiusMin //alive while above min
         : Life > 0 && Radius <= _settings.RingsSettings.RadiusMax; //alive while below max
 
+        /// <summary>
+        /// Returns the display color for this ring based on its normalized remaining life.
+        /// Supports multiple <see cref="RingColorMode"/> options including solid, gradient, and rainbow.
+        /// When <see cref="RingsSettings.SolidColor"/> is enabled, some modes return a single uniform color.
+        /// </summary>
+        /// <returns>The <see cref="ConsoleColor"/> for this ring at its current lifecycle stage.</returns>
         public ConsoleColor GetColor()
         {
             //all floats are between 0 and 1 once normalized
@@ -89,6 +115,14 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             }
         }
 
+        /// <summary>
+        /// Returns the character to display at a given segment of the ring.
+        /// If <see cref="RingsSettings.CharRandomizer"/> is enabled, picks a random character
+        /// from <see cref="RingsSettings.CharRandomizerCharset"/>. Otherwise cycles through
+        /// <see cref="RingsSettings.Characters"/> based on segment index. Defaults to 'O' if no characters defined.
+        /// </summary>
+        /// <param name="segmentIndex">The segment position around the ring (0-based).</param>
+        /// <returns>The character to draw at this segment.</returns>
         public char GetChar(int segmentIndex)
         {
             if (_settings.RingsSettings.CharRandomizer)

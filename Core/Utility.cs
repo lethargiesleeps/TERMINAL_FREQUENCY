@@ -18,7 +18,7 @@ namespace TERMINAL_FREQUENCY.Core
     /// </summary>
     public static class Utility
     {
-        public const string VERSION_NUMBER = "v0.7";
+        public const string VERSION_NUMBER = "v0.9";
         /// <summary>
         /// String data and console methods for the program launch screen.
         /// </summary>
@@ -45,7 +45,7 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v0.8           ║
+    ║               Terminal Audio Visualizer v0.9           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
@@ -102,8 +102,11 @@ namespace TERMINAL_FREQUENCY.Core
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
 
-
-
+        /// <summary>
+        /// Returns name of current visualization.
+        /// </summary>
+        /// <param name="modeIndex">Index representation of visualization determined by <see cref="VisualizationMode"/></param>
+        /// <returns>Name of visualization as formatted string.</returns>
         public static string GetModeName(int modeIndex)
         {
             return modeIndex switch
@@ -116,12 +119,24 @@ namespace TERMINAL_FREQUENCY.Core
             };
         }
 
+        /// <summary>
+        /// Ensures the provided value does not fall outside of the MinValue or MaxValue of a byte (0-255)
+        /// </summary>
+        /// <param name="value">Value to clamp.</param>
+        /// <returns>The clamped value.</returns>
         public static int ByteConstraintsCheck(int value)
         {
             if (value < byte.MinValue) return byte.MinValue;
             else if (value > byte.MaxValue) return byte.MaxValue;
             else return value;
         }
+
+        /// <summary>
+        /// Returns count of options in an enum.
+        /// </summary>
+        /// <typeparam name="T">Enum to determine count of.</typeparam>
+        /// <param name="returnLastIndex">If true, returns 0-indexed value, otherwise return real count.</param>
+        /// <returns>Number of items in provided enum.</returns>
         public static int EnumCount<T>(bool returnLastIndex = false) where T : Enum
         {
             return returnLastIndex
@@ -249,6 +264,13 @@ namespace TERMINAL_FREQUENCY.Core
             return value.ToString().ToUpper();
         }
 
+        /// <summary>
+        /// Used to replace instances of visualizations in certain circumstances.
+        /// </summary>
+        /// <param name="settings">Global settings for IVisualization constructors.</param>
+        /// <returns>List of new instances of all available visualization</returns>
+        /// <see cref="IVisualization"/>
+        /// <remarks>When building a new visualization, ensure to add here or it will not refresh when needed.</remarks>
         public static List<IVisualization> RefreshVisuals(Settings settings) => new List<IVisualization>() 
         { 
             new Rings(settings), 
@@ -257,6 +279,10 @@ namespace TERMINAL_FREQUENCY.Core
             new Equalizer(settings)
         };
 
+        /// <summary>
+        /// Renders a user prompt that shows all available devices and allows user to input desired selection.
+        /// </summary>
+        /// <returns>Returns index of audio device for <see cref="AudioCapture"/> instantiation.</returns>
         public static int SelectAudioDevice()
         {
             var devices = GetAvailableDevices();

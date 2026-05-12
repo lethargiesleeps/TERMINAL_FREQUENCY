@@ -1,11 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using TERMINAL_FREQUENCY.Config.Settings;
+﻿using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
+    /// <summary>
+    /// Renders expanding and fading rings that respond to volume spikes and continuous volume levels.
+    /// Implements <see cref="IVolumeReactive"/> for ambient ring pulsing and <see cref="ISpikeReactive"/>
+    /// for spawning new rings on audio beats. Supports reverse mode where rings shrink inward,
+    /// multiple color modes, character randomization, and a configurable crosshair with ambient circle.
+    /// </summary>
     public class Rings : IVolumeReactive, ISpikeReactive
     {
         private Settings _settings;
@@ -19,6 +22,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
 
+        /// <summary>
+        /// Returns the current number of active rings. Thread-safe.
+        /// </summary>
         public int RingCount
         {
             get
@@ -30,12 +36,22 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             }
         }
 
+        /// <summary>
+        /// Initializes the rings visualization with the given settings.
+        /// Sets the maximum ring count from <see cref="RingsSettings.MaxRings"/>.
+        /// </summary>
+        /// <param name="settings">The application settings containing ring configuration.</param>
         public Rings(Settings settings)
         {
             _settings = settings;
             _maxRings = _settings.RingsSettings.MaxRings;
         }
 
+        /// <summary>
+        /// Updates all active rings each frame. Advances their radius and reduces their life.
+        /// Removes rings that have expired. The smoothed volume is stored for ambient circle drawing.
+        /// </summary>
+        /// <param name="volume">The smoothed audio volume level from <see cref="AudioCapture"/>.</param>
         public void Update(float volume)
         {
             _smoothedVolume = volume;
@@ -53,6 +69,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             }
         }
 
+        /// <summary>
+        /// Spawns a new ring on each audio spike. If the maximum ring count is reached,
+        /// the oldest ring is removed first. Each ring starts at <see cref="RingsSettings.Radius"/>
+        /// and expands outward (or shrinks if reverse mode is enabled).
+        /// </summary>
         public void OnSpike()
         {
             lock (_ringLock)
@@ -63,8 +84,18 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             }
         }
 
+        /// <summary>Calls <see cref="OnSpike()"/>. Required by <see cref="ISpikeReactive"/>.</summary>
+        /// <param name="intensity">The volume intensity of the spike. Unused by rings.</param>
         public void OnSpike(float intensity) => OnSpike();
 
+        /// <summary>
+        /// Draws all active rings and the ambient circle to the console buffer.
+        /// Creates a thread-safe copy of the ring list before iterating.
+        /// The ambient circle pulses with <see cref="_smoothedVolume"/> and is drawn
+        /// as a dotted ring around the center point. Each ring is drawn as a segmented circle
+        /// with characters and colors determined by its lifecycle stage.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         public void Draw(ScreenBuffer buffer)
         {
             int centerX = buffer.Width / _settings.RingsSettings.Offset;

@@ -1,9 +1,13 @@
-﻿
-using TERMINAL_FREQUENCY.Config.Settings;
+﻿using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
+    /// <summary>
+    /// Renders waterfall streams that flow across the console in response to volume spikes.
+    /// Implements <see cref="IVolumeReactive"/> to update existing streams and
+    /// <see cref="ISpikeReactive"/> to spawn new streams on audio beats.
+    /// </summary>
     public class Waterfall : IVolumeReactive, ISpikeReactive
     {
         private Settings _settings;
@@ -19,6 +23,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 
         string IVisualization.Name => _name;
         int IVisualization.ModeIndex => _modeIndex;
+
+        /// <summary>
+        /// Returns the current number of active waterfall streams. Thread-safe.
+        /// </summary>
         public int StreamCount
         {
             get
@@ -30,6 +38,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
         }
 
+        /// <summary>
+        /// Initializes the waterfall with the given settings. Sets the starting clockwise index
+        /// based on the configured <see cref="WaterfallSettings.Origin"/>.
+        /// </summary>
         public Waterfall(Settings settings)
         {
             _settings = settings;
@@ -37,6 +49,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             if (_clockwiseIndex < 0) _clockwiseIndex = 0;
         }
 
+        /// <summary>
+        /// Updates all active streams each frame. Advances their progress and removes any
+        /// that have expired. Called every frame by the audio capture.
+        /// </summary>
         public void Update(float volume)
         {
             lock (_streamLock)
@@ -50,6 +66,14 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
         }
 
+        /// <summary>
+        /// Spawns new waterfall streams in response to a volume spike.
+        /// Respects <see cref="WaterfallSettings.OnlySpawnOnThreshold"/> and
+        /// <see cref="WaterfallSettings.TriggerThreshold"/>. Creates multiple offset streams
+        /// based on <see cref="WaterfallSettings.Thickness"/> for a thicker visual effect.
+        /// In <see cref="WaterfallMode.All"/> mode, spawns streams from all four edges simultaneously.
+        /// </summary>
+        /// <param name="intensity">The volume intensity of the spike that triggered this event.</param>
         public void OnSpike(float intensity)
         {
             if (_settings.WaterfallSettings.OnlySpawnOnThreshold && intensity < _settings.WaterfallSettings.TriggerThreshold) return;
@@ -92,8 +116,14 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
         }
 
+        /// <summary>Calls <see cref="OnSpike(float)"/> with zero intensity. Required by <see cref="ISpikeReactive"/>.</summary>
         public void OnSpike() => OnSpike(0f);
 
+        /// <summary>
+        /// Draws all active waterfall streams to the console buffer.
+        /// Creates a thread-safe copy of the stream list before iterating.
+        /// In debug mode, displays the current stream count.
+        /// </summary>
         public void Draw(ScreenBuffer buffer)
         {
             List<WaterfallStream> streamsCopy;
@@ -111,6 +141,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                 DrawStream(buffer, stream);
         }
 
+        /// <summary>
+        /// Determines the origin for the next stream based on the current <see cref="WaterfallMode"/>.
+        /// Normal mode always returns the configured origin. Clockwise and anti-clockwise rotate
+        /// through origins in order. TopBottom and LeftRight alternate between two origins.
+        /// All mode returns a random origin.
+        /// </summary>
         private VisualizationOrigin GetNextOrigin()
         {
             switch (_settings.WaterfallSettings.Mode)
@@ -144,6 +180,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                     return _settings.WaterfallSettings.Origin;
             }
         }
+
+        /// <summary>
+        /// Routes a stream to the correct drawing method based on its <see cref="WaterfallStream.Origin"/>.
+        /// Top and Center draw from top downward. Bottom draws from bottom upward.
+        /// Left draws from left to right. Right draws from right to left.
+        /// </summary>
         private void DrawStream(ScreenBuffer buffer, WaterfallStream stream)
         {
             switch(stream.Origin)
@@ -164,6 +206,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
         }
 
+        /// <summary>
+        /// Draws a waterfall stream flowing vertically (top-to-bottom or bottom-to-top).
+        /// Calculates the stream's Y position based on progress, then draws characters
+        /// along a horizontal line with a trailing curve effect behind the main flow.
+        /// Applies <see cref="WaterfallStream.ThicknessOffset"/> for multi-stream thickness.
+        /// </summary>
         private void DrawVerticalStream(ScreenBuffer buffer, WaterfallStream stream, bool fromTop)
         {
             int consoleHeight = buffer.Height;
@@ -224,6 +272,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             }
         }
 
+        /// <summary>
+        /// Draws a waterfall stream flowing horizontally (left-to-right or right-to-left).
+        /// Functions identically to <see cref="DrawVerticalStream"/> but operates on the X axis.
+        /// Characters are converted from vertical to horizontal equivalents using
+        /// <see cref="WaterfallSettings.HorizontalChars"/>.
+        /// </summary>
         private void DrawHorizontalStream(ScreenBuffer buffer, WaterfallStream stream, bool fromLeft)
         {
             int consoleHeight = buffer.Height;
@@ -287,6 +341,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
                 }
             }
         }
+
+        /// <summary>
+        /// Adds a new stream to the active list. If the stream count exceeds the maximum,
+        /// the oldest streams are removed first. In <see cref="WaterfallMode.All"/> mode,
+        /// the maximum is multiplied by <see cref="WaterfallSettings.Thickness"/> to
+        /// accommodate streams from all four origins simultaneously.
+        /// </summary>
+        /// <param name="intensity">The volume intensity that spawned this stream.</param>
+        /// <param name="origin">The screen edge this stream originates from.</param>
+        /// <param name="offset">The thickness offset for multi-stream rendering.</param>
         private void AddStream(float intensity, VisualizationOrigin origin, int offset)
         {
             int effectiveMax = _settings.WaterfallSettings.Mode == WaterfallMode.All

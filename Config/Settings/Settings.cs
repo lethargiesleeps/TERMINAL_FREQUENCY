@@ -2,6 +2,10 @@
 
 namespace TERMINAL_FREQUENCY.Config.Settings
 {
+    /// <summary>
+    /// Main settings class that holds an instance of each individual Settings category.
+    /// This is the class used for JSON serialization
+    /// </summary>
     public class Settings : IConfigurable
     {
         [JsonProperty("Global")]
