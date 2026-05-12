@@ -16,6 +16,7 @@ An incorrect number value will result in the default being used.
 
 **GENERAL SETTINGS:**
 - [Global](#global)
+	- [BypassStartupScreen](#bypassstartupscreen)
 - [Font](#font)
 - [Rendering](#rendering)
 - [Window](#window)
