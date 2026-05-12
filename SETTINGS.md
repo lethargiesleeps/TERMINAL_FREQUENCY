@@ -16,19 +16,195 @@ An incorrect number value will result in the default being used.
 
 **GENERAL SETTINGS:**
 - [Global](#global)
+	- [BypassStartupScreen](#bypassstartupscreen)
+	- [ForceDefaultSettings](#forcedefaultsettings)
+	- [EnableDebugMode](#enabledebugmode)
+	- [EnableSafeMode](#enablesafemode)
+	- [EnableErrorMode](#enableerrormode)
+	- [EnableControlLock](#enablecontrollock)
+	- [ShowGlobalControls](#showglobalcontrols)
+	- [DefaultMode](#defaultmode)
+	- [ConsoleInstances](#consoleinstances)
+	- [SaveOnExit](#saveonexit)
+	- [EnableRasterOnDirectWrite](#enablerasterondirectwrite)
+	- [EnableExclusiveMode](#enableexclusivemode)
 - [Font](#font)
+	- [EnableRasterFont](#enablerasterfont)
+	- [RasterFontType](#rasterfonttype)
+	- [EnableCustomFont](#enablecustomfont)
+	- [CustomFontFace](#customfontface)
+	- [CustomFontFaceOverride](#customfontfaceoverride)
+	- [CustomFontSize](#customfontsize)
+	- [CustomFontBold](#customfontbold)
 - [Rendering](#rendering)
+	- [TargetFps](#targetfps)
+	- [EnableYield](#enableyield)
+	- [YieldTimeout](#yieldtimeout)
+	- [EnableSpinWait](#enablespinwait)
+	- [SpinWaitIterations](#spinwaititerations)
+	- [EnableThreadPriority](#enablethreadpriority)
+	- [ThreadPriority](#threadpriority)
+	- [RendererMode](#renderermode)
+	- [RowBatchColor](#rowbatchcolor)
 - [Window](#window)
+	- [BackgroundColor](#backgroundcolor)
+	- [DisableCursor](#disablecursor)
+	- [DisableAppTitle](#disableapptitle)
+	- [CustomTitle](#customtitle)
+	- [DisableTitleBar](#disabletitlebar)
+	- [DisableScrollBars](#disablescrollbars)
+	- [DisableWindowResize](#disablewindowresize)
+	- [LaunchMaximized](#launchmaximized)
+	- [LaunchInCenter](#launchincenter)
+	- [LaunchAt](#launchat)
+	- [LaunchAtX](#launchatx)
+	- [LaunchAtY](#launchaty)
+	- [EnableCustomWindowSize](#enablecustomwindowsize)
+	- [CustomWindowWidth](#customwindowwidth)
+	- [CustomWindowHeight](#customwindowheight)
+	- [WindowOpacity](#windowopacity)
+	- [AlwaysOnTop](#alwaysontop)
+	- [EnableWindowBlur](#enablewindowblur)
+	- [EnableWindowVibrancy](#enablewindowvibrancy)
+	- [WindowVibrancyR](#windowvibrancyr)
+	- [WindowVibrancyG](#windowvibrancyg)
+	- [WindowVibrancyB](#windowvibrancyb)
+	- [WindowVibrancyA](#windowvibrancya)
+	- [EnableClickThrough](#enableclickthrough)
+	- [EnableFlashOnBeat](#enableflashonbeat)
+	- [FlashOnBeatCount](#flashonbeatcount)
+	- [DefaultColors](#defaultcolors)
 
 **AUDIO SPECIFIC SETTINGS:**
 - [AudioCapture](#audiocapture)
+	- [SpecifyAudioDevice](#specifyaudiodevice)
+	- [UserSelectedDevice](#userselecteddevice)
+	- [AudioDeviceIndex](#audiodeviceindex)
+	- [AudioSampleResolution](#audiosampleresolution)
+	- [RmsMultiplier](#rmsmultiplier)
+	- [NoiseGateFloor](#noisegatefloor)
+	- [SmoothingFactorExisting](#smoothingfactorexisting)
+	- [SmoothingFactorIncoming](#smoothingfactorincoming)
+	- [PeakTrackingMinimum](#peaktrackingminimum)
+	- [PeakDecayFactor](#peakdecayfactor)
+	- [SpikeVolumeMinimum](#spikevolumeminimum)
+	- [SpikeRatio](#spikeratio)
 - [FFT](#fft)
+	- [BandCount](#bandcount)
+	- [Sensitivity](#sensitivity)
+	- [DedicatedBassBand](#dedicatedbassband)
+	- [HighPass](#highpass)
+	- [LowPass](#lowpass)
+	- [BassCutoff](#basscutoff)
 
 **VISUAL SPECIFIC SETTINGS:**
 - [Rings](#rings)
+	- [ReverseMode](#reversemode)
+	- [RadiusMin](#radiusmin)
+	- [Radius](#radius)
+	- [RadiusMax](#radiusmax)
+	- [Lifetime](#lifetime)
+	- [Speed](#speed)
+	- [FadeRate](#faderate)
+	- [ColorMode](#colormode)
+	- [SolidColor](#solidcolor)
+	- [Characters](#characters)
+	- [CharRandomizer](#charrandomizer)
+	- [CharRandomizerCharset](#charrandomizercharset)
+	- [MaxRings](#maxrings)
+	- [Segments](#segments)
+	- [AmbientSegments](#ambientsegments)
+	- [AmbientDotInterval](#ambientdotinterval)
+	- [AmbientBaseRadius](#ambientbaseradius)
+	- [AmbientVolumeMultiplier](#ambientvolumemultiplier)
+	- [AmbientRadiusMax](#ambientradiusmax)
+	- [YStretch](#ystretch)
+	- [DrawCrosshair](#drawcrosshair)
+	- [CrosshairColor](#crosshaircolor)
+	- [CrosshairRingColor](#crosshairringcolor)
+	- [CrosshairChar](#crosshairchar)
+	- [CrosshairCharOutter](#crosshaircharoutter)
+	- [Offset](#offset)
+	- [FireworksMode](#fireworksmode)
 - [Waterfall](#waterfall)
+	- [Origin](#origin)
+	- [ReverseMode](#reversemode-1)
+	- [Mode](#mode)
+	- [StartWidthPercent](#startwidthpercent)
+	- [EndWidthPercent](#endwidthpercent)
+	- [Speed](#speed-1)
+	- [FadeRate](#faderate-1)
+	- [MaxStreams](#maxstreams)
+	- [Thickness](#thickness)
+	- [TriggerThreshold](#triggerthreshold)
+	- [OnlySpawnOnThreshold](#onlyspawnonthreshold)
+	- [MidpointChange](#midpointchange)
+	- [EndpointChange](#endpointchange)
+	- [VerticalChars](#verticalchars)
+	- [HorizontalChars](#horizontalchars)
+	- [CurveIntensityVertical](#curveintensityvertical)
+	- [CurveIntensityHorizontal](#curveintensityhorizontal)
+	- [CurveChar](#curvechar)
+	- [RainbowMode](#rainbowmode)
+	- [RainbowFadeBright](#rainbowfadebright)
+	- [RainbowFadeColor](#rainbowfadecolor)
+	- [RainbowFadeDark](#rainbowfadedark)
+	- [RainbowFadeDarkGray](#rainbowfadedarkgray)
+	- [NormalFadeWhite](#normalfadewhite)
+	- [NormalFadeGray](#normalfadegray)
+	- [NormalFadeDarkGray](#normalfadedarkgray)
+	- [Color](#color)
 - [Shape](#shape)
+	- [Type](#type)
+	- [Layout](#layout)
+	- [VolumeSensitivity](#volumesensitivity)
+	- [TriggerThreshold](#triggerthreshold-1)
+	- [MaxSizePercent](#maxsizepercent)
+	- [MinSizePercent](#minsizepercent)
+	- [Count](#count)
+	- [ConcentricLayers](#concentriclayers)
+	- [ConcentricPadding](#concentricpadding)
+	- [Thickness](#thickness-1)
+	- [ThicknessMax](#thicknessmax)
+	- [QuadrantCentered](#quadrantcentered)
+	- [QuadrantIndices](#quadrantindices)
+	- [QuadrantGapDivisor](#quadrantgapdivisor)
+	- [UseCustomColor](#usecustomcolor)
+	- [UniformColor](#uniformcolor)
+	- [CustomColors](#customcolors)
+	- [ReverseMode](#reversemode-2)
+	- [ReverseVolumeSensitivity](#reversevolumesensitivity)
+	- [SmoothMode](#smoothmode)
+	- [LerpFactor](#lerpfactor)
+	- [Character](#character)
+	- [VerticalStack](#verticalstack)
+	- [CircleSegmentDensity](#circlesegmentdensity)
+	- [CircleMinSegments](#circleminsegments)
+	- [CircleMaxSegments](#circlemaxsegments)
+	- [SquareWidthRatio](#squarewidthratio)
+	- [SquareHeightRatio](#squareheightratio)
+	- [TriangleSideMultiplier](#trianglesidemultiplier)
+	- [TriangleHeightMultiplier](#triangleheightmultiplier)
+	- [TriangleAspectCorrection](#triangleaspectcorrection)
+	- [PyramidRowSpacing](#pyramidrowspacing)
+	- [PolygonSides](#polygonsides)
+	- [FillMode](#fillmode)
+	- [FillSpacing](#fillspacing)
 - [Equalizer](#equalizer)
+	- [Origin](#origin-1)
+	- [ColorMode](#colormode-1)
+	- [UniformColor](#uniformcolor-1)
+	- [ColorPattern](#colorpattern)
+	- [GradientColors](#gradientcolors)
+	- [SolidBands](#solidbands)
+	- [SmoothMode](#smoothmode-1)
+	- [LerpFactor](#lerpfactor-1)
+	- [Direction](#direction)
+	- [BandCharacter](#bandcharacter)
+	- [BandSpacing](#bandspacing)
+	- [MaxBandHeightPercent](#maxbandheightpercent)
+	- [MinBandHeightPercent](#minbandheightpercent)
+	- [HorizontalWhenCentered](#horizontalwhencentered)
 
 ---
 
@@ -94,6 +270,8 @@ Switches to a raster font when using DirectWrite render mode. Fixes block charac
 #### true/false | bool
 Launches in exclusive fullscreen mode, hiding the taskbar and title bar.
 
+**[Back to Top](#settings)**
+
 ## Font
 Font settings dictate which type is displayed when rendering characters. Only 1 font can be rendered at a time. Fonts may vary from system to system, the default font will always be Consolas (default font on most systems).
 Some fonts can introduce character encoding issues. Enabling raster font usage can alleviate some of these encoding issues but not all.
@@ -154,6 +332,8 @@ Safe Mode Range: 8 - 48
 #### true/false | bool
 If true, renders the custom font in bold weight (700). If false, uses normal weight (400).
 
+**[Back to Top](#settings)**
+
 ## Rendering
 Rendering settings can be used to set the active Rendering Mode (see RendererMode), dedicate more CPU usage to the program if needed or introduce deliberate slowdowns to achieve certain effects (see EnableYield/EnableSpinWait).
 FPS can be seen with debug features enabled. Some rendering modes' FPS craters depending on screen size, but offer certain effects that may be desired.
@@ -212,7 +392,7 @@ DirectWrite
 - **DirtyRect:** Renders on changed values in the visual buffer
 - **RowBatched:** Renders buffer one row at a time, very fast but only one color can be used
 - **DirectWrite:** Renders entire visual buffer at once, has character encoding limitations, recommend to use RasterFont - fastest
-- 
+
 ### RowBatchColor
 #### ConsoleColor | enum
 Foreground color used when RendererMode is set to RowBatched. All text on screen will use this single color. Accepts any ConsoleColor value.
@@ -236,13 +416,15 @@ Yellow
 White
 ```
 
+**[Back to Top](#settings)**
+
 ## Window
 Window settings can be used to modify the program's window behaviour. Via these you can; 
 - Force the window to always be on top of other windows 
 - Launch full screen 
 - Launch at specific sizes or certain positions
 - Change the default background color
-- 
+
 The background color of the window can also be set here via BackgroundColor
 
 ### BackgroundColor
@@ -361,6 +543,8 @@ Safe Mode Range: 1 - 10
 #### ConsoleColor[]
 Array of default ConsoleColor values used throughout the program for cycling and fallback colors. Accepts any ConsoleColor values in any order. Must contain at least one entry.
 
+**[Back to Top](#settings)**
+
 ## AudioCapture
 Specific audio parameters can be set here, including; 
 - Selecting default audio device 
@@ -428,6 +612,8 @@ Safe Mode Range: 0.01 - 0.2
 How much louder than the average volume a spike must be to trigger. Lower values are more sensitive (1.0 = any increase triggers). Higher values require a more pronounced beat.
 Safe Mode Range: 1.0 - 2.5
 
+**[Back to Top](#settings)**
+
 ## FFT
 FFT settings can be used to adjust frequency analysis for certain visuals that use frequencies.
 Frequency enabled visualizers include:
@@ -462,6 +648,8 @@ Safe Mode Range: 16500.0 - 20000.0
 #### decimal | float
 If DedicatedBassBand is enabled, this value is the max amount (Hz) dedicated to the first band. Cannot be lower than HighPass and cannot be greater than LowPass.
 Safe Mode Range: 100.0 - 300.0
+
+**[Back to Top](#settings)**
 
 ## Rings
 *Sensitivity Type: Volume, Peak, RMS*
@@ -603,6 +791,8 @@ Safe Mode Range: 1 - 10
 #### true/false | bool
 Not yet implemented. Intended to randomize the ring origin point on each spike.
 
+**[Back to Top](#settings)**
+
 ## Waterfall
 *Sensitivity Type: Volume, Peak, RMS*
 The following settings are used to manipulate the output when using the Waterfall visualizer.
@@ -642,7 +832,7 @@ All
 - **TopBottom:** Waterfalls shoot from the top and bottom only.
 - **LeftRight:** Waterfalls shoot from the left and right only.
 - **All:** Waterfalls shoot from all directions simultaneously.
-- 
+
 ### StartWidthPercent
 #### decimal | float
 Width of the waterfall stream at its origin point, as a percentage of the console width or height depending on flow direction.
@@ -756,6 +946,8 @@ Safe Mode Range: 0.0 - 1.0
 ### Color
 #### ConsoleColor
 Default color for streams when RainbowMode is false. Accepts any ConsoleColor value.
+
+**[Back to Top](#settings)**
 
 ## Shape
 *Sensitivity Type: Volume, RMS*
@@ -961,6 +1153,8 @@ If true, fills the interior of the shape with the shape's color. The outline sti
 Spacing between fill characters. 0 creates solid fill. 1 fills every other pixel. Higher values create sparse dithering effects.
 Safe Mode Range: 0 - 3
 
+**[Back to Top](#settings)**
+
 ## EqualizerSettings
 *Sensitivity Type: Frequency Spectrum**
 The following settings are used to manipulate the output when using the Equalizer visualizer.
@@ -1054,3 +1248,5 @@ Safe Mode Range: 0.00 - 0.49
 ### HorizontalWhenCentered
 #### true/false | bool
 If Origin is Center, and this value is true then bands will react horizontally instead of vertically.
+
+**[Back to Top](#settings)**
