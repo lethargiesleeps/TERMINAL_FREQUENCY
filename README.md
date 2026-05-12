@@ -15,7 +15,7 @@ A Windows console program for audio visualizations. Captures any audio playing f
 
 ## GETTING STARTED
 Download the [Latest Release](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/releases/tag/alpha) `.zip` file. Extract the archive and run the application from within the extracted folder.
-The `settings.json` file should be in whatever folder the application is launched from. If one does not exist, it will be auto-generated.\
+The `settings.json` file should be in whatever folder the application is launched from. If one does not exist, it will be auto-generated.\\
 **It is highly recommended to initially run the program with the default settings.**\
 If you've accidentally modified some settings that are causing issues you can launch the program, go into the visualizer, press F3 to restore to defaults, then F1 to save. This will overwrite any changes in `settings.json` back to defaults.\
 **If the program crashes at launch, or crashes when entering the visualizer**, copy the contents of `settings_backup.json` from the repository, and paste it into your local `settings.json` where you are running the program. Each release will have an up-to-date backup in the `.zip` folder as well.
