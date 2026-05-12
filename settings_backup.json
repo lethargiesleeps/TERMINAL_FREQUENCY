@@ -1,5 +1,5 @@
 {
-    "GlobalSettings": {
+    "Global": {
         "BypassStartupScreen": false,
         "ForceDefaultSettings": false,
         "EnableDebugMode": true,
@@ -9,11 +9,11 @@
         "ShowGlobalControls": true,
         "DefaultMode": "Rings",
         "ConsoleInstances": 1,
-        "SaveOnExit": true,
+        "SaveOnExit": false,
         "EnableRasterOnDirectWrite": true,
         "EnableExclusiveMode": false
     },
-    "FontSettings": {
+    "Font": {
         "EnableRasterFont": true,
         "RasterFontType": "EightByTwelve",
         "EnableCustomFont": false,
@@ -22,7 +22,7 @@
         "CustomFontSize": 16,
         "CustomFontBold": false
     },
-    "RendererSettings": {
+    "Rendering": {
         "TargetFps": 120,
         "EnableYield": false,
         "YieldTimeout": 33,
@@ -33,7 +33,7 @@
         "RendererMode": "DirectWrite",
         "RowBatchColor": "White"
     },
-    "ConsoleSettings": {
+    "Window": {
         "BackgroundColor": "Black",
         "DisableCursor": true,
         "DisableAppTitle": false,
@@ -79,8 +79,10 @@
             "Black"
         ]
     },
-    "AudioCaptureSettings": {
+    "AudioCapture": {
         "SpecifyAudioDevice": false,
+        "UserSelectedDevice": true,
+        "AudioDeviceIndex": 0,
         "AudioSampleResolution": 4,
         "RmsMultiplier": 100.0,
         "NoiseGateFloor": 0.3,
@@ -91,7 +93,15 @@
         "SpikeVolumeMinimum": 0.05,
         "SpikeRatio": 1.15
     },
-    "RingsSettings": {
+    "FFT": {
+        "BandCount": 8,
+        "Sensitivity": 1.0,
+        "DedicatedBassBand": true,
+        "HighPass": 30.0,
+        "LowPass": 18000.0,
+        "BassCutoff": 150.0
+    },
+    "Rings": {
         "ReverseMode": false,
         "RadiusMin": 50.0,
         "Radius": 5.0,
@@ -124,7 +134,7 @@
         "Offset": 2,
         "FireworksMode": false
     },
-    "WaterfallSettings": {
+    "Waterfall": {
         "Origin": "Top",
         "ReverseMode": false,
         "Mode": "Normal",
@@ -161,7 +171,7 @@
         "NormalFadeDarkGray": 0.85,
         "Color": "Gray"
     },
-    "ShapeSettings": {
+    "Shape": {
         "Type": "Circle",
         "Layout": "Single",
         "VolumeSensitivity": 0.3,
@@ -202,5 +212,28 @@
         "PolygonSides": 5,
         "FillMode": false,
         "FillSpacing": 0
+    },
+    "Equalizer": {
+        "Origin": "Bottom",
+        "ColorMode": "Uniform",
+        "UniformColor": "White",
+        "ColorPattern": [
+            "White",
+            "Green"
+        ],
+        "GradientColors": [
+            "Green",
+            "Yellow",
+            "Red"
+        ],
+        "SolidBands": true,
+        "SmoothMode": true,
+        "LerpFactor": 0.4,
+        "Direction": "LowToHigh",
+        "BandCharacter": "█",
+        "BandSpacing": 1,
+        "MaxBandHeightPercent": 0.99,
+        "MinBandHeightPercent": 0.01,
+        "HorizontalWhenCentered": false
     }
 }
