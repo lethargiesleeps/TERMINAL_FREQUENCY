@@ -26,14 +26,16 @@ If you've accidentally modified some settings that are causing issues you can la
 More stuff coming soon
 
 ### AUDIO CAPTURE
-By default, TERMINAL_FREQUENCY uses the first available audio device on a system via WASAPI Loopback. Specific devices can be set in `settings.json` by settings *SpecifyAudioDevice* to `true` or `0`.
+By default, TERMINAL_FREQUENCY uses the first available audio device on a system via WASAPI Loopback. Specific devices can be set in `settings.json` by settings *SpecifyAudioDevice* to `true` or `0`.  
 If `SpecifyAudioDevice` is `true`, the program no longer uses WASAPI Loopback. Devices can be set via `AudioDeviceIndex`, an invalid index will default to either first or last available device.
 
-**NOTE: NOT ALL DEVICES LISTED MAY PRODUCE VISUALIZATIONS, SOME PLAYING AROUND WILL BE NEEDED.**  
+**NOTE: NOT ALL DEVICES LISTED MAY PRODUCE VISUALIZATIONS, SOME PLAYING AROUND WILL BE NEEDED.**
+
 You can see a list of all available devices on the host system by setting `UserSelectedDevice` to `true` or `0`. This will open a prompt when launching the program that shows the list of devices, and their corresponding index to select. From here you can enter the corresponding value, this will bypass whatever is set via `AudioDeviceIndex`.
 
 #### SPECIFIC DEVICE CAPTURE AND USING MICROPHONE AS CAPTURE
-The program may crash if certain Windows privacy settings are enabled. For example, if selected a microphone input as primary audio capture, you need to ensure the App has access to record or it will crash. Microphone permissions can bet set via searching *Microphone Privacy Settings* in the Windows start menu and allowing apps to access it.  
+The program may crash if certain Windows privacy settings are enabled. For example, if selected a microphone input as primary audio capture, you need to ensure the App has access to record or it will crash. Microphone permissions can bet set via searching *Microphone Privacy Settings* in the Windows start menu and allowing apps to access it.
+
 **For privacy reasons, TERMINAL_FREQUENCY does not store recorded audio, you can confirm this by seeing Core.Audio.AudioCapture code as well as Core.Audio.FftAnalyzer. Audio is only recorded to process volumes, frequencies and stereo imaging to properly visualize.**
 
 #### DEVICE ROUTING
