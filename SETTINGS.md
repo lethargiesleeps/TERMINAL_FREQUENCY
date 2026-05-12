@@ -51,9 +51,11 @@ Displays extra debug information including visualization controls, volume levels
 #### true/false | bool
 If true, clamps setting values to their safe ranges when loading from JSON.
 
-### EnableErrorMode [NOT IMPLEMENTED]
+### EnableErrorMode
 #### true/false | bool
 If true, prints all errors for values outside safe ranges to the console and pauses for input.
+
+**NOT IMPLENTED**
 
 ### EnableControlLock
 #### true/false | bool
