@@ -369,7 +369,17 @@ Specific audio parameters can be set here, including;
 
 ### SpecifyAudioDevice
 #### true/false | bool
-If true, prompts the user to select an audio capture device from a list at program launch. If false, automatically captures the system audio output.
+If true, user can specify which device to use either via UserSelectedDevice which prompts for user input or AudioDeviceIndex. If false, uses WASAPI Loopback capture at first available device.
+**NOTE: This option can be turned on and allow for Microphone input but specifying the device index.**
+**NOTE: A specific device MUST BE determined before launching the visualizer, selected devices currently cannot be switched while visualizer is running. You will have to close and reopen the program to modify which device to use.**
+
+### UserSelectedDevice
+#### true/false | bool
+If true, and SpecifyAudioDevice is true, a prompt appears to allow the user to select which specific device to use. The index and the device name is shown. When device is selected, AudioDeviceIndex is overwritten by this new index.
+
+### AudioDeviceIndex
+#### whole number | int
+If SpecifyAudioDevice is true, the index set here is used to specify which AudioDevice to capture from. If below 0, the first enumerated device is used as fallback. If the device index does not match an available device, the last available device is used by default.
 
 ### AudioSampleResolution
 #### whole number | int

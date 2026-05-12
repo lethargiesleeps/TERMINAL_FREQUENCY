@@ -1,4 +1,5 @@
-﻿using NAudio.Wave;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using System;
 using System.Diagnostics;
 using System.Text;
@@ -17,10 +18,13 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         public event Action<float[]>? OnFrequencyData;
 
         private WasapiLoopbackCapture? _capture;
-        private int _deviceIndex = -1; //fallback audio device
+        private IWaveIn? _waveIn;
+        private int _deviceIndex = 0; //fallback audio device
         private Settings _settings;
         private IVisualization? _currentVisualization;
-
+        private MMDeviceEnumerator _mmDeviceEnumerator;
+        private MMDeviceCollection _devices;
+        private string _deviceName;
         public float SmoothedVolume { get; private set; } = 0;
         public float PeakVolume { get; private set; } = 0;
         public FftAnalyzer FftAnalyzer { get; private set; }
@@ -30,31 +34,71 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         public AudioCapture(Settings settings)
         {
             _settings = settings;
-            _deviceIndex = -1;
             FftAnalyzer ??= new FftAnalyzer(_settings);
         }
 
         public AudioCapture(Settings settings, int deviceIndex)
         {
             _settings = settings;
-            _deviceIndex = deviceIndex < 0 ? -1 : deviceIndex;
+            _deviceIndex = deviceIndex;
             FftAnalyzer ??= new FftAnalyzer(_settings);
         }
 
         public void Start()
         {
-            _capture = new WasapiLoopbackCapture();
-            _capture.DataAvailable += OnDataAvailable;
-            _capture.StartRecording();
+
+            if(_settings.AudioCaptureSettings.SpecifyAudioDevice)
+            {
+                _mmDeviceEnumerator = new MMDeviceEnumerator();
+                _devices = _mmDeviceEnumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+                var selectedDevice = _devices[_deviceIndex];
+                _deviceName = selectedDevice.FriendlyName;
+
+                if (selectedDevice.DataFlow == DataFlow.Capture)
+                {
+                    // Microphone / line-in
+                    var capture = new WasapiCapture(selectedDevice);
+                    capture.ShareMode = AudioClientShareMode.Shared;
+                    capture.DataAvailable += OnDataAvailable;
+                    try
+                    {
+                        capture.StartRecording();
+                        _waveIn = capture;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Console.WriteLine("Microphone access denied. Please enable in Windows Settings → Privacy → Microphone.");
+                    }
+
+                }
+                else
+                {
+                    // Render device loopback (headphones, speakers)
+                    var loopback = new WasapiLoopbackCapture(selectedDevice);
+                    loopback.DataAvailable += OnDataAvailable;
+                    loopback.StartRecording();
+                    _waveIn = loopback;
+                }
+            }
+            else
+            {
+                var capture = new WasapiLoopbackCapture();
+                capture.DataAvailable += OnDataAvailable;
+                capture.StartRecording();
+                _deviceName = "System Output (Loopback)";
+                _waveIn = capture;
+            }
+            
+
         }
 
         public void Stop()
         {
-            if (_capture != null)
+            if (_waveIn != null)
             {
-                _capture.StopRecording();
-                _capture.Dispose();
-                _capture = null;
+                _waveIn.StopRecording();
+                _waveIn.Dispose();
+                _waveIn = null;
             }
         }
 
@@ -102,7 +146,7 @@ namespace TERMINAL_FREQUENCY.Core.Audio
 
             if (_currentVisualization is IFrequencyReactive)
             {
-                if (_capture != null && FftAnalyzer != null)
+                if (_waveIn != null && FftAnalyzer != null)
                 {
                     try
                     {
@@ -110,8 +154,8 @@ namespace TERMINAL_FREQUENCY.Core.Audio
                             e.Buffer,
                             e.BytesRecorded,
                             _settings.AudioCaptureSettings.AudioSampleResolution,
-                            _capture.WaveFormat.Channels,
-                            _capture.WaveFormat.SampleRate,
+                            _waveIn.WaveFormat.Channels,
+                            _waveIn.WaveFormat.SampleRate,
                             _settings.FftSettings.BandCount,
                             _settings.FftSettings.Sensitivity,
                             _settings.FftSettings.HighPass,
@@ -140,6 +184,17 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         public void UpdateSettings(Settings newSettings)
         {
             _settings = newSettings;
+        }
+
+        public string GetDeviceName()
+        {
+            if (_waveIn == null)
+                return "No device";
+
+            if (_waveIn is WaveInEvent waveIn)
+                return WaveInEvent.GetCapabilities(waveIn.DeviceNumber).ProductName;
+
+            return _deviceName; // Set during WASAPI capture setup
         }
     }
 }

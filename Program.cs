@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Core.Audio;
@@ -28,6 +27,7 @@ namespace TERMINAL_FREQUENCY
         private static bool _isDebug = Debugger.IsAttached;
         private static bool _isChild = false;
         private static bool _isSavingOrLoading = false;
+        private static int _selectedDeviceIndex = -1;
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -92,13 +92,20 @@ namespace TERMINAL_FREQUENCY
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
             CLI.HandleCliArgs(args, _settings.GlobalSettings);
 
-            HandleConsoleWindow();
+            HandleConsoleWindow(); //Sets all windows settings
+
+            //if enabled, user selects audio device, otherwise use loopback capture
+            if (_settings.AudioCaptureSettings.UserSelectedDevice && _settings.AudioCaptureSettings.SpecifyAudioDevice)
+                _selectedDeviceIndex = Utility.SelectAudioDevice();
 
             try
             {
                 _visualizations = Utility.RefreshVisuals(_settings);
 
-                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
+                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice 
+                    ? new AudioCapture(_settings, (_selectedDeviceIndex > -1 ? _selectedDeviceIndex : _settings.AudioCaptureSettings.AudioDeviceIndex)) 
+                    : new AudioCapture(_settings);
+
                 if (audioCapture == null)
                 {
                     Console.WriteLine("\nNo audio device selected. Exiting...");
@@ -283,7 +290,7 @@ namespace TERMINAL_FREQUENCY
                             string modeName = Utility.GetModeName(_currentMode);
                             string line1 = $"VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | RMS: {audioCapture.RMS:F2}";
                             string line2 = $"MODE: {modeName}";
-                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
+                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")} | DEVICE: {audioCapture.GetDeviceName()}";
 
                             buffer.DrawString(0, 0, line2, debugTextColor);
                             buffer.DrawString(0, 1, line3, debugTextColor);
