@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TERMINAL_FREQUENCY.Config.Settings;
+﻿using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Shape
 {
+    /// <summary>
+    /// Renders configurable geometric shapes that respond to volume levels and audio spikes.
+    /// Implements <see cref="IVolumeReactive"/> for continuous size changes and <see cref="ISpikeReactive"/>
+    /// for pump effects on beats. Supports multiple shape types (circle, square, diamond, polygon, triangles),
+    /// seven layout modes (single, vertical, horizontal, pyramid, quadrant, concentric),
+    /// reverse mode, fill mode, custom colors, and smooth lerp transitions.
+    /// </summary>
     public class Shape : IVolumeReactive, ISpikeReactive
     {
         private string _name = "SHAPE";
@@ -25,7 +26,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         public bool IsSmoothingEnabled { get; set; }
         public bool IsCustomColorEnabled { get; set; }
         public bool IsCyclingEnabled { get; set; }
-        
+
+        /// <summary>
+        /// Initializes the shape visualization with the given settings.
+        /// Reads initial state for reverse mode, smooth mode, and custom colors from <see cref="ShapeSettings"/>.
+        /// </summary>
+        /// <param name="settings">Loaded or runtime settings to be used</param>
         public Shape(Settings settings)
         {
             _settings = settings;
@@ -35,6 +41,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         }
 
         #region IVisualization
+        /// <summary>
+        /// Updates the shape size based on the current volume level.
+        /// In normal mode, higher volume increases the size from <see cref="ShapeSettings.MinSizePercent"/>
+        /// toward <see cref="ShapeSettings.MaxSizePercent"/>. In reverse mode, higher volume decreases the size.
+        /// Uses <see cref="ShapeSettings.LerpFactor"/> for smooth transitions when enabled.
+        /// </summary>
+        /// <param name="volume">The smoothed audio volume level from <see cref="AudioCapture"/>.</param>
         public void Update(float volume)
         {
             IsReversed = _settings.ShapeSettings.ReverseMode;
@@ -42,7 +55,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             IsCustomColorEnabled = _settings.ShapeSettings.UseCustomColor;
 
             float maxSize = GetEffectiveMaxSize();
-            float minSize = GetMinSize();
+            float minSize = _settings.ShapeSettings.MinSizePercent;
             float scaledVolume;
 
             if (IsReversed)
@@ -79,16 +92,25 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 : _targetSize;
         }
 
+        /// <summary>
+        /// Triggers a pump effect on audio spikes. Sets the target size to max (or min if reversed)
+        /// for an instant visual burst. If smooth mode is off, snaps immediately.
+        /// </summary>
         public void OnSpike()
         {
-            _targetSize = IsReversed ? GetMinSize() : GetEffectiveMaxSize();
+            _targetSize = IsReversed ? _settings.ShapeSettings.MinSizePercent : GetEffectiveMaxSize();
             if (!IsSmoothingEnabled) _currentSize = _targetSize;
         }
 
+        /// <summary>Calls <see cref="OnSpike()"/>. Required by <see cref="ISpikeReactive"/>.</summary>
         public void OnSpike(float intensity) => OnSpike();
         #endregion
 
         #region LayoutMethods
+        /// <summary>
+        /// Routes drawing to the appropriate layout method based on <see cref="ShapeSettings.Layout"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         public void Draw(ScreenBuffer buffer)
         {
             switch (_settings.ShapeSettings.Layout)
@@ -105,6 +127,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a single shape centered in the console window.
+        /// If <see cref="ShapeSettings.FillMode"/> is enabled, draws with full-thickness solid fill.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawSingle(ScreenBuffer buffer)
         {
             int centerX = buffer.Width / 2;
@@ -117,6 +144,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
         }
 
+        /// <summary>
+        /// Draws shapes stacked vertically. For count > 1, divides the screen vertically
+        /// and centers each shape in its section. Falls back to <see cref="DrawSingle"/> for count of 1.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawVertical(ScreenBuffer buffer)
         {
             int count = _settings.ShapeSettings.Count;
@@ -145,6 +177,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
         }
 
+        /// <summary>
+        /// Draws shapes arranged horizontally. For count > 1, divides the screen horizontally
+        /// and centers each shape in its section. Falls back to <see cref="DrawSingle"/> for count of 1.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawHorizontal(ScreenBuffer buffer)
         {
             int count = _settings.ShapeSettings.Count;
@@ -170,6 +207,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws shapes in a pyramid arrangement. Count of 3 places one shape on top and two below.
+        /// Count >= 4 inverts the pyramid (two on top, one below). Count < 3 falls back to <see cref="DrawSingle"/>.
+        /// Row spacing is controlled by <see cref="ShapeSettings.PyramidRowSpacing"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawPyramid(ScreenBuffer buffer)
         {
             int count = _settings.ShapeSettings.Count;
@@ -216,6 +259,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws shapes in screen quadrants. Supports 1-4 shapes with automatic placement.
+        /// For 1 shape, forces centered mode. For 2 shapes, uses diagonal corners.
+        /// For 3 shapes, uses three corners. For 4 shapes, uses all four quadrants or centered cluster.
+        /// Custom quadrant indices can be set via <see cref="ShapeSettings.QuadrantIndices"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawQuadrant(ScreenBuffer buffer)
         {
             int count = _settings.ShapeSettings.Count;
@@ -258,6 +308,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws concentric rings of shapes from a center point. Each ring is a proportionally smaller
+        /// copy of the outer shape. <see cref="ShapeSettings.ConcentricLayers"/> controls the number of rings.
+        /// <see cref="ShapeSettings.ConcentricPadding"/> controls spacing between rings.
+        /// Falls back to <see cref="DrawSingle"/> for a single layer.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawConcentric(ScreenBuffer buffer)
         {
             int count = _settings.ShapeSettings.ConcentricLayers;
@@ -299,6 +356,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         #endregion
 
         #region ShapeDrawingMethods
+        /// <summary>
+        /// Dispatches drawing to the appropriate shape-specific method based on <see cref="ShapeSettings.Type"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawShapeAt(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             if (radius <= 0) return;
@@ -326,6 +392,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a circle using radial segments. When filling (thickness >= radius), boosts segment density
+        /// and minimum segments for solid appearance. Uses <see cref="ShapeSettings.Character"/> for pixels.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawCircle(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             bool isFill = thickness >= radius - 1;
@@ -362,6 +438,18 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a square (or rectangle) using four edges. When filling (thickness >= radius),
+        /// draws solid rows instead of just edges for a completely filled shape.
+        /// Supports configurable width and height ratios via <see cref="ShapeSettings.SquareWidthRatio"/>
+        /// and <see cref="ShapeSettings.SquareHeightRatio"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawSquare(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int halfWidth = (int)(radius * _settings.ShapeSettings.SquareWidthRatio);
@@ -395,6 +483,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a diamond (rotated square). When filling, uses a scanline approach row-by-row
+        /// for solid fill. In outline mode, draws four edges using Bresenham's line algorithm.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawDiamond(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int halfWidth = radius;
@@ -425,6 +523,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a line from (x0,y0) to (x1,y1) using Bresenham's line algorithm.
+        /// Produces clean diagonal lines for diamond and polygon shapes.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="x0">Starting X position of the line</param>
+        /// <param name="y0">Starting Y position of the line</param>
+        /// <param name="x1">Ending X position of the line</param>
+        /// <param name="y1">Ending Y position of the line</param>
+        /// <param name="color">Colour of the line</param>
         private void DrawLine(ScreenBuffer buffer, int x0, int y0, int x1, int y1, ConsoleColor color)
         {
             //draw the line from x0/y0 to x1/y1 using bresenham algo
@@ -455,6 +563,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a regular polygon with the number of sides specified by <see cref="ShapeSettings.PolygonSides"/>.
+        /// When filling, increases the side count for a smoother shape. Vertices are calculated on a circle
+        /// then connected with lines. An offset of -PI/2 ensures a flat top edge.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             bool isFill = thickness >= radius - 1;
@@ -485,6 +604,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws an upward-pointing triangle. Side length and proportions controlled by
+        /// <see cref="ShapeSettings.TriangleSideMultiplier"/>, <see cref="ShapeSettings.TriangleHeightMultiplier"/>,
+        /// and <see cref="ShapeSettings.TriangleAspectCorrection"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawTriangleUp(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
@@ -505,6 +635,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             }
         }
 
+        /// <summary>
+        /// Draws a downward-pointing triangle. Uses the same proportion settings as <see cref="DrawTriangleUp"/>.
+        /// </summary>
+        /// <param name="buffer">The screen buffer to draw to.</param>
+        /// <param name="centerX">Calculated center of X axis to draw buffer to.</param>
+        /// <param name="centerY">Calculated center of Y axis to draw buffer to.</param>
+        /// <param name="radius">Radius/size of shape.</param>
+        /// <param name="thickness">Thickness of shape in pixels.</param>
+        /// <param name="color">Colour of shape.</param>
         private void DrawTriangleDown(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
@@ -527,6 +666,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         #endregion
 
         #region HelperMethods
+        /// <summary>
+        /// Returns the effective maximum size based on layout and shape count.
+        /// Concentric layout always uses full <see cref="ShapeSettings.MaxSizePercent"/>.
+        /// Single shapes use full size. Multi-shape layouts divide the max by the shape count.
+        /// </summary>
         private float GetEffectiveMaxSize()
         {
             if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
@@ -545,8 +689,11 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return _settings.ShapeSettings.MaxSizePercent / count;
         }
 
-        private float GetMinSize() => _settings.ShapeSettings.MinSizePercent;
-
+        /// <summary>
+        /// Calculates effective border thickness scaled by the number of shapes on screen.
+        /// More shapes reduce the thickness to prevent overcrowding. Clamped by <see cref="ShapeSettings.ThicknessMax"/>.
+        /// </summary>
+        /// <param name="shapeCount">How many shapes are in the window to determine effective thickness</param>
         private int GetEffectiveThickness(int shapeCount)
         {
             int thickness = _settings.ShapeSettings.Thickness;
@@ -556,6 +703,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return Math.Min(thickness, maxThickness);
         }
 
+        /// <summary>
+        /// Returns the color for a shape at the given index. If <see cref="IsCustomColorEnabled"/>,
+        /// picks from <see cref="ShapeSettings.CustomColors"/> by index (wrapping as needed).
+        /// Otherwise returns <see cref="ShapeSettings.UniformColor"/>.
+        /// </summary>
+        /// <param name="shapeIndex">The index of the shape within the current layout (0-based).</param>
+        /// <returns>The <see cref="ConsoleColor"/> for this shape based on custom or uniform color settings.</returns>
         private ConsoleColor GetColor(int shapeIndex)
         {
             if (IsCustomColorEnabled)
@@ -568,6 +722,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return _settings.ShapeSettings.UniformColor;
         }
 
+        /// <summary>
+        /// Calculates the half-width of a regular polygon at a given row position.
+        /// Uses sine to determine how far the polygon edge extends from center at each row.
+        /// </summary>
+        /// <param name="radius">The radius of the polygon.</param>
+        /// <param name="sides">Number of sides of the polygon.</param>
+        /// <param name="rowProgress">Progress through the polygon from top (0) to center (0.5) to bottom (1).</param>
         private int CalculatePolygonHalfWidth(int radius, int sides, float rowProgress)
         {
             //polygon width varies with row...widest at center, narrows toward top/bottom
@@ -578,6 +739,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return (int)(radius * normalizedWidth);
         }
 
+        /// <summary>
+        /// Returns the Y position for a shape in a vertical layout.
+        /// Evenly divides the screen height among the shape count and positions each shape
+        /// at the center of its allocated space.
+        /// </summary>
+        /// <param name="height">Total console height in characters.</param>
+        /// <param name="count">Number of shapes in the layout.</param>
+        /// <param name="index">Index of this shape (0-based).</param>
+        /// <param name="spacing">Spacing between shapes in characters.</param>
         private int GetVerticalPosition(int height, int count, int index, int spacing)
         {
             if (count == 1) return height / 2;
@@ -586,6 +756,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return totalSpace * index + totalSpace / 2;
         }
 
+        /// <summary>
+        /// Returns the X position for a shape in a horizontal layout.
+        /// Evenly divides the screen width among the shape count and positions each shape
+        /// at the center of its allocated space.
+        /// </summary>
+        /// <param name="width">Total console width in characters.</param>
+        /// <param name="count">Number of shapes in the layout.</param>
+        /// <param name="index">Index of this shape (0-based).</param>
+        /// <param name="spacing">Spacing between shapes in characters.</param>
         private int GetHorizontalPosition(int width, int count, int index, int spacing)
         {
             if (count == 1) return width / 2;
@@ -594,6 +773,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             return totalSpace * index + totalSpace / 2;
         }
 
+        /// <summary>
+        /// Determines which quadrant indices to use based on shape count.
+        /// Supports user-defined indices from <see cref="ShapeSettings.QuadrantIndices"/>
+        /// or automatic placement: 1=centered, 2=diagonal, 3=three corners, 4=all quadrants.
+        /// </summary>
+        /// <param name="count">The total number of shapes to place in quadrants.</param>
         private int[] GetQuadrantIndices(int count)
         {
             //user defined positions

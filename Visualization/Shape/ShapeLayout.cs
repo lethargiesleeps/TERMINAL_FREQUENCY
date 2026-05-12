@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TERMINAL_FREQUENCY.Visualization.Shape
+﻿namespace TERMINAL_FREQUENCY.Visualization.Shape
 {
+    /// <summary>
+    /// Enum to determine how the shapes are positioned inside the window.
+    /// </summary>
+    /// <see cref="Shape"/>
     public enum ShapeLayout
     {
         Single,

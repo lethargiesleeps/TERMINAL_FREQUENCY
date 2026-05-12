@@ -15,6 +15,10 @@ using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 namespace TERMINAL_FREQUENCY
 {
+    /// <summary>
+    /// Main execution point of program. Launch setup is done here.
+    /// Handles input, rendering loop, creation and parsing of settings, and debug mode information.
+    /// </summary>
     class Program
     {
         private static Settings _settings;
@@ -37,8 +41,13 @@ namespace TERMINAL_FREQUENCY
 
         private const float SAMPLE_DURATION_SECONDS = 1.0f;
 
+        /// <summary>
+        /// Main function of program where everything happens.
+        /// </summary>
+        /// <param name="args">Command line arguments, not fully implemented</param>
         static void Main(string[] args)
         {
+            //ensure settings properly configured
             try
             {
                 _settings = SettingsManager.Load();
@@ -62,6 +71,7 @@ namespace TERMINAL_FREQUENCY
                 if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
             }
 
+            //setup console settings, font, audio capture and renderer
             _exclusiveMode = _settings.GlobalSettings.EnableExclusiveMode;
             _currentMode = (int)_settings.GlobalSettings.DefaultMode;
             _colors = _settings.ConsoleSettings.DefaultColors;
@@ -100,8 +110,9 @@ namespace TERMINAL_FREQUENCY
 
             try
             {
-                _visualizations = Utility.RefreshVisuals(_settings);
+                _visualizations = Utility.RefreshVisuals(_settings); //instantiate new visual classes
 
+                //configure audio capture
                 AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice 
                     ? new AudioCapture(_settings, (_selectedDeviceIndex > -1 ? _selectedDeviceIndex : _settings.AudioCaptureSettings.AudioDeviceIndex)) 
                     : new AudioCapture(_settings);
@@ -113,7 +124,7 @@ namespace TERMINAL_FREQUENCY
                     return;
                 }
 
-
+                //configure renderer
                 ScreenBuffer buffer = new ScreenBuffer(_settings);
                 _currentVisualization = _visualizations[_currentMode];
 
@@ -139,7 +150,7 @@ namespace TERMINAL_FREQUENCY
                 };
 
 
-                //capture the audio
+                //start capture
                 audioCapture.Start();
 
                 _stopWatch = Stopwatch.StartNew(); //prep for FPS tracking
@@ -308,7 +319,7 @@ namespace TERMINAL_FREQUENCY
                             buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", fpsColor);
                         }
 
-                        buffer.Render();
+                        buffer.Render(); //main render
 
                         //yield settings
                         long targetTicks = Stopwatch.Frequency / _settings.RendererSettings.TargetFps;
@@ -348,6 +359,11 @@ namespace TERMINAL_FREQUENCY
 
         }
 
+        /// <summary>
+        /// Checks for a keyboard press while in main loop and handles accordingly.
+        /// </summary>
+        /// <param name="audioCapture">Global AudioCapture instance.</param>
+        /// <param name="buffer">Global ScreenBuffer (Renderer) instance</param>
         static void HandleInput(AudioCapture audioCapture, ScreenBuffer buffer)
         {
             while (Console.KeyAvailable)
@@ -583,7 +599,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.EqualizerSettings.Direction = Utility.CycleNextEnum(_settings.EqualizerSettings.Direction);
                         break;
 
-                    case ConsoleKey.O:
+                    case ConsoleKey.O: //decrement 1 or Origin toggle
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -617,7 +633,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.EqualizerSettings.Origin = Utility.CycleNextEnum(_settings.EqualizerSettings.Origin);
                         break;
 
-                    case ConsoleKey.P:
+                    case ConsoleKey.P: //increment 1
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -641,7 +657,7 @@ namespace TERMINAL_FREQUENCY
                         }
                         break;
 
-                    case ConsoleKey.OemMinus:
+                    case ConsoleKey.OemMinus: //decrement 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -660,7 +676,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.FftSettings.BandCount = Math.Max(4, _settings.FftSettings.BandCount - 2);
                         break;
 
-                    case ConsoleKey.OemPlus:
+                    case ConsoleKey.OemPlus: //increment 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -681,7 +697,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.FftSettings.BandCount = Math.Min(32, _settings.FftSettings.BandCount  + 2);
                         break;
 
-                    case ConsoleKey.D9:
+                    case ConsoleKey.D9: //decrement 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -700,7 +716,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
                         break;
 
-                    case ConsoleKey.D0:
+                    case ConsoleKey.D0: //increment 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
@@ -722,6 +738,11 @@ namespace TERMINAL_FREQUENCY
                 }
             }
         }
+
+        /// <summary>
+        /// Sets up the console window and configures based on values set in settings. Uses ConsoleWindow class extensively.
+        /// </summary>
+        /// <see cref="ConsoleWindow"/>
         static void HandleConsoleWindow()
         {
 

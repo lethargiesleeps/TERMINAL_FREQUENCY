@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TERMINAL_FREQUENCY.Config.Font
 {
+    /// <summary>
+    /// Font 'interface' used for manipulating font displayed on console.
+    /// </summary>
     public static class Font
     {
         [DllImport("kernel32.dll")]
@@ -42,6 +40,9 @@ namespace TERMINAL_FREQUENCY.Config.Font
         private static CONSOLE_FONT_INFO_EX _previousFont;
         private static bool _fontSaved = false;
         
+        /// <summary>
+        /// Saves a copy of whatever current font settings are being used.
+        /// </summary>
         public static void SaveCurrentFont()
         {
             nint handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -51,6 +52,9 @@ namespace TERMINAL_FREQUENCY.Config.Font
             _fontSaved = true;
         }
 
+        /// <summary>
+        /// Deubgging method that writes all current font info to attached debugger.
+        /// </summary>
         public static void DumpFontData()
         {
             nint handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -75,6 +79,10 @@ namespace TERMINAL_FREQUENCY.Config.Font
             }
         }
 
+        /// <summary>
+        /// Sets up the console to use a Raster font
+        /// </summary>
+        /// <param name="nFontIndex">Index of raster font.</param>
         public static void SetRasterFont(int nFontIndex)
         {
             if (nFontIndex < 0) return;
@@ -86,6 +94,13 @@ namespace TERMINAL_FREQUENCY.Config.Font
             SetCurrentConsoleFontEx(handle, false, ref fontInfo);
         }
 
+        /// <summary>
+        /// Sets up the console to utilize a font with user determined settings.
+        /// </summary>
+        /// <param name="fontFace">Type of font used <see cref="FontFace"/></param>
+        /// <param name="fontSize">Size of font in pixels.</param>
+        /// <param name="bold">Whether the font weight is 700 or 400</param>
+        /// <param name="fontFaceOverride">If provided and font is available on system, uses that font.</param>
         public static void SetCustomFont(FontFace fontFace, int fontSize, bool bold, string fontFaceOverride = "")
         {
             IntPtr handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -117,6 +132,10 @@ namespace TERMINAL_FREQUENCY.Config.Font
             }
         }
 
+        /// <summary>
+        /// Provide settings for Raster font.
+        /// </summary>
+        /// <param name="rasterFontType">Size of raster font determined from passed value. See <see cref="RasterFontType"/></param>
         public static void SetRasterFont(RasterFontType rasterFontType)
         {
             nint handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -144,6 +163,10 @@ namespace TERMINAL_FREQUENCY.Config.Font
             fontInfo.FaceName = "Terminal";
             SetCurrentConsoleFontEx(handle, false, ref fontInfo);
         }
+
+        /// <summary>
+        /// Sets current font to last saved font via <see cref="Font.SaveCurrentFont"/>
+        /// </summary>
         public static void RestorePreviousFont()
         {
             if (!_fontSaved) return;
@@ -151,6 +174,11 @@ namespace TERMINAL_FREQUENCY.Config.Font
             SetCurrentConsoleFontEx(handle, false, ref _previousFont);
         }
 
+        /// <summary>
+        /// Returns formatted name of default console True Type font faces.
+        /// </summary>
+        /// <param name="font">Which font to return name of.</param>
+        /// <returns>Formatted font name.</returns>
         private static string GetFontFaceName(FontFace font)
         {
             return font switch

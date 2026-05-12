@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace TERMINAL_FREQUENCY.Visualization.Waterfall
 {
+    /// <summary>
+    /// Used to set the pattern of <see cref="WaterfallStream"/> creation via its <see cref="WaterfallStream.Origin"/>
+    /// </summary>
     public enum WaterfallMode
     {
         Normal,
