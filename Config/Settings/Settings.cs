@@ -2,6 +2,10 @@
 
 namespace TERMINAL_FREQUENCY.Config.Settings
 {
+    /// <summary>
+    /// Main settings class that holds an instance of each individual Settings category.
+    /// This is the class used for JSON serialization
+    /// </summary>
     public class Settings : IConfigurable
     {
         [JsonProperty("Global")]
@@ -34,6 +38,9 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         [JsonProperty("Equalizer")]
         public EqualizerSettings EqualizerSettings { get; private set; }
 
+        [JsonProperty("Cube")]
+        public CubeSettings CubeSettings { get; private set; }
+
         public Settings()
         {
             GlobalSettings = new GlobalSettings();
@@ -46,6 +53,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             WaterfallSettings = new WaterfallSettings();
             ShapeSettings = new ShapeSettings();
             EqualizerSettings = new EqualizerSettings();
+            CubeSettings = new CubeSettings();
         }
 
         public void Restore()
@@ -60,6 +68,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             WaterfallSettings.Restore();
             ShapeSettings.Restore();
             EqualizerSettings.Restore();
+            CubeSettings.Restore();
         }
 
         public void EnforceConstraints()
@@ -74,6 +83,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             WaterfallSettings.EnforceConstraints();
             ShapeSettings.EnforceConstraints();
             EqualizerSettings.EnforceConstraints();
+            CubeSettings.EnforceConstraints();
         }
 
         public void EnforceMandatoryConstraints()
@@ -88,6 +98,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             WaterfallSettings.EnforceMandatoryConstraints();
             ShapeSettings.EnforceMandatoryConstraints();
             EqualizerSettings.EnforceMandatoryConstraints();
+            CubeSettings.EnforceMandatoryConstraints();
         }
     }
 }

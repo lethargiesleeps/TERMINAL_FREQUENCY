@@ -1,11 +1,11 @@
-![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/splash.jpg)
+![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/resources/img/splash.jpg)
 
 # TERMINAL__FREQUENCY
-*v0.8.0*
+*v0.9.0*
 
 ## ABOUT
 A Windows console program for audio visualizations. Captures any audio playing from your computer automatically. Features a robust settings API to endlessly customize the look and feel of the available visuals.
-![Terminal Frequency Demo Sampler](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/demo.gif)
+![Terminal Frequency Demo Sampler](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/resources/img/demo.gif)
 
 ### BUILT WITH
 - .NET 8.0
@@ -15,16 +15,33 @@ A Windows console program for audio visualizations. Captures any audio playing f
 
 ## GETTING STARTED
 Download the [Latest Release](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/releases/tag/alpha) `.zip` file. Extract the archive and run the application from within the extracted folder.
-The `settings` file should be in whatever folder the application is launched from. If one does not exist, it will be auto-generated.
+The `settings.json` file should be in whatever folder the application is launched from. If one does not exist, it will be auto-generated.
+
+**It is highly recommended to initially run the program with the default settings.**
+
+If you've accidentally modified some settings that are causing issues you can launch the program, go into the visualizer, press F3 to restore to defaults, then F1 to save. This will overwrite any changes in `settings.json` back to defaults.  
+**If the program crashes at launch, or crashes when entering the visualizer**, copy the contents of `settings_backup.json` from the repository, and paste it into your local `settings.json` where you are running the program. Each release will have an up-to-date backup in the `.zip` folder as well.
+
 ## USAGE
 More stuff coming soon
 
-### NOTE ON AUDIO CAPTURE
-Currently, the program only registers the first audio device that is outputting audio (speakers, headset, bluetooth).
-The first official release will let you select which audio interface to capture.
-For the time being, an external tool can be used to route other audio so the default device is captured (if using an external audio interface or DJ controller).
+### AUDIO CAPTURE
+By default, TERMINAL_FREQUENCY uses the first available audio device on a system via WASAPI Loopback. Specific devices can be set in `settings.json` by settings *SpecifyAudioDevice* to `true` or `0`.  
+If `SpecifyAudioDevice` is `true`, the program no longer uses WASAPI Loopback. Devices can be set via `AudioDeviceIndex`, an invalid index will default to either first or last available device.
 
-Voicemeeter [Banana](https://vb-audio.com/Voicemeeter/banana.htm) and [Potato](https://vb-audio.com/Voicemeeter/potato.htm) are free-to-use donationware that can temporarily fix this limitation.
+**NOTE: NOT ALL DEVICES LISTED MAY PRODUCE VISUALIZATIONS, SOME PLAYING AROUND WILL BE NEEDED.**
+
+You can see a list of all available devices on the host system by setting `UserSelectedDevice` to `true` or `0`. This will open a prompt when launching the program that shows the list of devices, and their corresponding index to select. From here you can enter the corresponding value, this will bypass whatever is set via `AudioDeviceIndex`.
+
+#### SPECIFIC DEVICE CAPTURE AND USING MICROPHONE AS CAPTURE
+The program may crash if certain Windows privacy settings are enabled. For example, if selected a microphone input as primary audio capture, you need to ensure the App has access to record or it will crash. Microphone permissions can bet set via searching *Microphone Privacy Settings* in the Windows start menu and allowing apps to access it.
+
+**For privacy reasons, TERMINAL_FREQUENCY does not store recorded audio, you can confirm this by seeing Core.Audio.AudioCapture code as well as Core.Audio.FftAnalyzer. Audio is only recorded to process volumes, frequencies and stereo imaging to properly visualize.**
+
+#### DEVICE ROUTING
+Some external audio interfaces may need to be routed to WASAPI Loopback default device. To acheive this, ensure `SpecifyAudioDevice` is set to `false` or `0`. Then open up an audio mixer program (default Windows one may not solve this), and route the audio from the external interface to the default device.  
+Voicemeeter [Banana](https://vb-audio.com/Voicemeeter/banana.htm) and [Potato](https://vb-audio.com/Voicemeeter/potato.htm) are free-to-use donationware that can temporarily fix this limitation, as I try to figure out a more permanent solution to this bottle-neck.
+
 ### CONTROLS
 **GLOBAL:**
 - TAB: Change visuals
@@ -48,6 +65,7 @@ As of this version, the Visual Modes are:
 - Waterfall
 - Shape
 - Equalizer
+- Cube
 
 ### USER CONFIGURATION
 In the built package, there is a `settings.json` with all the configurable settings for maximum customization. Once saved, you can press F2 in the visualizr to load the settings (you don't need to close the settings file).
@@ -79,13 +97,13 @@ This is the default mode, and raster fonts are used by default in this mode. All
 ## ROADMAP
 ### v1.0a
 *v1.0a* is planned to include the following features:
-- 2 additional dynamic visualizations
+- 2 additional dynamic visualizations (equalizer added as of v0.8)
 - 2 static visualizations (visuals that don't react to audio)
-- Audio interface selection
+- Audio interface selection (completed in v0.9)
 - Background manipulation (change colour on beat, change colour every Nth minute)
-- Trigger on audio frequency (right now it triggers based on volume parameters)
-- Mic mode (capture audio from a microphone)
-- More comprehensive settings API documentation
+- Trigger on audio frequency (completed in v0.9)
+- Mic input capture (completed in v0.9, by allowing user to manually select the input device for capture)
+- More comprehensive settings API documentation (completed in v0.8) see [SETTINGS.md](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/tree/main/SETTINGS.md)
 
 ### v1.0a+
 The following are features that are planned but may or may not be in v1.0a
@@ -100,4 +118,6 @@ The following are features that are planned but may or may not be in v1.0a
 - LAN Mode, seperate devices can sync visuals of a local network (control visuals from laptop being used for a live performance to another laptop plugged into a projector).
 
 ## CONTRIBUTION
-Coming soon, but feel free to fork project and submit PRs :)
+Coming soon, but feel free to fork project and submit PRs :)  
+If you would like to directly collaborate or report a bug, please DM me at **michaellandry@protonmail.com**
+Will have proper contribution setup once this project grows a bit more/

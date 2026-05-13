@@ -1,0 +1,31 @@
+@startuml
+class Font <<static>> {
+    - {static} <<extern>> GetStdHandle(nStdHandle:int) : nint
+    - {static} <<extern>> SetCurrentConsoleFontEx(consoleOutput:nint, maximumWindow:bool, consoleCurrentFont:CONSOLE_FONT_INFO_EX) : bool
+    - {static} <<extern>> GetCurrentConsoleFontEx(consoleOutput:nint, maximumWindow:bool, consoleCurrentFont:CONSOLE_FONT_INFO_EX) : bool
+    - <<const>> STD_OUTPUT_HANDLE : int
+    - {static} _fontSaved : bool = false
+    + {static} SaveCurrentFont() : void
+    + {static} DumpFontData() : void
+    + {static} SetRasterFont(nFontIndex:int) : void
+    + {static} SetCustomFont(fontFace:FontFace, fontSize:int, bold:bool, fontFaceOverride:string) : void
+    + {static} SetRasterFont(rasterFontType:RasterFontType) : void
+    + {static} RestorePreviousFont() : void
+    - {static} GetFontFaceName(font:FontFace) : string
+}
+struct COORD {
+    + X : short
+    + Y : short
+}
+struct CONSOLE_FONT_INFO_EX {
+    + cbSize : uint
+    + nFont : uint
+    + FontFamily : int
+    + FontWeight : int
+    + FaceName : string
+}
+Font --> "_previousFont" CONSOLE_FONT_INFO_EX
+Font +-- COORD
+Font +-- CONSOLE_FONT_INFO_EX
+CONSOLE_FONT_INFO_EX --> "dwFontSize" COORD
+@enduml

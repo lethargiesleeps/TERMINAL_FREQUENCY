@@ -1,0 +1,21 @@
+@startuml
+class EqualizerSettings {
+    + SolidBands : bool <<get>> <<set>>
+    + SmoothMode : bool <<get>> <<set>>
+    + LerpFactor : float <<get>> <<set>>
+    + BandCharacter : char <<get>> <<set>>
+    + BandSpacing : int <<get>> <<set>>
+    + MaxBandHeightPercent : float <<get>> <<set>>
+    + MinBandHeightPercent : float <<get>> <<set>>
+    + HorizontalWhenCentered : bool <<get>> <<set>>
+    + EqualizerSettings()
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- EqualizerSettings
+EqualizerSettings --> "Origin" VisualizationOrigin
+EqualizerSettings --> "ColorMode" EqColorMode
+EqualizerSettings --> "UniformColor" ConsoleColor
+EqualizerSettings --> "Direction" EqDirection
+@enduml

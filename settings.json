@@ -81,6 +81,8 @@
   },
   "AudioCapture": {
     "SpecifyAudioDevice": false,
+    "UserSelectedDevice": true,
+    "AudioDeviceIndex": 0,
     "AudioSampleResolution": 4,
     "RmsMultiplier": 100.0,
     "NoiseGateFloor": 0.3,
@@ -233,5 +235,34 @@
     "MaxBandHeightPercent": 0.99,
     "MinBandHeightPercent": 0.01,
     "HorizontalWhenCentered": false
+  },
+  "Cube": {
+    "CubeWidth": 20.0,
+    "DistanceFromCam": 100.0,
+    "ZoomLevel": 30.0,
+    "PointDensity": 0.8,
+    "FaceCharacters": [
+      "@",
+      "#",
+      "%",
+      ".",
+      "=",
+      "^"
+    ],
+    "RotationMode": "Continuous",
+    "Direction": "Forward",
+    "Color": "White",
+    "RotationSpeedX": 0.1,
+    "RotationSpeedY": 0.1,
+    "RotationSpeedZ": 0.05,
+    "ContinuousSpeedMultiplier": 0.1,
+    "FreezeXRotation": false,
+    "FreezeYRotation": false,
+    "FreezeZRotation": false,
+    "FrequencyThreshold": 0.5,
+    "VolumeThreshold": 0.3,
+    "PulseEnabled": true,
+    "PulseIntensity": 0.3,
+    "PulseDecay": 0.95
   }
 }

@@ -1,0 +1,20 @@
+@startuml
+class WaterfallStream {
+    + Progress : float
+    + Life : float
+    + Intensity : float
+    + IsReversed : bool
+    + ThicknessOffset : int <<get>> <<set>>
+    + WaterfallStream(settings:Settings, intensity:float, origin:VisualizationOrigin, isReversed:bool)
+    + Update() : void
+    + IsAlive : bool <<get>>
+    + GetWidth(consoleSize:float) : float
+    + GetCharacter(position:int, totalPositions:int) : char
+    + GetColor() : ConsoleColor
+}
+WaterfallStream --> "_settings" Settings
+WaterfallStream --> "_streamColor" ConsoleColor
+WaterfallStream o-> "_lastColor" ConsoleColor
+WaterfallStream o-> "_rnd" Random
+WaterfallStream --> "Origin" VisualizationOrigin
+@enduml

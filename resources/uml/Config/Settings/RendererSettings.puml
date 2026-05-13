@@ -1,0 +1,19 @@
+@startuml
+class RendererSettings {
+    + TargetFps : int <<get>> <<set>>
+    + EnableYield : bool <<get>> <<set>>
+    + YieldTimeout : int <<get>> <<set>>
+    + EnableSpinWait : bool <<get>> <<set>>
+    + SpinWaitIterations : int <<get>> <<set>>
+    + EnableThreadPriority : bool <<get>> <<set>>
+    + RendererSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + GetProperties(obj:T) : Dictionary<string, object>
+}
+IConfigurable <|-- RendererSettings
+RendererSettings --> "ThreadPriority" ThreadPriority
+RendererSettings --> "RendererMode" RenderMode
+RendererSettings --> "RowBatchColor" ConsoleColor
+@enduml

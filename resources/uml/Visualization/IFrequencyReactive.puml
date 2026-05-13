@@ -1,0 +1,6 @@
+@startuml
+interface IFrequencyReactive {
+    OnFrequencyData(bands:float[]) : void
+}
+IVisualization <|-- IFrequencyReactive
+@enduml

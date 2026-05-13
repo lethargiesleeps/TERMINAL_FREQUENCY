@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TERMINAL_FREQUENCY.Visualization.Rings
+﻿namespace TERMINAL_FREQUENCY.Visualization.Rings
 {
+    /// <summary>
+    /// Enum of colours a ring cycle will use if <see cref="RingsSettings.SolidColor"/> is false
+    /// </summary>
     public enum RingColorMode
     {
         Light,

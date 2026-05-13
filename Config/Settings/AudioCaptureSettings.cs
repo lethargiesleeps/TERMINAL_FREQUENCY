@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TERMINAL_FREQUENCY.Core;
 
 namespace TERMINAL_FREQUENCY.Config.Settings
 {
     public class AudioCaptureSettings : IConfigurable
     {
         public bool SpecifyAudioDevice { get; set; }                   //TODO: lets user select which audio device to capture, not implemented
+        public bool UserSelectedDevice { get; set; }
+        public int AudioDeviceIndex { get; set; }
         public int AudioSampleResolution { get; set; }                 //bytes per sample (typically 4, can be 2 or 4)
         public float RmsMultiplier { get; set; }                       //scale RMS to the useable volume, safe range 10-1000
         public float NoiseGateFloor { get; set; }                      //ignores audio below set volume, higher kills quiet sounds, lower keeps noise. can be used to cut out device 'static/humming' that would trigger a visualization
@@ -41,6 +44,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings
 
         public void EnforceMandatoryConstraints()
         {
+            if (AudioDeviceIndex < 0) AudioDeviceIndex = 0;
+            //if (AudioDeviceIndex > Utility.GetAvailableDevices().Count - 1) AudioDeviceIndex = Utility.GetAvailableDevices().Count - 1;
             if (AudioSampleResolution != 2 && AudioSampleResolution != 4) AudioSampleResolution = 4;
             if (RmsMultiplier < 0.1) RmsMultiplier = 0.1f;
             if (NoiseGateFloor < 0) NoiseGateFloor = 0.01f;
@@ -62,6 +67,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public void Restore()
         {
             SpecifyAudioDevice = false;
+            UserSelectedDevice = true;
+            AudioDeviceIndex = 0;
             AudioSampleResolution = 4;
             RmsMultiplier = 100;
             NoiseGateFloor = 0.3f;

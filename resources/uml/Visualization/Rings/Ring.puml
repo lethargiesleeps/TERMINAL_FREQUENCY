@@ -1,0 +1,13 @@
+@startuml
+class Ring {
+    + Radius : float <<get>> <<set>>
+    + Life : float <<get>> <<set>>
+    + Ring(settings:Settings)
+    + Update(speed:float, fadeRate:float) : void
+    + IsAlive : bool <<get>>
+    + GetColor() : ConsoleColor
+    + GetChar(segmentIndex:int) : char
+}
+Ring --> "_rnd" Random
+Ring --> "_settings" Settings
+@enduml

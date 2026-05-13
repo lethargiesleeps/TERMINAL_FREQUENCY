@@ -2,13 +2,13 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using TERMINAL_FREQUENCY.Config;
 using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.CLI;
 using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
@@ -16,6 +16,10 @@ using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 namespace TERMINAL_FREQUENCY
 {
+    /// <summary>
+    /// Main execution point of program. Launch setup is done here.
+    /// Handles input, rendering loop, creation and parsing of settings, and debug mode information.
+    /// </summary>
     class Program
     {
         private static Settings _settings;
@@ -28,6 +32,7 @@ namespace TERMINAL_FREQUENCY
         private static bool _isDebug = Debugger.IsAttached;
         private static bool _isChild = false;
         private static bool _isSavingOrLoading = false;
+        private static int _selectedDeviceIndex = -1;
 
         //fps calculations
         private static Stopwatch _stopWatch;
@@ -37,8 +42,13 @@ namespace TERMINAL_FREQUENCY
 
         private const float SAMPLE_DURATION_SECONDS = 1.0f;
 
+        /// <summary>
+        /// Main function of program where everything happens.
+        /// </summary>
+        /// <param name="args">Command line arguments, not fully implemented</param>
         static void Main(string[] args)
         {
+            //ensure settings properly configured
             try
             {
                 _settings = SettingsManager.Load();
@@ -62,6 +72,7 @@ namespace TERMINAL_FREQUENCY
                 if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
             }
 
+            //setup console settings, font, audio capture and renderer
             _exclusiveMode = _settings.GlobalSettings.EnableExclusiveMode;
             _currentMode = (int)_settings.GlobalSettings.DefaultMode;
             _colors = _settings.ConsoleSettings.DefaultColors;
@@ -92,13 +103,21 @@ namespace TERMINAL_FREQUENCY
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
             CLI.HandleCliArgs(args, _settings.GlobalSettings);
 
-            HandleConsoleWindow();
+            HandleConsoleWindow(); //Sets all windows settings
+
+            //if enabled, user selects audio device, otherwise use loopback capture
+            if (_settings.AudioCaptureSettings.UserSelectedDevice && _settings.AudioCaptureSettings.SpecifyAudioDevice)
+                _selectedDeviceIndex = Utility.SelectAudioDevice();
 
             try
             {
-                _visualizations = Utility.RefreshVisuals(_settings);
+                _visualizations = Utility.RefreshVisuals(_settings); //instantiate new visual classes
 
-                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice ? Utility.SelectAudioDevice() : new AudioCapture(_settings);
+                //configure audio capture
+                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice 
+                    ? new AudioCapture(_settings, (_selectedDeviceIndex > -1 ? _selectedDeviceIndex : _settings.AudioCaptureSettings.AudioDeviceIndex)) 
+                    : new AudioCapture(_settings);
+
                 if (audioCapture == null)
                 {
                     Console.WriteLine("\nNo audio device selected. Exiting...");
@@ -106,7 +125,7 @@ namespace TERMINAL_FREQUENCY
                     return;
                 }
 
-
+                //configure renderer
                 ScreenBuffer buffer = new ScreenBuffer(_settings);
                 _currentVisualization = _visualizations[_currentMode];
 
@@ -132,7 +151,7 @@ namespace TERMINAL_FREQUENCY
                 };
 
 
-                //capture the audio
+                //start capture
                 audioCapture.Start();
 
                 _stopWatch = Stopwatch.StartNew(); //prep for FPS tracking
@@ -225,32 +244,53 @@ namespace TERMINAL_FREQUENCY
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
 
+                            if(_currentVisualization is Cube)
+                            {
+                                float globalSpeed = (_settings.CubeSettings.RotationSpeedY + _settings.CubeSettings.RotationSpeedX + _settings.CubeSettings.RotationSpeedZ) / 3;
+                                string cubeStatus1 = $"[M]ODE:{Utility.FormatEnum(_settings.CubeSettings.RotationMode)} | [R]OTATION:{Utility.FormatEnum(_settings.CubeSettings.Direction)} | [O/P] GLOBAL SPEED:{globalSpeed:F3} | [9/0] SIZE:{_settings.CubeSettings.ZoomLevel:F2}";
+                                string cubeStatus2 = $"[C]COLOR:{Utility.FormatEnum(_settings.CubeSettings.Color)} | FREEZE [X]:{(_settings.CubeSettings.FreezeXRotation ? "ON" : "OFF")} | FREEZE [Y]:{(_settings.CubeSettings.FreezeYRotation ? "ON" : "OFF")} | FREEZE [Z]:{(_settings.CubeSettings.FreezeZRotation ? "ON" : "OFF")} | PUL[S]E:{(_settings.CubeSettings.PulseEnabled ? "ON" : "OFF")}";
+
+                                if (_settings.CubeSettings.PulseEnabled)
+                                    cubeStatus2 += $" | [7/8] INTENSITY:{_settings.CubeSettings.PulseIntensity:F3}";
+
+                                buffer.DrawString(0, buffer.Height - 3, cubeStatus1, debugTextColor);
+                                buffer.DrawString(0, buffer.Height - 2, cubeStatus2, debugTextColor);
+
+                            }
                             if (_currentVisualization is IFrequencyReactive)
                             {
+                                bool skipFrequencyData = _currentVisualization is Cube cube && _settings.CubeSettings.RotationMode != CubeRotationMode.OnFrequency;
+
                                 //draw frequency data
                                 try
                                 {
-                                    int debugBufferHeight = 4;
-                                    int debugBufferWidth = 0;
-                                    string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
-                                    int bandsPerColumn = frequencyData.Length > 16 ? 8 : 4;
-                                    
-                                    for (int i = 0; i < frequencyData.Length; i++)
+                                    if(!skipFrequencyData)
                                     {
-                                        if (i > 0 && i % bandsPerColumn == 0)
-                                        {
-                                            debugBufferWidth += 35; //shift to the right
-                                            debugBufferHeight = 4;
-                                        }
+                                        int debugBufferHeight = 4;
+                                        int debugBufferWidth = 0;
+                                        string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
+                                        int bandsPerColumn = frequencyData.Length > 16 ? 8 : 4;
 
-                                        buffer.DrawString(debugBufferWidth, debugBufferHeight, frequencyData[i], fpsColor);
-                                        debugBufferHeight++;
+                                        for (int i = 0; i < frequencyData.Length; i++)
+                                        {
+                                            if (i > 0 && i % bandsPerColumn == 0)
+                                            {
+                                                debugBufferWidth += 35; //shift to the right
+                                                debugBufferHeight = 4;
+                                            }
+
+
+                                            buffer.DrawString(debugBufferWidth, debugBufferHeight, frequencyData[i], fpsColor);
+                                            debugBufferHeight++;
+                                        }
                                     }
                                 }
                                 catch(Exception ex)
                                 {
-                                    buffer.DrawString(0, 4, "NO FREQUENCY DATA", debugTextColor);
+                                    if(!skipFrequencyData)
+                                        buffer.DrawString(0, 4, "NO FREQUENCY DATA", debugTextColor);
                                 }
+
 
                                 //global frequency controls
                                 var controls = new List<string>
@@ -258,6 +298,8 @@ namespace TERMINAL_FREQUENCY
                                     $"[-/+] BANDS:{_settings.FftSettings.BandCount}",
                                     $"[9/0] SENSITIVITY:{_settings.FftSettings.Sensitivity:F1}",
                                 };
+
+                                if (_currentVisualization is Cube) controls.RemoveAt(1);
 
                                 //equalizer specific
                                 if (_currentVisualization is Equalizer)
@@ -272,10 +314,13 @@ namespace TERMINAL_FREQUENCY
                                 }
 
                                 //draw controls, below FPS
-                                int startY = 2;
-                                for (int i = 0; i < controls.Count; i++)
+                                if(!skipFrequencyData)
                                 {
-                                    buffer.DrawString(buffer.Width - 28, startY + i, controls[i], fpsColor);
+                                    int startY = 2;
+                                    for (int i = 0; i < controls.Count; i++)
+                                    {
+                                        buffer.DrawString(buffer.Width - 28, startY + i, controls[i], fpsColor);
+                                    }
                                 }
 
                             }
@@ -283,7 +328,7 @@ namespace TERMINAL_FREQUENCY
                             string modeName = Utility.GetModeName(_currentMode);
                             string line1 = $"VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | RMS: {audioCapture.RMS:F2}";
                             string line2 = $"MODE: {modeName}";
-                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")}";
+                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")} | DEVICE: {audioCapture.GetDeviceName()}";
 
                             buffer.DrawString(0, 0, line2, debugTextColor);
                             buffer.DrawString(0, 1, line3, debugTextColor);
@@ -301,7 +346,7 @@ namespace TERMINAL_FREQUENCY
                             buffer.DrawString(rightX, 0, $"FPS:{_currentFps,6:F1}", fpsColor);
                         }
 
-                        buffer.Render();
+                        buffer.Render(); //main render
 
                         //yield settings
                         long targetTicks = Stopwatch.Frequency / _settings.RendererSettings.TargetFps;
@@ -341,6 +386,11 @@ namespace TERMINAL_FREQUENCY
 
         }
 
+        /// <summary>
+        /// Checks for a keyboard press while in main loop and handles accordingly.
+        /// </summary>
+        /// <param name="audioCapture">Global AudioCapture instance.</param>
+        /// <param name="buffer">Global ScreenBuffer (Renderer) instance</param>
         static void HandleInput(AudioCapture audioCapture, ScreenBuffer buffer)
         {
             while (Console.KeyAvailable)
@@ -480,6 +530,10 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Equalizer)
                             if (_settings.EqualizerSettings.Origin == VisualizationOrigin.Center)
                                 _settings.EqualizerSettings.HorizontalWhenCentered = !_settings.EqualizerSettings.HorizontalWhenCentered;
+
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.Direction = Utility.CycleNextEnum(_settings.CubeSettings.Direction);
+
                         break;
 
                     case ConsoleKey.M:
@@ -504,6 +558,10 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Waterfall)
                             _settings.WaterfallSettings.Mode = Utility.CycleNextEnum(_settings.WaterfallSettings.Mode);
+
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.RotationMode = Utility.CycleNextEnum(_settings.CubeSettings.RotationMode);
+                        
                         break;
 
                     case ConsoleKey.V:
@@ -537,6 +595,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Equalizer)
                             _settings.EqualizerSettings.ColorMode = Utility.CycleNextEnum(_settings.EqualizerSettings.ColorMode);
+
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.Color = Utility.CycleNext(_colors, _settings.CubeSettings.Color);
                         break;
 
                     case ConsoleKey.F:
@@ -557,6 +618,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Equalizer)
                             _settings.EqualizerSettings.SolidBands = !_settings.EqualizerSettings.SolidBands;
+
+                        if(_currentVisualization is Cube)
+                            _settings.CubeSettings.PulseEnabled = !_settings.CubeSettings.PulseEnabled;
                         break;
 
                     case ConsoleKey.Y:
@@ -564,8 +628,20 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Shape)
                             _settings.ShapeSettings.Layout = Utility.CycleNextEnum(_settings.ShapeSettings.Layout);
+                        
+                        if(_currentVisualization is Cube)
+                            _settings.CubeSettings.FreezeYRotation = !_settings.CubeSettings.FreezeYRotation;
                         break;
 
+                    case ConsoleKey.X:
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.FreezeXRotation = !_settings.CubeSettings.FreezeXRotation;
+                        break;
+
+                    case ConsoleKey.Z:
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.FreezeZRotation = !_settings.CubeSettings.FreezeZRotation;
+                        break;
                     case ConsoleKey.T:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
@@ -576,7 +652,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.EqualizerSettings.Direction = Utility.CycleNextEnum(_settings.EqualizerSettings.Direction);
                         break;
 
-                    case ConsoleKey.O:
+                    case ConsoleKey.O: //decrement 1 or Origin toggle
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -608,9 +684,16 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Equalizer)
                             _settings.EqualizerSettings.Origin = Utility.CycleNextEnum(_settings.EqualizerSettings.Origin);
+                        
+                        if(_currentVisualization is Cube)
+                        {
+                            _settings.CubeSettings.RotationSpeedX = (float)Math.Max(0.002, _settings.CubeSettings.RotationSpeedX - 0.005f);
+                            _settings.CubeSettings.RotationSpeedY = (float)Math.Max(0.002, _settings.CubeSettings.RotationSpeedY - 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = (float)Math.Max(0.001, _settings.CubeSettings.RotationSpeedZ - 0.005f);
+                        }
                         break;
 
-                    case ConsoleKey.P:
+                    case ConsoleKey.P: //increment 1
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -632,9 +715,16 @@ namespace TERMINAL_FREQUENCY
                             int shapeCount = Math.Min(4, _settings.ShapeSettings.Count + 1);
                             _settings.ShapeSettings.Count = shapeCount;
                         }
-                        break;
+                        
 
-                    case ConsoleKey.OemMinus:
+                        if (_currentVisualization is Cube)
+                        {
+                            _settings.CubeSettings.RotationSpeedX = (float)Math.Min(0.5, _settings.CubeSettings.RotationSpeedX + 0.005f);
+                            _settings.CubeSettings.RotationSpeedY = (float)Math.Min(0.5, _settings.CubeSettings.RotationSpeedY + 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = (float)Math.Min(0.3, _settings.CubeSettings.RotationSpeedZ + 0.005f);
+                        }
+                        break;
+                    case ConsoleKey.OemMinus: //decrement 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -653,7 +743,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.FftSettings.BandCount = Math.Max(4, _settings.FftSettings.BandCount - 2);
                         break;
 
-                    case ConsoleKey.OemPlus:
+                    case ConsoleKey.OemPlus: //increment 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -674,7 +764,20 @@ namespace TERMINAL_FREQUENCY
                             _settings.FftSettings.BandCount = Math.Min(32, _settings.FftSettings.BandCount  + 2);
                         break;
 
-                    case ConsoleKey.D9:
+                    case ConsoleKey.D7:
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if(_currentVisualization is Cube)
+                            _settings.CubeSettings.PulseIntensity = Math.Max(0.05f, _settings.CubeSettings.PulseIntensity - 0.025f);
+
+                        break;
+
+                    case ConsoleKey.D8:
+                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_currentVisualization is Cube)
+                            _settings.CubeSettings.PulseIntensity = Math.Min(1.5f, _settings.CubeSettings.PulseIntensity + 0.025f);
+
+                        break;
+                    case ConsoleKey.D9: //decrement 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
@@ -690,10 +793,15 @@ namespace TERMINAL_FREQUENCY
                         }
 
                         if (_currentVisualization is IFrequencyReactive)
-                            _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
+                        {
+                            if(_currentVisualization is Cube)
+                                _settings.CubeSettings.ZoomLevel = (float)Math.Max(5.0f, _settings.CubeSettings.ZoomLevel - 0.5f);
+                            else
+                                _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
+                        }
                         break;
 
-                    case ConsoleKey.D0:
+                    case ConsoleKey.D0: //increment 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
@@ -710,11 +818,22 @@ namespace TERMINAL_FREQUENCY
                         }
 
                         if (_currentVisualization is IFrequencyReactive)
-                            _settings.FftSettings.Sensitivity = Math.Min(3.0f, _settings.FftSettings.Sensitivity + 0.05f);
+                        {
+                            if (_currentVisualization is Cube)
+                                _settings.CubeSettings.ZoomLevel = (float)Math.Min(50.0f, _settings.CubeSettings.ZoomLevel + 0.5f);
+                            else
+                                _settings.FftSettings.Sensitivity = Math.Min(3.0f, _settings.FftSettings.Sensitivity + 0.05f);
+
+                        }
                         break;
                 }
             }
         }
+
+        /// <summary>
+        /// Sets up the console window and configures based on values set in settings. Uses ConsoleWindow class extensively.
+        /// </summary>
+        /// <see cref="ConsoleWindow"/>
         static void HandleConsoleWindow()
         {
 

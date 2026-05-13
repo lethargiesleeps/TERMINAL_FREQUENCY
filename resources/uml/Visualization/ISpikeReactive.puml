@@ -1,0 +1,7 @@
+@startuml
+interface ISpikeReactive {
+    OnSpike() : void
+    OnSpike(intensity:float) : void
+}
+IVisualization <|-- ISpikeReactive
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+enum RingColorMode {
+    Light,
+    Dark,
+    Red,
+    Blue,
+    Green,
+    Yellow,
+    RainbowLight,
+    RainbowDark,
+    All,
+    Random,
+}
+@enduml

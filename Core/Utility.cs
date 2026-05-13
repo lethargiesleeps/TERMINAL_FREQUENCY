@@ -1,12 +1,14 @@
-﻿using NAudio.Wave;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
-using TERMINAL_FREQUENCY.Visualization.Shape;
-using TERMINAL_FREQUENCY.Visualization.Rings;
-using TERMINAL_FREQUENCY.Visualization.Waterfall;
+using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
+using TERMINAL_FREQUENCY.Visualization.Rings;
+using TERMINAL_FREQUENCY.Visualization.Shape;
+using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core
@@ -17,7 +19,7 @@ namespace TERMINAL_FREQUENCY.Core
     /// </summary>
     public static class Utility
     {
-        public const string VERSION_NUMBER = "v0.7";
+        public const string VERSION_NUMBER = "v0.9";
         /// <summary>
         /// String data and console methods for the program launch screen.
         /// </summary>
@@ -44,7 +46,7 @@ namespace TERMINAL_FREQUENCY.Core
     ║              ██║     ██║  ██║███████╗╚██████╔╝         ║
     ║              ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝          ║
     ║                                                        ║
-    ║               Terminal Audio Visualizer v0.8           ║
+    ║               Terminal Audio Visualizer v0.9           ║
     ║             github.com/lethargiesleeps/term-freq       ║
     ╚════════════════════════════════════════════════════════╝
     ");
@@ -61,6 +63,7 @@ namespace TERMINAL_FREQUENCY.Core
             Console.ReadKey();
 
         }
+
 
         /// <summary>
         /// String data for when the user paused the screen.
@@ -100,58 +103,11 @@ namespace TERMINAL_FREQUENCY.Core
                         buffer.SetPixel(startX + x, startY + y, lines[y][x], ConsoleColor.DarkMagenta);
         }
 
-
         /// <summary>
-        /// Allows user to select audio device/interface to capture.
+        /// Returns name of current visualization.
         /// </summary>
-        /// <returns>The selected audio device/interface.</returns>
-        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
-        public static AudioCapture? SelectAudioDevice()
-        {
-            Console.WriteLine("\nPlease select an audio device to capture...");
-            Console.WriteLine("--------------------------------");
-            Console.WriteLine("\nAvailable Audio Input Devices:\n");
-            Console.WriteLine("--------------------------------");
-
-            var devices = GetAvailableDevices();
-
-            if (devices.Count == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No audio input devices found");
-                Console.ResetColor();
-                return null;
-            }
-
-            for (int i = 0; i < devices.Count; i++)
-                Console.WriteLine($"  [{i}] {devices[i]}");
-            
-
-            Console.WriteLine("\nSelect device number (or press ENTER for default): ");
-            string input = Console.ReadLine();
-
-            int selectedIndex = -1;
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                Console.WriteLine("Using default device...");
-                return new AudioCapture(new Config.Settings.Settings()); // Use default device
-            }
-
-            if (int.TryParse(input, out selectedIndex) && selectedIndex >= 0 && selectedIndex < devices.Count)
-            {
-                Console.WriteLine($"Selected: {devices[selectedIndex]}");
-                return new AudioCapture(new Config.Settings.Settings()); //TODO: Let user select audio device
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Invalid selection. Using default device...");
-                Console.ResetColor();
-                return new AudioCapture(new Config.Settings.Settings());
-            }
-        }
-
-
+        /// <param name="modeIndex">Index representation of visualization determined by <see cref="VisualizationMode"/></param>
+        /// <returns>Name of visualization as formatted string.</returns>
         public static string GetModeName(int modeIndex)
         {
             return modeIndex switch
@@ -160,16 +116,29 @@ namespace TERMINAL_FREQUENCY.Core
                 1 => "WATERFALL",
                 2 => "SHAPE",
                 3 => "EQ",
+                4 => "CUBE",
                 _ => "UNKNOWN"
             };
         }
 
+        /// <summary>
+        /// Ensures the provided value does not fall outside of the MinValue or MaxValue of a byte (0-255)
+        /// </summary>
+        /// <param name="value">Value to clamp.</param>
+        /// <returns>The clamped value.</returns>
         public static int ByteConstraintsCheck(int value)
         {
             if (value < byte.MinValue) return byte.MinValue;
             else if (value > byte.MaxValue) return byte.MaxValue;
             else return value;
         }
+
+        /// <summary>
+        /// Returns count of options in an enum.
+        /// </summary>
+        /// <typeparam name="T">Enum to determine count of.</typeparam>
+        /// <param name="returnLastIndex">If true, returns 0-indexed value, otherwise return real count.</param>
+        /// <returns>Number of items in provided enum.</returns>
         public static int EnumCount<T>(bool returnLastIndex = false) where T : Enum
         {
             return returnLastIndex
@@ -293,36 +262,111 @@ namespace TERMINAL_FREQUENCY.Core
                 };
             }
 
+            if (value is CubeRotationMode rotationMode)
+            {
+                return rotationMode switch
+                {
+                    CubeRotationMode.Continuous => "CONT",
+                    CubeRotationMode.OnVolume => "VOL",
+                    CubeRotationMode.OnFrequency => "FREQ",
+                    _ => "???"
+                };
+            }
+
+            if(value is RotationDirection rotationDirection)
+            {
+                return rotationDirection switch 
+                { 
+                    RotationDirection.Forward => "FWD",
+                    RotationDirection.Backward => "BWD",
+                    RotationDirection.Random => "RND",
+                    _ => "???"
+                };
+            }
+
             //fallback
             return value.ToString().ToUpper();
         }
 
+        /// <summary>
+        /// Used to replace instances of visualizations in certain circumstances.
+        /// </summary>
+        /// <param name="settings">Global settings for IVisualization constructors.</param>
+        /// <returns>List of new instances of all available visualization</returns>
+        /// <see cref="IVisualization"/>
+        /// <remarks>When building a new visualization, ensure to add here or it will not refresh when needed.</remarks>
         public static List<IVisualization> RefreshVisuals(Settings settings) => new List<IVisualization>() 
         { 
             new Rings(settings), 
             new Waterfall(settings), 
             new Shape(settings) ,
-            new Equalizer(settings)
+            new Equalizer(settings),
+            new Cube(settings)
         };
 
+        /// <summary>
+        /// Renders a user prompt that shows all available devices and allows user to input desired selection.
+        /// </summary>
+        /// <returns>Returns index of audio device for <see cref="AudioCapture"/> instantiation.</returns>
+        public static int SelectAudioDevice()
+        {
+            var devices = GetAvailableDevices();
+
+            Console.Clear();
+            Console.WriteLine(@"
+╔════════════════════════════════════════════════════════╗
+║                                                        ║
+║            T E R M I N A L   F R E Q U E N C Y         ║
+║                                                        ║
+╚════════════════════════════════════════════════════════╝
+║ SELECT AUDIO DEVICE:                                   ║
+╚════════════════════════════════════════════════════════╝
+");
+            for (int i = 0; i < devices.Count; i++)
+                Console.WriteLine($"  [{i}] {devices[i]}");
+
+            Console.Write("\nEnter device index (0-{0}): ", devices.Count - 1);
+
+            while (true)
+            {
+                string input = Console.ReadLine();
+
+                if (!int.TryParse(input, out int index))
+                {
+                    Console.Write("Invalid input. Please enter a whole number: ");
+                    continue;
+                }
+
+                if (index < 0 || index >= devices.Count)
+                {
+                    Console.Write($"Index out of range. Please enter 0-{devices.Count - 1}: ");
+                    continue;
+                }
+
+                return index;
+            }
+        }
         /// <summary>
         /// Uses WASAPI to get a list of all audio devices on a system.
         /// </summary>
         /// <returns>A list of string containing all the available audio devices.</returns>
-        /// <remarks>NOT FULLY IMPLEMENTED</remarks>
         public static List<string> GetAvailableDevices()
         {
             List<string> devices = new List<string>();
             try
             {
-                for (int i = 0; i < WaveInEvent.DeviceCount; i++)
-                    devices.Add($"{WaveInEvent.GetCapabilities(i).ProductName}");
+                var enumerator = new MMDeviceEnumerator();
+                var endpoints = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+                for (int i = 0; i < endpoints.Count; i++)
+                {
+                    string type = endpoints[i].DataFlow == DataFlow.Capture ? "INPUT " : "OUTPUT";
+                    devices.Add($"DEVICE INDEX - [{i}] : [{type}] {endpoints[i].FriendlyName}");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error enumerating devices: {ex.Message}");
             }
-
             return devices;
         }
 

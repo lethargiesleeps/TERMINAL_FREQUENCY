@@ -1,0 +1,10 @@
+@startuml
+enum WaterfallMode {
+    Normal,
+    Clockwise,
+    AntiClockwise,
+    TopBottom,
+    LeftRight,
+    All,
+}
+@enduml
