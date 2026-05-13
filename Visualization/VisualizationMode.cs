@@ -8,6 +8,7 @@
         Rings,
         Waterfall,
         Shape,
-        Equalizer
+        Equalizer,
+        Cube
     }
 }
