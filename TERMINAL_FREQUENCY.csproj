@@ -8,7 +8,7 @@
 		<SelfContained>true</SelfContained>
 		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 		<DebugType>none</DebugType>
-		<Version>0.8.0</Version>
+		<Version>0.9.0</Version>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="img\**" />
