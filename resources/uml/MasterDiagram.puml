@@ -1,0 +1,951 @@
+@startuml
+class Program {
+    - {static} _currentMode : int
+    - {static} _exclusiveMode : bool
+    - {static} _isPaused : bool = false
+    - {static} _isDebug : bool
+    - {static} _isChild : bool = false
+    - {static} _isSavingOrLoading : bool = false
+    - {static} _selectedDeviceIndex : int
+    - {static} _sampleWindowStart : long = 0
+    - {static} _framesInWindow : int = 0
+    - {static} _currentFps : float = 0
+    - <<const>> SAMPLE_DURATION_SECONDS : float = 1.0f
+    {static} - Main(args:string[]) : void
+    {static} - HandleInput(audioCapture:AudioCapture, buffer:ScreenBuffer) : void
+    {static} - HandleConsoleWindow() : void
+}
+class "List`1"<T> {
+}
+Program --> "_settings" Settings
+Program --> "_visualizations<IVisualization>" "List`1"
+Program --> "_currentVisualization" IVisualization
+Program --> "_stopWatch" Stopwatch
+@enduml
+ 
+ 
+@startuml
+interface IConfigurable {
+    Restore() : void
+    EnforceConstraints() : void
+    EnforceMandatoryConstraints() : void
+}
+@enduml
+ 
+ 
+@startuml
+class Font <<static>> {
+    - {static} <<extern>> GetStdHandle(nStdHandle:int) : nint
+    - {static} <<extern>> SetCurrentConsoleFontEx(consoleOutput:nint, maximumWindow:bool, consoleCurrentFont:CONSOLE_FONT_INFO_EX) : bool
+    - {static} <<extern>> GetCurrentConsoleFontEx(consoleOutput:nint, maximumWindow:bool, consoleCurrentFont:CONSOLE_FONT_INFO_EX) : bool
+    - <<const>> STD_OUTPUT_HANDLE : int
+    - {static} _fontSaved : bool = false
+    + {static} SaveCurrentFont() : void
+    + {static} DumpFontData() : void
+    + {static} SetRasterFont(nFontIndex:int) : void
+    + {static} SetCustomFont(fontFace:FontFace, fontSize:int, bold:bool, fontFaceOverride:string) : void
+    + {static} SetRasterFont(rasterFontType:RasterFontType) : void
+    + {static} RestorePreviousFont() : void
+    - {static} GetFontFaceName(font:FontFace) : string
+}
+struct COORD {
+    + X : short
+    + Y : short
+}
+struct CONSOLE_FONT_INFO_EX {
+    + cbSize : uint
+    + nFont : uint
+    + FontFamily : int
+    + FontWeight : int
+    + FaceName : string
+}
+Font --> "_previousFont" CONSOLE_FONT_INFO_EX
+Font +-- COORD
+Font +-- CONSOLE_FONT_INFO_EX
+CONSOLE_FONT_INFO_EX --> "dwFontSize" COORD
+@enduml
+ 
+ 
+@startuml
+enum FontFace {
+    CascadiaCode,
+    CascadiaMono,
+    Consolas,
+    CourierNew,
+    LucidaConsole,
+    LucidaSansTypeWriter,
+    MSGothic,
+    NSimSun,
+    Terminal,
+}
+@enduml
+ 
+ 
+@startuml
+enum RasterFontType {
+    FourBySix,
+    SixByEight,
+    EightByEight,
+    SixteenByEight,
+    FiveByTwelve,
+    SevenByTwelve,
+    EightByTwelve,
+    SixteenByTwelve,
+    TwelveBySixteen,
+    TenByEighteen,
+    TenByTwenty,
+}
+@enduml
+ 
+ 
+@startuml
+class AudioCaptureSettings {
+    + SpecifyAudioDevice : bool <<get>> <<set>>
+    + UserSelectedDevice : bool <<get>> <<set>>
+    + AudioDeviceIndex : int <<get>> <<set>>
+    + AudioSampleResolution : int <<get>> <<set>>
+    + RmsMultiplier : float <<get>> <<set>>
+    + NoiseGateFloor : float <<get>> <<set>>
+    + SmoothingFactorExisting : float <<get>> <<set>>
+    + SmoothingFactorIncoming : float <<get>> <<set>>
+    + PeakTrackingMinimum : float <<get>> <<set>>
+    + PeakDecayFactor : float <<get>> <<set>>
+    + SpikeVolumeMinimum : float <<get>> <<set>>
+    + SpikeRatio : float <<get>> <<set>>
+    + AudioCaptureSettings()
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- AudioCaptureSettings
+@enduml
+ 
+ 
+@startuml
+class ConsoleSettings {
+    + DisableCursor : bool <<get>> <<set>>
+    + DisableAppTitle : bool <<get>> <<set>>
+    + CustomTitle : string <<get>> <<set>>
+    + DisableTitleBar : bool <<get>> <<set>>
+    + DisableScrollBars : bool <<get>> <<set>>
+    + DisableWindowResize : bool <<get>> <<set>>
+    + LaunchMaximized : bool <<get>> <<set>>
+    + LaunchInCenter : bool <<get>> <<set>>
+    + LaunchAt : bool <<get>> <<set>>
+    + LaunchAtX : int <<get>> <<set>>
+    + LaunchAtY : int <<get>> <<set>>
+    + EnableCustomWindowSize : bool <<get>> <<set>>
+    + CustomWindowWidth : int <<get>> <<set>>
+    + CustomWindowHeight : int <<get>> <<set>>
+    + WindowOpacity : int <<get>> <<set>>
+    + AlwaysOnTop : bool <<get>> <<set>>
+    + EnableWindowBlur : bool <<get>> <<set>>
+    + EnableWindowVibrancy : bool <<get>> <<set>>
+    + WindowVibrancyR : int <<get>> <<set>>
+    + WindowVibrancyG : int <<get>> <<set>>
+    + WindowVibrancyB : int <<get>> <<set>>
+    + WindowVibrancyA : int <<get>> <<set>>
+    + EnableClickThrough : bool <<get>> <<set>>
+    + EnableFlashOnBeat : bool <<get>> <<set>>
+    + FlashOnBeatCount : int <<get>> <<set>>
+    - {static} <<extern>> GetSystemMetrics(nIndex:int) : int
+    - <<const>> SM_CXSCREEN : int = 0
+    - <<const>> SM_CYSCREEN : int = 1
+    + ConsoleSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- ConsoleSettings
+ConsoleSettings --> "BackgroundColor" ConsoleColor
+@enduml
+ 
+ 
+@startuml
+class EqualizerSettings {
+    + SolidBands : bool <<get>> <<set>>
+    + SmoothMode : bool <<get>> <<set>>
+    + LerpFactor : float <<get>> <<set>>
+    + BandCharacter : char <<get>> <<set>>
+    + BandSpacing : int <<get>> <<set>>
+    + MaxBandHeightPercent : float <<get>> <<set>>
+    + MinBandHeightPercent : float <<get>> <<set>>
+    + HorizontalWhenCentered : bool <<get>> <<set>>
+    + EqualizerSettings()
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- EqualizerSettings
+EqualizerSettings --> "Origin" VisualizationOrigin
+EqualizerSettings --> "ColorMode" EqColorMode
+EqualizerSettings --> "UniformColor" ConsoleColor
+EqualizerSettings --> "Direction" EqDirection
+@enduml
+ 
+ 
+@startuml
+class FftSettings {
+    + BandCount : int <<get>> <<set>>
+    + Sensitivity : float <<get>> <<set>>
+    + DedicatedBassBand : bool <<get>> <<set>>
+    + HighPass : float <<get>> <<set>>
+    + LowPass : float <<get>> <<set>>
+    + BassCutoff : float <<get>> <<set>>
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- FftSettings
+@enduml
+ 
+ 
+@startuml
+class FontSettings {
+    + EnableRasterFont : bool <<get>> <<set>>
+    + EnableCustomFont : bool <<get>> <<set>>
+    + CustomFontFaceOverride : string? <<get>> <<set>>
+    + CustomFontSize : int <<get>> <<set>>
+    + CustomFontBold : bool <<get>> <<set>>
+    + FontSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- FontSettings
+FontSettings --> "RasterFontType" RasterFontType
+FontSettings --> "CustomFontFace" FontFace
+@enduml
+ 
+ 
+@startuml
+class GlobalSettings {
+    + BypassStartupScreen : bool <<get>> <<set>>
+    + ForceDefaultSettings : bool <<get>> <<set>>
+    + EnableDebugMode : bool <<get>> <<set>>
+    + EnableSafeMode : bool <<get>> <<set>>
+    + EnableErrorMode : bool <<get>> <<set>>
+    + EnableControlLock : bool <<get>> <<set>>
+    + ShowGlobalControls : bool <<get>> <<set>>
+    + ConsoleInstances : int <<get>> <<set>>
+    + SaveOnExit : bool <<get>> <<set>>
+    + EnableRasterOnDirectWrite : bool <<get>> <<set>>
+    + EnableExclusiveMode : bool <<get>> <<set>>
+    + GlobalSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- GlobalSettings
+GlobalSettings --> "DefaultMode" VisualizationMode
+@enduml
+ 
+ 
+@startuml
+class RendererSettings {
+    + TargetFps : int <<get>> <<set>>
+    + EnableYield : bool <<get>> <<set>>
+    + YieldTimeout : int <<get>> <<set>>
+    + EnableSpinWait : bool <<get>> <<set>>
+    + SpinWaitIterations : int <<get>> <<set>>
+    + EnableThreadPriority : bool <<get>> <<set>>
+    + RendererSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + GetProperties(obj:T) : Dictionary<string, object>
+}
+IConfigurable <|-- RendererSettings
+RendererSettings --> "ThreadPriority" ThreadPriority
+RendererSettings --> "RendererMode" RenderMode
+RendererSettings --> "RowBatchColor" ConsoleColor
+@enduml
+ 
+ 
+@startuml
+class RingsSettings {
+    + ReverseMode : bool <<get>> <<set>>
+    + RadiusMin : float <<get>> <<set>>
+    + Radius : float <<get>> <<set>>
+    + RadiusMax : float <<get>> <<set>>
+    + Lifetime : float <<get>> <<set>>
+    + Speed : float <<get>> <<set>>
+    + FadeRate : float <<get>> <<set>>
+    + SolidColor : bool <<get>> <<set>>
+    + CharRandomizer : bool <<get>> <<set>>
+    + CharRandomizerCharset : string <<get>> <<set>>
+    + MaxRings : int <<get>> <<set>>
+    + Segments : int <<get>> <<set>>
+    + AmbientSegments : int <<get>> <<set>>
+    + AmbientDotInterval : int <<get>> <<set>>
+    + AmbientBaseRadius : float <<get>> <<set>>
+    + AmbientVolumeMultiplier : float <<get>> <<set>>
+    + AmbientRadiusMax : float <<get>> <<set>>
+    + YStretch : float <<get>> <<set>>
+    + DrawCrosshair : bool <<get>> <<set>>
+    + CrosshairChar : char <<get>> <<set>>
+    + CrosshairCharOutter : char <<get>> <<set>>
+    + Offset : int <<get>> <<set>>
+    + FireworksMode : bool <<get>> <<set>>
+    + RingsSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- RingsSettings
+RingsSettings --> "ColorMode" RingColorMode
+RingsSettings --> "CrosshairColor" ConsoleColor
+RingsSettings --> "CrosshairRingColor" ConsoleColor
+@enduml
+ 
+ 
+@startuml
+class Settings {
+    + Settings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- Settings
+Settings --> "GlobalSettings" GlobalSettings
+Settings --> "FontSettings" FontSettings
+Settings --> "RendererSettings" RendererSettings
+Settings --> "ConsoleSettings" ConsoleSettings
+Settings --> "AudioCaptureSettings" AudioCaptureSettings
+Settings --> "FftSettings" FftSettings
+Settings --> "RingsSettings" RingsSettings
+Settings --> "WaterfallSettings" WaterfallSettings
+Settings --> "ShapeSettings" ShapeSettings
+Settings --> "EqualizerSettings" EqualizerSettings
+@enduml
+ 
+ 
+@startuml
+class SettingsManager <<static>> {
+    + {static} DefaultFileName : string = "settings.json"
+    + {static} GetDefaultPath() : string
+    + {static} Save(settings:Settings, filePath:string?) : void
+    + {static} Load(filePath:string?) : Settings
+}
+class SafeStringEnumConverter {
+    + <<override>> ReadJson(reader:JsonReader, objectType:Type, existingValue:object?, serializer:JsonSerializer) : object?
+}
+SettingsManager +-- SafeStringEnumConverter
+StringEnumConverter <|-- SafeStringEnumConverter
+@enduml
+ 
+ 
+@startuml
+class ShapeSettings {
+    + VolumeSensitivity : float <<get>> <<set>>
+    + TriggerThreshold : float <<get>> <<set>>
+    + MaxSizePercent : float <<get>> <<set>>
+    + MinSizePercent : float <<get>> <<set>>
+    + Count : int <<get>> <<set>>
+    + ConcentricLayers : int <<get>> <<set>>
+    + ConcentricPadding : int <<get>> <<set>>
+    + Thickness : int <<get>> <<set>>
+    + ThicknessMax : int <<get>> <<set>>
+    + QuadrantCentered : bool <<get>> <<set>>
+    + QuadrantGapDivisor : int <<get>> <<set>>
+    + UseCustomColor : bool <<get>> <<set>>
+    + ReverseMode : bool <<get>> <<set>>
+    + ReverseVolumeSensitivity : float <<get>> <<set>>
+    + SmoothMode : bool <<get>> <<set>>
+    + LerpFactor : float <<get>> <<set>>
+    + Character : char <<get>> <<set>>
+    + VerticalStack : bool <<get>> <<set>>
+    + CircleSegmentDensity : float <<get>> <<set>>
+    + CircleMinSegments : int <<get>> <<set>>
+    + CircleMaxSegments : int <<get>> <<set>>
+    + SquareWidthRatio : float <<get>> <<set>>
+    + SquareHeightRatio : float <<get>> <<set>>
+    + TriangleSideMultiplier : float <<get>> <<set>>
+    + TriangleHeightMultiplier : float <<get>> <<set>>
+    + TriangleAspectCorrection : float <<get>> <<set>>
+    + PyramidRowSpacing : float <<get>> <<set>>
+    + PolygonSides : int <<get>> <<set>>
+    + FillMode : bool <<get>> <<set>>
+    + FillSpacing : int <<get>> <<set>>
+    + ShapeSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- ShapeSettings
+ShapeSettings --> "Type" ShapeType
+ShapeSettings --> "Layout" ShapeLayout
+ShapeSettings --> "UniformColor" ConsoleColor
+@enduml
+ 
+ 
+@startuml
+class WaterfallSettings {
+    + ReverseMode : bool <<get>> <<set>>
+    + StartWidthPercent : float <<get>> <<set>>
+    + EndWidthPercent : float <<get>> <<set>>
+    + Speed : float <<get>> <<set>>
+    + FadeRate : float <<get>> <<set>>
+    + MaxStreams : int <<get>> <<set>>
+    + Thickness : int <<get>> <<set>>
+    + TriggerThreshold : float <<get>> <<set>>
+    + OnlySpawnOnThreshold : bool <<get>> <<set>>
+    + MidpointChange : float <<get>> <<set>>
+    + EndpointChange : float <<get>> <<set>>
+    + CurveIntensityVertical : float <<get>> <<set>>
+    + CurveIntensityHorizontal : float <<get>> <<set>>
+    + CurveChar : char <<get>> <<set>>
+    + RainbowMode : bool <<get>> <<set>>
+    + RainbowFadeBright : float <<get>> <<set>>
+    + RainbowFadeColor : float <<get>> <<set>>
+    + RainbowFadeDark : float <<get>> <<set>>
+    + RainbowFadeDarkGray : float <<get>> <<set>>
+    + NormalFadeWhite : float <<get>> <<set>>
+    + NormalFadeGray : float <<get>> <<set>>
+    + NormalFadeDarkGray : float <<get>> <<set>>
+    + WaterfallSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- WaterfallSettings
+WaterfallSettings --> "Origin" VisualizationOrigin
+WaterfallSettings --> "Mode" WaterfallMode
+WaterfallSettings --> "Color" ConsoleColor
+@enduml
+ 
+ 
+@startuml
+class Utility <<static>> {
+    + <<const>> VERSION_NUMBER : string = "v0.9"
+    + {static} PrintStartup() : void
+    + {static} PrintPause(buffer:ScreenBuffer, modeName:string) : void
+    + {static} GetModeName(modeIndex:int) : string
+    + {static} ByteConstraintsCheck(value:int) : int
+    + {static} EnumCount(returnLastIndex:bool) : int
+    + {static} FormatEnum(value:Enum) : string
+    + {static} RefreshVisuals(settings:Settings) : List<IVisualization>
+    + {static} SelectAudioDevice() : int
+    + {static} GetAvailableDevices() : List<string>
+    + {static} DarkenColor(color:ConsoleColor) : ConsoleColor
+    + {static} LightenColor(color:ConsoleColor) : ConsoleColor
+    + {static} CycleNext(values:T[], currentValue:T, clamp:bool) : T
+    + {static} CyclePrevious(values:T[], currentValue:T, clamp:bool) : T
+    + {static} CycleNextEnum(currentValue:T, clamp:bool) : T
+    + {static} CyclePreviousEnum(currentValue:T, clamp:bool) : T
+}
+@enduml
+ 
+ 
+@startuml
+class AudioCapture {
+    +  <<event>> OnVolumeUpdated : Action<float>? 
+    +  <<event>> OnVolumeSpike : Action<float>? 
+    +  <<event>> OnFrequencyData : Action<float[]>? 
+    + SmoothedVolume : float <<get>> = 0
+    + PeakVolume : float <<get>> = 0
+    + RMS : double <<get>> <<set>> = 0
+    - _capture : WasapiLoopbackCapture?
+    - _waveIn : IWaveIn?
+    - _deviceIndex : int = 0
+    - _currentVisualization : IVisualization?
+    - _deviceName : string
+    + AudioCapture(settings:Settings)
+    + AudioCapture(settings:Settings, deviceIndex:int)
+    + Start() : void
+    + Stop() : void
+    - OnDataAvailable(sender:object, e:WaveInEventArgs) : void
+    + UpdateCurrentVisualization(visualization:IVisualization) : void
+    + UpdateSettings(newSettings:Settings) : void
+    + GetDeviceName() : string
+}
+AudioCapture --> "FftAnalyzer" FftAnalyzer
+AudioCapture --> "_settings" Settings
+AudioCapture --> "_mmDeviceEnumerator" MMDeviceEnumerator
+AudioCapture --> "_devices" MMDeviceCollection
+@enduml
+ 
+ 
+@startuml
+class FftAnalyzer {
+    - _fftLength : int
+    - _highPassCutoff : float
+    - _lowPassCutoff : float
+    - _bassBandCutoff : float
+    - <<const>> HAMMING_ALPHA : float = 0.54f
+    - <<const>> HAMMING_BETA : float = 0.46f
+    - <<const>> BASS_BAND_CUTOFF : float = 150f
+    + FftAnalyzer(settings:Settings, fftLength:int)
+    + Process(buffer:byte[], bytesRecorded:int, bytesPerSample:int, channels:int, sampleRate:float, numBands:int, bandSensitivity:float, lowFreq:float, highFreq:float, bassBandCutoff:float) : void
+    + GetBandFrequencyData(bandCount:int) : string[]
+}
+FftAnalyzer --> "_settings" Settings
+@enduml
+ 
+ 
+@startuml
+class CLI <<static>> {
+    - {static} _isChild : bool = false
+    + {static} HandleCliArgs(args:string[], settings:GlobalSettings) : void
+    - {static} LaunchChildProcess() : void
+}
+@enduml
+ 
+ 
+@startuml
+class ConsoleWindow <<static>> {
+    - {static} <<extern>> GetConsoleWindow() : nint
+    - {static} <<extern>> ShowWindow(hWnd:nint, nCmdShow:int) : bool
+    - {static} <<extern>> SetForegroundWindow(hWnd:nint) : bool
+    - {static} <<extern>> FindWindow(lpClassName:string, lpWindowName:string) : int
+    - {static} <<extern>> SetWindowLong(hWnd:nint, nIndex:int, dwNewLong:int) : int
+    - {static} <<extern>> GetWindowLong(hWnd:nint, nIndex:int) : int
+    - {static} <<extern>> SetWindowPos(hWnd:nint, hWndInsertAfter:nint, x:int, y:int, cx:int, cy:int, uFlags:uint) : bool
+    - {static} <<extern>> GetWindowRect(hWnd:nint, lpRect:RECT) : bool
+    - {static} <<extern>> GetSystemMetrics(nIndex:int) : int
+    - {static} <<extern>> SetLayeredWindowAttributes(hWnd:nint, crKey:uint, bAlpha:byte, dwFlags:uint) : bool
+    - {static} <<extern>> SetWindowCompositionAttribute(hwnd:nint, data:WindowCompositionAttributeData) : int
+    - {static} <<extern>> FlashWindowEx(pwfi:FLASHWINFO) : bool
+    - {static} <<extern>> DwmExtendFrameIntoClientArea(hWnd:nint, margins:MARGINS) : void
+    - {static} <<extern>> DwmSetWindowAttribute(hwnd:nint, dwAttribute:uint, pvAttribute:int, cbAttribute:int) : int
+    - <<const>> SM_CXSCREEN : int = 0
+    - <<const>> SM_CYSCREEN : int = 1
+    - <<const>> GWL_STYLE : int
+    - <<const>> WS_CAPTION : int = 0x00C00000
+    - <<const>> WS_THICKFRAME : int = 0x00040000
+    - <<const>> WS_HSCROLL : int = 0x00100000
+    - <<const>> WS_VSCROLL : int = 0x00200000
+    - <<const>> WS_MAXIMIZEBOX : int = 0x00010000
+    - <<const>> WS_MINIMIZEBOX : int = 0x00020000
+    - <<const>> SWP_FRAMECHANGED : uint = 0x0020
+    - <<const>> SWP_NOZORDER : uint = 0x0004
+    - <<const>> SWP_NOMOVE : uint = 0x0002
+    - <<const>> SWP_NOSIZE : uint = 0x0001
+    - <<const>> GWL_EXSTYLE : int
+    - <<const>> WS_EX_LAYERED : int = 0x00080000
+    - <<const>> LWA_ALPHA : uint = 0x00000002
+    - <<const>> WS_EX_TRANSPARENT : int = 0x00000020
+    - <<const>> WCA_ACCENT_POLICY : uint = 19
+    - <<const>> FLASHW_ALL : uint = 0x00000003
+    - <<const>> FLASHW_TIMERNOFG : uint = 0x0000000C
+    - <<const>> SW_HIDE : int = 0
+    - <<const>> SW_SHOW : int = 5
+    - <<const>> DWMWA_BORDER_COLOR : uint = 34
+    - <<const>> DWMWA_USE_IMMERSIVE_DARK_MODE : uint = 20
+    + {static} SetWindowBlur(enable:bool) : void
+    + {static} SetClickThrough(enable:bool) : void
+    + {static} SetWindowVibrancy(r:byte, g:byte, b:byte, alpha:byte) : void
+    + {static} SetOpacity(opacity:byte) : void
+    + {static} SetAlwaysOnTop(enable:bool) : void
+    + {static} DisableTitleBar() : void
+    + {static} EnableTitleBar() : void
+    + {static} DisableScrollBars() : void
+    + {static} EnableScrollBars() : void
+    + {static} DisableResize() : void
+    + {static} EnableResize() : void
+    + {static} LaunchConsoleCenter() : void
+    + {static} LaunchConsoleAt(x:int, y:int) : void
+    + {static} SetFullScreen() : void
+    + {static} SetScreenSize(width:int, height:int) : void
+    + {static} ExclusiveMode(enable:bool) : void
+    + {static} FlashWindowOnBeat(flashCount:int) : void
+    + {static} SetWindowGlow(radius:int, r:byte, g:byte, b:byte) : void
+    - {static} LaunchOnMonitor(monitorIndex:int) : void
+    - {static} SetWindowCorners() : void
+    - {static} ApplyStyle(handle:nint) : void
+}
+enum AccentState {
+    ACCENT_DISABLED= 0,
+    ACCENT_ENABLE_GRADIENT= 1,
+    ACCENT_ENABLE_TRANSPARENTGRADIENT= 2,
+    ACCENT_ENABLE_BLURBEHIND= 3,
+    ACCENT_ENABLE_ACRYLICBLURBEHIND= 4,
+    ACCENT_INVALID_STATE= 5,
+}
+struct RECT {
+    + Left : int
+    + Top : int
+    + Right : int
+    + Bottom : int
+}
+struct WindowCompositionAttributeData {
+    + Attribute : uint
+    + SizeOfData : int
+}
+struct AccentPolicy {
+    + AccentFlags : int
+    + GradientColor : int
+    + AnimationId : int
+}
+struct FLASHWINFO {
+    + cbSize : uint
+    + dwFlags : uint
+    + uCount : uint
+    + dwTimeout : uint
+}
+struct MARGINS {
+    + Left : int
+    + Right : int
+    + Top : int
+    + Bottom : int
+}
+ConsoleWindow o-> "HWND_TOPMOST" nint
+ConsoleWindow o-> "HWND_NOTOPMOST" nint
+ConsoleWindow +-- AccentState
+ConsoleWindow +-- RECT
+ConsoleWindow +-- WindowCompositionAttributeData
+WindowCompositionAttributeData --> "Data" nint
+ConsoleWindow +-- AccentPolicy
+AccentPolicy --> "AccentState" AccentState
+ConsoleWindow +-- FLASHWINFO
+FLASHWINFO --> "hwnd" nint
+ConsoleWindow +-- MARGINS
+@enduml
+ 
+ 
+@startuml
+enum RenderMode {
+    PerPixel,
+    DirtyRect,
+    RowBatched,
+    DirectWrite,
+}
+@enduml
+ 
+ 
+@startuml
+class ScreenBuffer {
+    - _dirtyMinX : int
+    - _dirtyMinY : int
+    - _dirtyMaxX : int
+    - _dirtyMaxY : int
+    + Width : int <<get>>
+    + Height : int <<get>>
+    - {static} <<extern>> GetStdHandle(nStdHandle:int) : nint
+    - {static} <<extern>> SetConsoleOutputCP(codePage:uint) : bool
+    - {static} <<extern>> WriteConsoleOutput(hConsoleOutput:nint, lpBuffer:CHAR_INFO[,], dwBufferSize:COORD, dwBufferCoord:COORD, lpWriteRegion:SMALL_RECT) : bool
+    - <<const>> STD_OUTPUT_HANDLE : int
+    + ScreenBuffer(settings:Settings)
+    + Clear() : void
+    + SetPixel(x:int, y:int, c:char, color:ConsoleColor) : void
+    + DrawString(x:int, y:int, text:string, color:ConsoleColor) : void
+    + DrawStatusBar(text:string, volume:float) : void
+    + UpdateBackgroundColor(newColor:ConsoleColor) : void
+    + Render() : void
+    + GetRendererMode() : string
+    + CycleRenderMode() : void
+    - ResetRenderState() : void
+    - RenderPerPixel() : void
+    - RenderDirtyRect() : void
+    - RenderRowBatched() : void
+    - RenderDirectWrite() : void
+}
+struct CHAR_INFO {
+    + UnicodeChar : char
+    + Attributes : short
+}
+struct COORD {
+    + X : short
+    + Y : short
+}
+struct SMALL_RECT {
+    + Left : short
+    + Top : short
+    + Right : short
+    + Bottom : short
+}
+ScreenBuffer --> "_settings" Settings
+ScreenBuffer --> "_bgColor" ConsoleColor
+ScreenBuffer o-> "ConsoleOutputHandle" nint
+ScreenBuffer +-- CHAR_INFO
+ScreenBuffer +-- COORD
+ScreenBuffer +-- SMALL_RECT
+@enduml
+ 
+ 
+@startuml
+interface IFrequencyReactive {
+    OnFrequencyData(bands:float[]) : void
+}
+IVisualization <|-- IFrequencyReactive
+@enduml
+ 
+ 
+@startuml
+interface ISpikeReactive {
+    OnSpike() : void
+    OnSpike(intensity:float) : void
+}
+IVisualization <|-- ISpikeReactive
+@enduml
+ 
+ 
+@startuml
+interface IVisualization {
+    + Name : string <<get>>
+    + ModeIndex : int <<get>>
+    Draw(buffer:ScreenBuffer) : void
+}
+@enduml
+ 
+ 
+@startuml
+interface IVolumeReactive {
+    Update(volume:float) : void
+}
+IVisualization <|-- IVolumeReactive
+@enduml
+ 
+ 
+@startuml
+enum VisualizationMode {
+    Rings,
+    Waterfall,
+    Shape,
+    Equalizer,
+}
+@enduml
+ 
+ 
+@startuml
+enum VisualizationOrigin {
+    Top,
+    Bottom,
+    Left,
+    Right,
+    Center,
+}
+@enduml
+ 
+ 
+@startuml
+enum EqColorMode {
+    Uniform,
+    Pattern,
+    Gradient,
+}
+@enduml
+ 
+ 
+@startuml
+enum EqDirection {
+    LowToHigh,
+    HighToLow,
+    Mirror,
+}
+@enduml
+ 
+ 
+@startuml
+class Equalizer {
+    - _name : string = "EQUALIZER"
+    - _modeIndex : int = 3
+    + Name : string <<get>>
+    + ModeIndex : int <<get>>
+    + Equalizer(settings:Settings)
+    + OnFrequencyData(bands:float[]) : void
+    + Draw(buffer:ScreenBuffer) : void
+    - DrawVertical(bands:float[], eq:EqualizerSettings, displayBands:int, dataBands:int, barSpacing:int, buffer:ScreenBuffer) : void
+    - DrawHorizontal(bands:float[], eq:EqualizerSettings, displayBands:int, dataBands:int, barSpacing:int, buffer:ScreenBuffer) : void
+    - DrawHorizontalBar(buffer:ScreenBuffer, baseX:int, y:int, length:int, height:int, color:ConsoleColor, fromLeft:bool) : void
+    - GetOrderedBands(dataBands:int) : float[]
+    - GetBandColor(index:int) : ConsoleColor
+    - DrawBar(buffer:ScreenBuffer, x:int, baseY:int, width:int, height:int, color:ConsoleColor, fromTop:bool) : void
+}
+IFrequencyReactive <|-- Equalizer
+Equalizer --> "_settings" Settings
+@enduml
+ 
+ 
+@startuml
+class Ring {
+    + Radius : float <<get>> <<set>>
+    + Life : float <<get>> <<set>>
+    + Ring(settings:Settings)
+    + Update(speed:float, fadeRate:float) : void
+    + IsAlive : bool <<get>>
+    + GetColor() : ConsoleColor
+    + GetChar(segmentIndex:int) : char
+}
+Ring --> "_rnd" Random
+Ring --> "_settings" Settings
+@enduml
+ 
+ 
+@startuml
+enum RingColorMode {
+    Light,
+    Dark,
+    Red,
+    Blue,
+    Green,
+    Yellow,
+    RainbowLight,
+    RainbowDark,
+    All,
+    Random,
+}
+@enduml
+ 
+ 
+@startuml
+class Rings {
+    - <<readonly>> _ringLock : object
+    - _maxRings : int
+    - _smoothedVolume : float = 0
+    - _name : string = "RINGS"
+    - _modeIndex : int = 0
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + RingCount : int <<get>>
+    + Rings(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike() : void
+    + OnSpike(intensity:float) : void
+    + Draw(buffer:ScreenBuffer) : void
+}
+class "List`1"<T> {
+}
+IVolumeReactive <|-- Rings
+ISpikeReactive <|-- Rings
+Rings --> "_settings" Settings
+Rings o-> "_rings<Ring>" "List`1"
+@enduml
+ 
+ 
+@startuml
+class Shape {
+    - _name : string = "SHAPE"
+    - _modeIndex : int = 2
+    - _currentSize : float = 0f
+    - _targetSize : float = 0f
+    - _peakVolume : float = 0.1f
+    - <<const>> SIZE_BOOST : float = 2.0f
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + IsReversed : bool <<get>> <<set>>
+    + IsSmoothingEnabled : bool <<get>> <<set>>
+    + IsCustomColorEnabled : bool <<get>> <<set>>
+    + IsCyclingEnabled : bool <<get>> <<set>>
+    + Shape(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike() : void
+    + OnSpike(intensity:float) : void
+    + Draw(buffer:ScreenBuffer) : void
+    - DrawSingle(buffer:ScreenBuffer) : void
+    - DrawVertical(buffer:ScreenBuffer) : void
+    - DrawHorizontal(buffer:ScreenBuffer) : void
+    - DrawPyramid(buffer:ScreenBuffer) : void
+    - DrawQuadrant(buffer:ScreenBuffer) : void
+    - DrawConcentric(buffer:ScreenBuffer) : void
+    - DrawShapeAt(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawCircle(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawSquare(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawDiamond(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawLine(buffer:ScreenBuffer, x0:int, y0:int, x1:int, y1:int, color:ConsoleColor) : void
+    - DrawPolygon(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawTriangleUp(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawTriangleDown(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - GetEffectiveMaxSize() : float
+    - GetEffectiveThickness(shapeCount:int) : int
+    - GetColor(shapeIndex:int) : ConsoleColor
+    - CalculatePolygonHalfWidth(radius:int, sides:int, rowProgress:float) : int
+    - GetVerticalPosition(height:int, count:int, index:int, spacing:int) : int
+    - GetHorizontalPosition(width:int, count:int, index:int, spacing:int) : int
+    - GetQuadrantIndices(count:int) : int[]
+}
+IVolumeReactive <|-- Shape
+ISpikeReactive <|-- Shape
+Shape --> "_settings" Settings
+@enduml
+ 
+ 
+@startuml
+enum ShapeLayout {
+    Single,
+    Vertical,
+    Horizontal,
+    Pyramid,
+    Quadrant,
+    Concentric,
+}
+@enduml
+ 
+ 
+@startuml
+enum ShapeType {
+    Circle,
+    Square,
+    Diamond,
+    Polygon,
+    TriangleUp,
+    TriangleDown,
+}
+@enduml
+ 
+ 
+@startuml
+class Waterfall {
+    - _name : string = "WATERFALL"
+    - _modeIndex : int = 1
+    - <<readonly>> _streamLock : object
+    - _clockwiseIndex : int = 0
+    - _topBottomToggle : bool = true
+    - _leftRightToggle : bool = true
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + StreamCount : int <<get>>
+    + Waterfall(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike(intensity:float) : void
+    + OnSpike() : void
+    + Draw(buffer:ScreenBuffer) : void
+    - GetNextOrigin() : VisualizationOrigin
+    - DrawStream(buffer:ScreenBuffer, stream:WaterfallStream) : void
+    - DrawVerticalStream(buffer:ScreenBuffer, stream:WaterfallStream, fromTop:bool) : void
+    - DrawHorizontalStream(buffer:ScreenBuffer, stream:WaterfallStream, fromLeft:bool) : void
+    - AddStream(intensity:float, origin:VisualizationOrigin, offset:int) : void
+}
+class "List`1"<T> {
+}
+IVolumeReactive <|-- Waterfall
+ISpikeReactive <|-- Waterfall
+Waterfall --> "_settings" Settings
+Waterfall o-> "_streams<WaterfallStream>" "List`1"
+@enduml
+ 
+ 
+@startuml
+enum WaterfallMode {
+    Normal,
+    Clockwise,
+    AntiClockwise,
+    TopBottom,
+    LeftRight,
+    All,
+}
+@enduml
+ 
+ 
+@startuml
+class WaterfallStream {
+    + Progress : float
+    + Life : float
+    + Intensity : float
+    + IsReversed : bool
+    + ThicknessOffset : int <<get>> <<set>>
+    + WaterfallStream(settings:Settings, intensity:float, origin:VisualizationOrigin, isReversed:bool)
+    + Update() : void
+    + IsAlive : bool <<get>>
+    + GetWidth(consoleSize:float) : float
+    + GetCharacter(position:int, totalPositions:int) : char
+    + GetColor() : ConsoleColor
+}
+WaterfallStream --> "_settings" Settings
+WaterfallStream --> "_streamColor" ConsoleColor
+WaterfallStream o-> "_lastColor" ConsoleColor
+WaterfallStream o-> "_rnd" Random
+WaterfallStream --> "Origin" VisualizationOrigin
+@enduml
+ 
+ 

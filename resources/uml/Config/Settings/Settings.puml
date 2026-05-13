@@ -1,0 +1,19 @@
+@startuml
+class Settings {
+    + Settings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- Settings
+Settings --> "GlobalSettings" GlobalSettings
+Settings --> "FontSettings" FontSettings
+Settings --> "RendererSettings" RendererSettings
+Settings --> "ConsoleSettings" ConsoleSettings
+Settings --> "AudioCaptureSettings" AudioCaptureSettings
+Settings --> "FftSettings" FftSettings
+Settings --> "RingsSettings" RingsSettings
+Settings --> "WaterfallSettings" WaterfallSettings
+Settings --> "ShapeSettings" ShapeSettings
+Settings --> "EqualizerSettings" EqualizerSettings
+@enduml

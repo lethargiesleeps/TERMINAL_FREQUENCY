@@ -1,0 +1,13 @@
+@startuml
+enum FontFace {
+    CascadiaCode,
+    CascadiaMono,
+    Consolas,
+    CourierNew,
+    LucidaConsole,
+    LucidaSansTypeWriter,
+    MSGothic,
+    NSimSun,
+    Terminal,
+}
+@enduml

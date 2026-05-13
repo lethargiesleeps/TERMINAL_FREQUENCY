@@ -1,0 +1,24 @@
+@startuml
+class Program {
+    - {static} _currentMode : int
+    - {static} _exclusiveMode : bool
+    - {static} _isPaused : bool = false
+    - {static} _isDebug : bool
+    - {static} _isChild : bool = false
+    - {static} _isSavingOrLoading : bool = false
+    - {static} _selectedDeviceIndex : int
+    - {static} _sampleWindowStart : long = 0
+    - {static} _framesInWindow : int = 0
+    - {static} _currentFps : float = 0
+    - <<const>> SAMPLE_DURATION_SECONDS : float = 1.0f
+    {static} - Main(args:string[]) : void
+    {static} - HandleInput(audioCapture:AudioCapture, buffer:ScreenBuffer) : void
+    {static} - HandleConsoleWindow() : void
+}
+class "List`1"<T> {
+}
+Program --> "_settings" Settings
+Program --> "_visualizations<IVisualization>" "List`1"
+Program --> "_currentVisualization" IVisualization
+Program --> "_stopWatch" Stopwatch
+@enduml

@@ -1,0 +1,9 @@
+@startuml
+enum VisualizationOrigin {
+    Top,
+    Bottom,
+    Left,
+    Right,
+    Center,
+}
+@enduml

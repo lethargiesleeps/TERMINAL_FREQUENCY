@@ -1,0 +1,42 @@
+@startuml
+class ShapeSettings {
+    + VolumeSensitivity : float <<get>> <<set>>
+    + TriggerThreshold : float <<get>> <<set>>
+    + MaxSizePercent : float <<get>> <<set>>
+    + MinSizePercent : float <<get>> <<set>>
+    + Count : int <<get>> <<set>>
+    + ConcentricLayers : int <<get>> <<set>>
+    + ConcentricPadding : int <<get>> <<set>>
+    + Thickness : int <<get>> <<set>>
+    + ThicknessMax : int <<get>> <<set>>
+    + QuadrantCentered : bool <<get>> <<set>>
+    + QuadrantGapDivisor : int <<get>> <<set>>
+    + UseCustomColor : bool <<get>> <<set>>
+    + ReverseMode : bool <<get>> <<set>>
+    + ReverseVolumeSensitivity : float <<get>> <<set>>
+    + SmoothMode : bool <<get>> <<set>>
+    + LerpFactor : float <<get>> <<set>>
+    + Character : char <<get>> <<set>>
+    + VerticalStack : bool <<get>> <<set>>
+    + CircleSegmentDensity : float <<get>> <<set>>
+    + CircleMinSegments : int <<get>> <<set>>
+    + CircleMaxSegments : int <<get>> <<set>>
+    + SquareWidthRatio : float <<get>> <<set>>
+    + SquareHeightRatio : float <<get>> <<set>>
+    + TriangleSideMultiplier : float <<get>> <<set>>
+    + TriangleHeightMultiplier : float <<get>> <<set>>
+    + TriangleAspectCorrection : float <<get>> <<set>>
+    + PyramidRowSpacing : float <<get>> <<set>>
+    + PolygonSides : int <<get>> <<set>>
+    + FillMode : bool <<get>> <<set>>
+    + FillSpacing : int <<get>> <<set>>
+    + ShapeSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- ShapeSettings
+ShapeSettings --> "Type" ShapeType
+ShapeSettings --> "Layout" ShapeLayout
+ShapeSettings --> "UniformColor" ConsoleColor
+@enduml

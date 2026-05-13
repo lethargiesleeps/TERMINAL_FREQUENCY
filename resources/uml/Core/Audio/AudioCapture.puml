@@ -1,0 +1,27 @@
+@startuml
+class AudioCapture {
+    +  <<event>> OnVolumeUpdated : Action<float>? 
+    +  <<event>> OnVolumeSpike : Action<float>? 
+    +  <<event>> OnFrequencyData : Action<float[]>? 
+    + SmoothedVolume : float <<get>> = 0
+    + PeakVolume : float <<get>> = 0
+    + RMS : double <<get>> <<set>> = 0
+    - _capture : WasapiLoopbackCapture?
+    - _waveIn : IWaveIn?
+    - _deviceIndex : int = 0
+    - _currentVisualization : IVisualization?
+    - _deviceName : string
+    + AudioCapture(settings:Settings)
+    + AudioCapture(settings:Settings, deviceIndex:int)
+    + Start() : void
+    + Stop() : void
+    - OnDataAvailable(sender:object, e:WaveInEventArgs) : void
+    + UpdateCurrentVisualization(visualization:IVisualization) : void
+    + UpdateSettings(newSettings:Settings) : void
+    + GetDeviceName() : string
+}
+AudioCapture --> "FftAnalyzer" FftAnalyzer
+AudioCapture --> "_settings" Settings
+AudioCapture --> "_mmDeviceEnumerator" MMDeviceEnumerator
+AudioCapture --> "_devices" MMDeviceCollection
+@enduml

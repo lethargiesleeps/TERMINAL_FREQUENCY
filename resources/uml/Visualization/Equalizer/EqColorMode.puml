@@ -1,0 +1,7 @@
+@startuml
+enum EqColorMode {
+    Uniform,
+    Pattern,
+    Gradient,
+}
+@enduml

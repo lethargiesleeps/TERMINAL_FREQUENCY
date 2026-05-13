@@ -1,0 +1,21 @@
+@startuml
+class AudioCaptureSettings {
+    + SpecifyAudioDevice : bool <<get>> <<set>>
+    + UserSelectedDevice : bool <<get>> <<set>>
+    + AudioDeviceIndex : int <<get>> <<set>>
+    + AudioSampleResolution : int <<get>> <<set>>
+    + RmsMultiplier : float <<get>> <<set>>
+    + NoiseGateFloor : float <<get>> <<set>>
+    + SmoothingFactorExisting : float <<get>> <<set>>
+    + SmoothingFactorIncoming : float <<get>> <<set>>
+    + PeakTrackingMinimum : float <<get>> <<set>>
+    + PeakDecayFactor : float <<get>> <<set>>
+    + SpikeVolumeMinimum : float <<get>> <<set>>
+    + SpikeRatio : float <<get>> <<set>>
+    + AudioCaptureSettings()
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- AudioCaptureSettings
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+interface IVisualization {
+    + Name : string <<get>>
+    + ModeIndex : int <<get>>
+    Draw(buffer:ScreenBuffer) : void
+}
+@enduml

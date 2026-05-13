@@ -1,0 +1,19 @@
+@startuml
+class Equalizer {
+    - _name : string = "EQUALIZER"
+    - _modeIndex : int = 3
+    + Name : string <<get>>
+    + ModeIndex : int <<get>>
+    + Equalizer(settings:Settings)
+    + OnFrequencyData(bands:float[]) : void
+    + Draw(buffer:ScreenBuffer) : void
+    - DrawVertical(bands:float[], eq:EqualizerSettings, displayBands:int, dataBands:int, barSpacing:int, buffer:ScreenBuffer) : void
+    - DrawHorizontal(bands:float[], eq:EqualizerSettings, displayBands:int, dataBands:int, barSpacing:int, buffer:ScreenBuffer) : void
+    - DrawHorizontalBar(buffer:ScreenBuffer, baseX:int, y:int, length:int, height:int, color:ConsoleColor, fromLeft:bool) : void
+    - GetOrderedBands(dataBands:int) : float[]
+    - GetBandColor(index:int) : ConsoleColor
+    - DrawBar(buffer:ScreenBuffer, x:int, baseY:int, width:int, height:int, color:ConsoleColor, fromTop:bool) : void
+}
+IFrequencyReactive <|-- Equalizer
+Equalizer --> "_settings" Settings
+@enduml

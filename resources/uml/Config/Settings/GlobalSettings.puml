@@ -1,0 +1,21 @@
+@startuml
+class GlobalSettings {
+    + BypassStartupScreen : bool <<get>> <<set>>
+    + ForceDefaultSettings : bool <<get>> <<set>>
+    + EnableDebugMode : bool <<get>> <<set>>
+    + EnableSafeMode : bool <<get>> <<set>>
+    + EnableErrorMode : bool <<get>> <<set>>
+    + EnableControlLock : bool <<get>> <<set>>
+    + ShowGlobalControls : bool <<get>> <<set>>
+    + ConsoleInstances : int <<get>> <<set>>
+    + SaveOnExit : bool <<get>> <<set>>
+    + EnableRasterOnDirectWrite : bool <<get>> <<set>>
+    + EnableExclusiveMode : bool <<get>> <<set>>
+    + GlobalSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- GlobalSettings
+GlobalSettings --> "DefaultMode" VisualizationMode
+@enduml

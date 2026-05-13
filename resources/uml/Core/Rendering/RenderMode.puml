@@ -1,0 +1,8 @@
+@startuml
+enum RenderMode {
+    PerPixel,
+    DirtyRect,
+    RowBatched,
+    DirectWrite,
+}
+@enduml

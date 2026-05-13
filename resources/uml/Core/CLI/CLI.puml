@@ -1,0 +1,7 @@
+@startuml
+class CLI <<static>> {
+    - {static} _isChild : bool = false
+    + {static} HandleCliArgs(args:string[], settings:GlobalSettings) : void
+    - {static} LaunchChildProcess() : void
+}
+@enduml

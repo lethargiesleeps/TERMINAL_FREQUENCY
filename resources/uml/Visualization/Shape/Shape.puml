@@ -1,0 +1,45 @@
+@startuml
+class Shape {
+    - _name : string = "SHAPE"
+    - _modeIndex : int = 2
+    - _currentSize : float = 0f
+    - _targetSize : float = 0f
+    - _peakVolume : float = 0.1f
+    - <<const>> SIZE_BOOST : float = 2.0f
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + IsReversed : bool <<get>> <<set>>
+    + IsSmoothingEnabled : bool <<get>> <<set>>
+    + IsCustomColorEnabled : bool <<get>> <<set>>
+    + IsCyclingEnabled : bool <<get>> <<set>>
+    + Shape(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike() : void
+    + OnSpike(intensity:float) : void
+    + Draw(buffer:ScreenBuffer) : void
+    - DrawSingle(buffer:ScreenBuffer) : void
+    - DrawVertical(buffer:ScreenBuffer) : void
+    - DrawHorizontal(buffer:ScreenBuffer) : void
+    - DrawPyramid(buffer:ScreenBuffer) : void
+    - DrawQuadrant(buffer:ScreenBuffer) : void
+    - DrawConcentric(buffer:ScreenBuffer) : void
+    - DrawShapeAt(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawCircle(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawSquare(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawDiamond(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawLine(buffer:ScreenBuffer, x0:int, y0:int, x1:int, y1:int, color:ConsoleColor) : void
+    - DrawPolygon(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawTriangleUp(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - DrawTriangleDown(buffer:ScreenBuffer, centerX:int, centerY:int, radius:int, thickness:int, color:ConsoleColor) : void
+    - GetEffectiveMaxSize() : float
+    - GetEffectiveThickness(shapeCount:int) : int
+    - GetColor(shapeIndex:int) : ConsoleColor
+    - CalculatePolygonHalfWidth(radius:int, sides:int, rowProgress:float) : int
+    - GetVerticalPosition(height:int, count:int, index:int, spacing:int) : int
+    - GetHorizontalPosition(width:int, count:int, index:int, spacing:int) : int
+    - GetQuadrantIndices(count:int) : int[]
+}
+IVolumeReactive <|-- Shape
+ISpikeReactive <|-- Shape
+Shape --> "_settings" Settings
+@enduml

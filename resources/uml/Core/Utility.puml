@@ -1,0 +1,20 @@
+@startuml
+class Utility <<static>> {
+    + <<const>> VERSION_NUMBER : string = "v0.9"
+    + {static} PrintStartup() : void
+    + {static} PrintPause(buffer:ScreenBuffer, modeName:string) : void
+    + {static} GetModeName(modeIndex:int) : string
+    + {static} ByteConstraintsCheck(value:int) : int
+    + {static} EnumCount(returnLastIndex:bool) : int
+    + {static} FormatEnum(value:Enum) : string
+    + {static} RefreshVisuals(settings:Settings) : List<IVisualization>
+    + {static} SelectAudioDevice() : int
+    + {static} GetAvailableDevices() : List<string>
+    + {static} DarkenColor(color:ConsoleColor) : ConsoleColor
+    + {static} LightenColor(color:ConsoleColor) : ConsoleColor
+    + {static} CycleNext(values:T[], currentValue:T, clamp:bool) : T
+    + {static} CyclePrevious(values:T[], currentValue:T, clamp:bool) : T
+    + {static} CycleNextEnum(currentValue:T, clamp:bool) : T
+    + {static} CyclePreviousEnum(currentValue:T, clamp:bool) : T
+}
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+enum EqDirection {
+    LowToHigh,
+    HighToLow,
+    Mirror,
+}
+@enduml

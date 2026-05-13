@@ -1,0 +1,38 @@
+@startuml
+class ConsoleSettings {
+    + DisableCursor : bool <<get>> <<set>>
+    + DisableAppTitle : bool <<get>> <<set>>
+    + CustomTitle : string <<get>> <<set>>
+    + DisableTitleBar : bool <<get>> <<set>>
+    + DisableScrollBars : bool <<get>> <<set>>
+    + DisableWindowResize : bool <<get>> <<set>>
+    + LaunchMaximized : bool <<get>> <<set>>
+    + LaunchInCenter : bool <<get>> <<set>>
+    + LaunchAt : bool <<get>> <<set>>
+    + LaunchAtX : int <<get>> <<set>>
+    + LaunchAtY : int <<get>> <<set>>
+    + EnableCustomWindowSize : bool <<get>> <<set>>
+    + CustomWindowWidth : int <<get>> <<set>>
+    + CustomWindowHeight : int <<get>> <<set>>
+    + WindowOpacity : int <<get>> <<set>>
+    + AlwaysOnTop : bool <<get>> <<set>>
+    + EnableWindowBlur : bool <<get>> <<set>>
+    + EnableWindowVibrancy : bool <<get>> <<set>>
+    + WindowVibrancyR : int <<get>> <<set>>
+    + WindowVibrancyG : int <<get>> <<set>>
+    + WindowVibrancyB : int <<get>> <<set>>
+    + WindowVibrancyA : int <<get>> <<set>>
+    + EnableClickThrough : bool <<get>> <<set>>
+    + EnableFlashOnBeat : bool <<get>> <<set>>
+    + FlashOnBeatCount : int <<get>> <<set>>
+    - {static} <<extern>> GetSystemMetrics(nIndex:int) : int
+    - <<const>> SM_CXSCREEN : int = 0
+    - <<const>> SM_CYSCREEN : int = 1
+    + ConsoleSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- ConsoleSettings
+ConsoleSettings --> "BackgroundColor" ConsoleColor
+@enduml
