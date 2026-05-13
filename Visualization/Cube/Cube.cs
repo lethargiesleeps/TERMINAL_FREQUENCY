@@ -9,6 +9,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
     /// and <see cref="IFrequencyReactive"/> for frequency-triggered rotation based on bass energy.
     /// Each of the six faces can have a unique character, and rotation can be frozen per axis.
     /// Supports continuous spinning, audio-reactive stepping, and a pulse effect that expands the cube with volume.
+    /// Cube code inspired by Chuehan Kuo (https://hackmd.io/@ChuehanKuo/rysEQMpyeg). Converted to C# by me and coded to use this project's renderer buffers/
     /// </summary>
     public class Cube : IVolumeReactive, IFrequencyReactive
     {
