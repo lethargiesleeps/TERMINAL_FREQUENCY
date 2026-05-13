@@ -205,6 +205,27 @@ An incorrect number value will result in the default being used.
 	- [MaxBandHeightPercent](#maxbandheightpercent)
 	- [MinBandHeightPercent](#minbandheightpercent)
 	- [HorizontalWhenCentered](#horizontalwhencentered)
+- [Cube](#cube)
+	- [CubeWidth](#cubewidth)
+	- [DistanceFromCam](#distancefromcam)
+	- [ZoomLevel](#zoomlevel)
+	- [PointDensity](#pointdensity)
+	- [FaceCharacters](#facecharacters)
+	- [RotationMode](#rotationmode)
+	- [Direction](#direction)
+	- [Color](#color)
+	- [RotationSpeedX](#rotationspeedx)
+	- [RotationSpeedY](#rotationspeedy)
+	- [RotationSpeedZ](#rotationspeedz)
+	- [ContinuousSpeedMultiplier](#continuousspeedmultiplier)
+	- [FreezeXRotation](#freezexrotation)
+	- [FreezeYRotation](#freezeyrotation)
+	- [FreezeZRotation](#freezezrotation)
+	- [FrequencyThreshold](#frequencythreshold)
+	- [VolumeThreshold](#volumethreshold)
+	- [PulseEnabled](#pulseenabled)
+	- [PulseIntensity](#pulseintensity)
+	- [PulseDecay](#pulsedecay)
 
 ---
 
@@ -250,6 +271,7 @@ Rings
 Waterfall
 Shape
 Equalizer
+Cube
 ```
 
 ### ConsoleInstances
@@ -1248,5 +1270,117 @@ Safe Mode Range: 0.00 - 0.49
 ### HorizontalWhenCentered
 #### true/false | bool
 If Origin is Center, and this value is true then bands will react horizontally instead of vertically.
+
+**[Back to Top](#settings)**
+
+## Cube
+*Sensitivity Type: Volume, Frequency*
+The following settings control the 3D rotating ASCII cube. The cube renders six faces with z-buffering for proper occlusion and can rotate continuously or in response to audio.
+
+### CubeWidth
+#### decimal | float
+Half-size of the cube in character units. Controls the overall size of the cube. Larger values create a bigger cube with more surface detail.
+Safe Mode Range: 1.0 - 50.0
+
+### DistanceFromCam
+#### decimal | float
+Distance from the virtual camera to the cube. Higher values push the cube further away, reducing perspective distortion. Lower values create more dramatic perspective.
+Safe Mode Range: 10.0 - 500.0
+
+### ZoomLevel
+#### decimal | float
+Projection scaling factor. Higher values make the cube appear larger on screen. Adjust together with DistanceFromCam for the desired framing.
+Safe Mode Range: 1.0 - 100.0
+
+### PointDensity
+#### decimal | float
+Spacing between points on each cube face. Lower values create a denser mesh with more characters. Higher values are more sparse but faster to render.
+Safe Mode Range: 0.1 - 2.0
+
+### FaceCharacters
+#### text list | char[]
+Characters used for each of the six cube faces. Index 0 = front, 1 = right, 2 = left, 3 = back, 4 = bottom, 5 = top. Must contain exactly 6 characters.
+
+### RotationMode
+#### CubeRotationMode | enum
+Determines how and when the cube rotates.
+**Accepted Values:**
+```
+None
+Continuous
+OnVolume
+OnFrequency
+Random
+```
+
+### Direction
+#### RotationDirection | enum
+Direction of rotation when RotationMode is active. Ignored when RotationMode is None.
+**Accepted Values:**
+```
+Forward
+Backward
+Random
+```
+
+### Color
+#### ConsoleColor | enum
+Color of all cube face characters. All six faces use this single color. Accepts any ConsoleColor value.
+
+### RotationSpeedX
+#### decimal | float
+Rotation speed around the X axis (tilts forward/backward). Higher values create faster spin. In Continuous mode, this value is multiplied by ContinuousSpeedMultiplier.
+Safe Mode Range: 0.0 - 1.0
+
+### RotationSpeedY
+#### decimal | float
+Rotation speed around the Y axis (spins left/right). Higher values create faster spin. In Continuous mode, this value is multiplied by ContinuousSpeedMultiplier.
+Safe Mode Range: 0.0 - 1.0
+
+### RotationSpeedZ
+#### decimal | float
+Rotation speed around the Z axis (rolls clockwise/counterclockwise). Higher values create faster spin. In Continuous mode, this value is multiplied by ContinuousSpeedMultiplier.
+Safe Mode Range: 0.0 - 1.0
+
+### ContinuousSpeedMultiplier
+#### decimal | float
+Global speed multiplier applied to all rotation axes when RotationMode is Continuous. The raw RotationSpeed values are multiplied by this to prevent excessively fast spinning. 0.1 means a setting of 0.05 becomes 0.005.
+Safe Mode Range: 0.01 - 1.0
+
+### FreezeXRotation
+#### true/false | bool
+If true, locks the X axis rotation at zero degrees. The cube will not tilt forward or backward.
+
+### FreezeYRotation
+#### true/false | bool
+If true, locks the Y axis rotation at zero degrees. The cube will not spin left or right.
+
+### FreezeZRotation
+#### true/false | bool
+If true, locks the Z axis rotation at zero degrees. The cube will not roll.
+
+### FrequencyThreshold
+#### decimal | float
+Minimum bass energy required to trigger rotation when RotationMode is OnFrequency. Uses band 0 if DedicatedBassBand is enabled, otherwise averages the first quarter of all frequency bands.
+Safe Mode Range: 0.0 - 1.0
+
+### VolumeThreshold
+#### decimal | float
+Minimum volume level required to trigger rotation when RotationMode is OnVolume.
+Safe Mode Range: 0.0 - 1.0
+
+### PulseEnabled
+#### true/false | bool
+If true, the cube expands and contracts with volume changes. The zoom level temporarily increases during loud sections and decays back to normal.
+
+### PulseIntensity
+#### decimal | float
+How much the cube grows during a pulse. Higher values create more dramatic size changes. 0.1 is subtle, 0.5 is dramatic.
+Safe Mode Range: 0.0 - 1.0
+
+### PulseDecay
+#### decimal | float
+How quickly the pulse effect fades back to normal size. Higher values hold the pulse longer. 0.95 takes about one second to return to normal.
+Safe Mode Range: 0.8 - 0.99
 
 **[Back to Top](#settings)**

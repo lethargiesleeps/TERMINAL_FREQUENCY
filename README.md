@@ -65,6 +65,7 @@ As of this version, the Visual Modes are:
 - Waterfall
 - Shape
 - Equalizer
+- Cube
 
 ### USER CONFIGURATION
 In the built package, there is a `settings.json` with all the configurable settings for maximum customization. Once saved, you can press F2 in the visualizr to load the settings (you don't need to close the settings file).

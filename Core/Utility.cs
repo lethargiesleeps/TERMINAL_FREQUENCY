@@ -4,6 +4,7 @@ using TERMINAL_FREQUENCY.Config.Settings;
 using TERMINAL_FREQUENCY.Core.Audio;
 using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
+using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
@@ -115,6 +116,7 @@ namespace TERMINAL_FREQUENCY.Core
                 1 => "WATERFALL",
                 2 => "SHAPE",
                 3 => "EQ",
+                4 => "CUBE",
                 _ => "UNKNOWN"
             };
         }
@@ -260,6 +262,28 @@ namespace TERMINAL_FREQUENCY.Core
                 };
             }
 
+            if (value is CubeRotationMode rotationMode)
+            {
+                return rotationMode switch
+                {
+                    CubeRotationMode.Continuous => "CONT",
+                    CubeRotationMode.OnVolume => "VOL",
+                    CubeRotationMode.OnFrequency => "FREQ",
+                    _ => "???"
+                };
+            }
+
+            if(value is RotationDirection rotationDirection)
+            {
+                return rotationDirection switch 
+                { 
+                    RotationDirection.Forward => "FWD",
+                    RotationDirection.Backward => "BWD",
+                    RotationDirection.Random => "RND",
+                    _ => "???"
+                };
+            }
+
             //fallback
             return value.ToString().ToUpper();
         }
@@ -276,7 +300,8 @@ namespace TERMINAL_FREQUENCY.Core
             new Rings(settings), 
             new Waterfall(settings), 
             new Shape(settings) ,
-            new Equalizer(settings)
+            new Equalizer(settings),
+            new Cube(settings)
         };
 
         /// <summary>
