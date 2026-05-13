@@ -1,0 +1,8 @@
+@startuml
+enum VisualizationMode {
+    Rings,
+    Waterfall,
+    Shape,
+    Equalizer,
+}
+@enduml

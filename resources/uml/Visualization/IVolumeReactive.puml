@@ -1,0 +1,6 @@
+@startuml
+interface IVolumeReactive {
+    Update(volume:float) : void
+}
+IVisualization <|-- IVolumeReactive
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+class ScreenBuffer {
+    - _dirtyMinX : int
+    - _dirtyMinY : int
+    - _dirtyMaxX : int
+    - _dirtyMaxY : int
+    + Width : int <<get>>
+    + Height : int <<get>>
+    - {static} <<extern>> GetStdHandle(nStdHandle:int) : nint
+    - {static} <<extern>> SetConsoleOutputCP(codePage:uint) : bool
+    - {static} <<extern>> WriteConsoleOutput(hConsoleOutput:nint, lpBuffer:CHAR_INFO[,], dwBufferSize:COORD, dwBufferCoord:COORD, lpWriteRegion:SMALL_RECT) : bool
+    - <<const>> STD_OUTPUT_HANDLE : int
+    + ScreenBuffer(settings:Settings)
+    + Clear() : void
+    + SetPixel(x:int, y:int, c:char, color:ConsoleColor) : void
+    + DrawString(x:int, y:int, text:string, color:ConsoleColor) : void
+    + DrawStatusBar(text:string, volume:float) : void
+    + UpdateBackgroundColor(newColor:ConsoleColor) : void
+    + Render() : void
+    + GetRendererMode() : string
+    + CycleRenderMode() : void
+    - ResetRenderState() : void
+    - RenderPerPixel() : void
+    - RenderDirtyRect() : void
+    - RenderRowBatched() : void
+    - RenderDirectWrite() : void
+}
+struct CHAR_INFO {
+    + UnicodeChar : char
+    + Attributes : short
+}
+struct COORD {
+    + X : short
+    + Y : short
+}
+struct SMALL_RECT {
+    + Left : short
+    + Top : short
+    + Right : short
+    + Bottom : short
+}
+ScreenBuffer --> "_settings" Settings
+ScreenBuffer --> "_bgColor" ConsoleColor
+ScreenBuffer o-> "ConsoleOutputHandle" nint
+ScreenBuffer +-- CHAR_INFO
+ScreenBuffer +-- COORD
+ScreenBuffer +-- SMALL_RECT
+@enduml

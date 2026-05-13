@@ -1,0 +1,109 @@
+@startuml
+class ConsoleWindow <<static>> {
+    - {static} <<extern>> GetConsoleWindow() : nint
+    - {static} <<extern>> ShowWindow(hWnd:nint, nCmdShow:int) : bool
+    - {static} <<extern>> SetForegroundWindow(hWnd:nint) : bool
+    - {static} <<extern>> FindWindow(lpClassName:string, lpWindowName:string) : int
+    - {static} <<extern>> SetWindowLong(hWnd:nint, nIndex:int, dwNewLong:int) : int
+    - {static} <<extern>> GetWindowLong(hWnd:nint, nIndex:int) : int
+    - {static} <<extern>> SetWindowPos(hWnd:nint, hWndInsertAfter:nint, x:int, y:int, cx:int, cy:int, uFlags:uint) : bool
+    - {static} <<extern>> GetWindowRect(hWnd:nint, lpRect:RECT) : bool
+    - {static} <<extern>> GetSystemMetrics(nIndex:int) : int
+    - {static} <<extern>> SetLayeredWindowAttributes(hWnd:nint, crKey:uint, bAlpha:byte, dwFlags:uint) : bool
+    - {static} <<extern>> SetWindowCompositionAttribute(hwnd:nint, data:WindowCompositionAttributeData) : int
+    - {static} <<extern>> FlashWindowEx(pwfi:FLASHWINFO) : bool
+    - {static} <<extern>> DwmExtendFrameIntoClientArea(hWnd:nint, margins:MARGINS) : void
+    - {static} <<extern>> DwmSetWindowAttribute(hwnd:nint, dwAttribute:uint, pvAttribute:int, cbAttribute:int) : int
+    - <<const>> SM_CXSCREEN : int = 0
+    - <<const>> SM_CYSCREEN : int = 1
+    - <<const>> GWL_STYLE : int
+    - <<const>> WS_CAPTION : int = 0x00C00000
+    - <<const>> WS_THICKFRAME : int = 0x00040000
+    - <<const>> WS_HSCROLL : int = 0x00100000
+    - <<const>> WS_VSCROLL : int = 0x00200000
+    - <<const>> WS_MAXIMIZEBOX : int = 0x00010000
+    - <<const>> WS_MINIMIZEBOX : int = 0x00020000
+    - <<const>> SWP_FRAMECHANGED : uint = 0x0020
+    - <<const>> SWP_NOZORDER : uint = 0x0004
+    - <<const>> SWP_NOMOVE : uint = 0x0002
+    - <<const>> SWP_NOSIZE : uint = 0x0001
+    - <<const>> GWL_EXSTYLE : int
+    - <<const>> WS_EX_LAYERED : int = 0x00080000
+    - <<const>> LWA_ALPHA : uint = 0x00000002
+    - <<const>> WS_EX_TRANSPARENT : int = 0x00000020
+    - <<const>> WCA_ACCENT_POLICY : uint = 19
+    - <<const>> FLASHW_ALL : uint = 0x00000003
+    - <<const>> FLASHW_TIMERNOFG : uint = 0x0000000C
+    - <<const>> SW_HIDE : int = 0
+    - <<const>> SW_SHOW : int = 5
+    - <<const>> DWMWA_BORDER_COLOR : uint = 34
+    - <<const>> DWMWA_USE_IMMERSIVE_DARK_MODE : uint = 20
+    + {static} SetWindowBlur(enable:bool) : void
+    + {static} SetClickThrough(enable:bool) : void
+    + {static} SetWindowVibrancy(r:byte, g:byte, b:byte, alpha:byte) : void
+    + {static} SetOpacity(opacity:byte) : void
+    + {static} SetAlwaysOnTop(enable:bool) : void
+    + {static} DisableTitleBar() : void
+    + {static} EnableTitleBar() : void
+    + {static} DisableScrollBars() : void
+    + {static} EnableScrollBars() : void
+    + {static} DisableResize() : void
+    + {static} EnableResize() : void
+    + {static} LaunchConsoleCenter() : void
+    + {static} LaunchConsoleAt(x:int, y:int) : void
+    + {static} SetFullScreen() : void
+    + {static} SetScreenSize(width:int, height:int) : void
+    + {static} ExclusiveMode(enable:bool) : void
+    + {static} FlashWindowOnBeat(flashCount:int) : void
+    + {static} SetWindowGlow(radius:int, r:byte, g:byte, b:byte) : void
+    - {static} LaunchOnMonitor(monitorIndex:int) : void
+    - {static} SetWindowCorners() : void
+    - {static} ApplyStyle(handle:nint) : void
+}
+enum AccentState {
+    ACCENT_DISABLED= 0,
+    ACCENT_ENABLE_GRADIENT= 1,
+    ACCENT_ENABLE_TRANSPARENTGRADIENT= 2,
+    ACCENT_ENABLE_BLURBEHIND= 3,
+    ACCENT_ENABLE_ACRYLICBLURBEHIND= 4,
+    ACCENT_INVALID_STATE= 5,
+}
+struct RECT {
+    + Left : int
+    + Top : int
+    + Right : int
+    + Bottom : int
+}
+struct WindowCompositionAttributeData {
+    + Attribute : uint
+    + SizeOfData : int
+}
+struct AccentPolicy {
+    + AccentFlags : int
+    + GradientColor : int
+    + AnimationId : int
+}
+struct FLASHWINFO {
+    + cbSize : uint
+    + dwFlags : uint
+    + uCount : uint
+    + dwTimeout : uint
+}
+struct MARGINS {
+    + Left : int
+    + Right : int
+    + Top : int
+    + Bottom : int
+}
+ConsoleWindow o-> "HWND_TOPMOST" nint
+ConsoleWindow o-> "HWND_NOTOPMOST" nint
+ConsoleWindow +-- AccentState
+ConsoleWindow +-- RECT
+ConsoleWindow +-- WindowCompositionAttributeData
+WindowCompositionAttributeData --> "Data" nint
+ConsoleWindow +-- AccentPolicy
+AccentPolicy --> "AccentState" AccentState
+ConsoleWindow +-- FLASHWINFO
+FLASHWINFO --> "hwnd" nint
+ConsoleWindow +-- MARGINS
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+enum ShapeLayout {
+    Single,
+    Vertical,
+    Horizontal,
+    Pyramid,
+    Quadrant,
+    Concentric,
+}
+@enduml

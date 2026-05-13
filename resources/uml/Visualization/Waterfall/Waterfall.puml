@@ -1,0 +1,29 @@
+@startuml
+class Waterfall {
+    - _name : string = "WATERFALL"
+    - _modeIndex : int = 1
+    - <<readonly>> _streamLock : object
+    - _clockwiseIndex : int = 0
+    - _topBottomToggle : bool = true
+    - _leftRightToggle : bool = true
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + StreamCount : int <<get>>
+    + Waterfall(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike(intensity:float) : void
+    + OnSpike() : void
+    + Draw(buffer:ScreenBuffer) : void
+    - GetNextOrigin() : VisualizationOrigin
+    - DrawStream(buffer:ScreenBuffer, stream:WaterfallStream) : void
+    - DrawVerticalStream(buffer:ScreenBuffer, stream:WaterfallStream, fromTop:bool) : void
+    - DrawHorizontalStream(buffer:ScreenBuffer, stream:WaterfallStream, fromLeft:bool) : void
+    - AddStream(intensity:float, origin:VisualizationOrigin, offset:int) : void
+}
+class "List`1"<T> {
+}
+IVolumeReactive <|-- Waterfall
+ISpikeReactive <|-- Waterfall
+Waterfall --> "_settings" Settings
+Waterfall o-> "_streams<WaterfallStream>" "List`1"
+@enduml

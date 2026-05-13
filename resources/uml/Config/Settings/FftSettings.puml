@@ -1,0 +1,14 @@
+@startuml
+class FftSettings {
+    + BandCount : int <<get>> <<set>>
+    + Sensitivity : float <<get>> <<set>>
+    + DedicatedBassBand : bool <<get>> <<set>>
+    + HighPass : float <<get>> <<set>>
+    + LowPass : float <<get>> <<set>>
+    + BassCutoff : float <<get>> <<set>>
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+    + Restore() : void
+}
+IConfigurable <|-- FftSettings
+@enduml

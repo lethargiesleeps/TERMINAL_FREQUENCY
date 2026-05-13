@@ -1,0 +1,34 @@
+@startuml
+class WaterfallSettings {
+    + ReverseMode : bool <<get>> <<set>>
+    + StartWidthPercent : float <<get>> <<set>>
+    + EndWidthPercent : float <<get>> <<set>>
+    + Speed : float <<get>> <<set>>
+    + FadeRate : float <<get>> <<set>>
+    + MaxStreams : int <<get>> <<set>>
+    + Thickness : int <<get>> <<set>>
+    + TriggerThreshold : float <<get>> <<set>>
+    + OnlySpawnOnThreshold : bool <<get>> <<set>>
+    + MidpointChange : float <<get>> <<set>>
+    + EndpointChange : float <<get>> <<set>>
+    + CurveIntensityVertical : float <<get>> <<set>>
+    + CurveIntensityHorizontal : float <<get>> <<set>>
+    + CurveChar : char <<get>> <<set>>
+    + RainbowMode : bool <<get>> <<set>>
+    + RainbowFadeBright : float <<get>> <<set>>
+    + RainbowFadeColor : float <<get>> <<set>>
+    + RainbowFadeDark : float <<get>> <<set>>
+    + RainbowFadeDarkGray : float <<get>> <<set>>
+    + NormalFadeWhite : float <<get>> <<set>>
+    + NormalFadeGray : float <<get>> <<set>>
+    + NormalFadeDarkGray : float <<get>> <<set>>
+    + WaterfallSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- WaterfallSettings
+WaterfallSettings --> "Origin" VisualizationOrigin
+WaterfallSettings --> "Mode" WaterfallMode
+WaterfallSettings --> "Color" ConsoleColor
+@enduml

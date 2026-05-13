@@ -1,0 +1,7 @@
+@startuml
+interface IConfigurable {
+    Restore() : void
+    EnforceConstraints() : void
+    EnforceMandatoryConstraints() : void
+}
+@enduml

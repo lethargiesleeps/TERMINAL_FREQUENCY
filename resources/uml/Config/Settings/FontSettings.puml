@@ -1,0 +1,16 @@
+@startuml
+class FontSettings {
+    + EnableRasterFont : bool <<get>> <<set>>
+    + EnableCustomFont : bool <<get>> <<set>>
+    + CustomFontFaceOverride : string? <<get>> <<set>>
+    + CustomFontSize : int <<get>> <<set>>
+    + CustomFontBold : bool <<get>> <<set>>
+    + FontSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- FontSettings
+FontSettings --> "RasterFontType" RasterFontType
+FontSettings --> "CustomFontFace" FontFace
+@enduml

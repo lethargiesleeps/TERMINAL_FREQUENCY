@@ -1,0 +1,35 @@
+@startuml
+class RingsSettings {
+    + ReverseMode : bool <<get>> <<set>>
+    + RadiusMin : float <<get>> <<set>>
+    + Radius : float <<get>> <<set>>
+    + RadiusMax : float <<get>> <<set>>
+    + Lifetime : float <<get>> <<set>>
+    + Speed : float <<get>> <<set>>
+    + FadeRate : float <<get>> <<set>>
+    + SolidColor : bool <<get>> <<set>>
+    + CharRandomizer : bool <<get>> <<set>>
+    + CharRandomizerCharset : string <<get>> <<set>>
+    + MaxRings : int <<get>> <<set>>
+    + Segments : int <<get>> <<set>>
+    + AmbientSegments : int <<get>> <<set>>
+    + AmbientDotInterval : int <<get>> <<set>>
+    + AmbientBaseRadius : float <<get>> <<set>>
+    + AmbientVolumeMultiplier : float <<get>> <<set>>
+    + AmbientRadiusMax : float <<get>> <<set>>
+    + YStretch : float <<get>> <<set>>
+    + DrawCrosshair : bool <<get>> <<set>>
+    + CrosshairChar : char <<get>> <<set>>
+    + CrosshairCharOutter : char <<get>> <<set>>
+    + Offset : int <<get>> <<set>>
+    + FireworksMode : bool <<get>> <<set>>
+    + RingsSettings()
+    + Restore() : void
+    + EnforceConstraints() : void
+    + EnforceMandatoryConstraints() : void
+}
+IConfigurable <|-- RingsSettings
+RingsSettings --> "ColorMode" RingColorMode
+RingsSettings --> "CrosshairColor" ConsoleColor
+RingsSettings --> "CrosshairRingColor" ConsoleColor
+@enduml

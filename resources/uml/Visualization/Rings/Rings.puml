@@ -1,0 +1,23 @@
+@startuml
+class Rings {
+    - <<readonly>> _ringLock : object
+    - _maxRings : int
+    - _smoothedVolume : float = 0
+    - _name : string = "RINGS"
+    - _modeIndex : int = 0
+    - Name : string <<get>>
+    - ModeIndex : int <<get>>
+    + RingCount : int <<get>>
+    + Rings(settings:Settings)
+    + Update(volume:float) : void
+    + OnSpike() : void
+    + OnSpike(intensity:float) : void
+    + Draw(buffer:ScreenBuffer) : void
+}
+class "List`1"<T> {
+}
+IVolumeReactive <|-- Rings
+ISpikeReactive <|-- Rings
+Rings --> "_settings" Settings
+Rings o-> "_rings<Ring>" "List`1"
+@enduml

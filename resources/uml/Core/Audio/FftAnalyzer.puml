@@ -1,0 +1,15 @@
+@startuml
+class FftAnalyzer {
+    - _fftLength : int
+    - _highPassCutoff : float
+    - _lowPassCutoff : float
+    - _bassBandCutoff : float
+    - <<const>> HAMMING_ALPHA : float = 0.54f
+    - <<const>> HAMMING_BETA : float = 0.46f
+    - <<const>> BASS_BAND_CUTOFF : float = 150f
+    + FftAnalyzer(settings:Settings, fftLength:int)
+    + Process(buffer:byte[], bytesRecorded:int, bytesPerSample:int, channels:int, sampleRate:float, numBands:int, bandSensitivity:float, lowFreq:float, highFreq:float, bassBandCutoff:float) : void
+    + GetBandFrequencyData(bandCount:int) : string[]
+}
+FftAnalyzer --> "_settings" Settings
+@enduml

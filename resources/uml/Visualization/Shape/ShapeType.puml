@@ -1,0 +1,10 @@
+@startuml
+enum ShapeType {
+    Circle,
+    Square,
+    Diamond,
+    Polygon,
+    TriangleUp,
+    TriangleDown,
+}
+@enduml
