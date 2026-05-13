@@ -1,11 +1,11 @@
-![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/splash.jpg)
+![Terminal Frequency Splash](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/resources/img/splash.jpg)
 
 # TERMINAL__FREQUENCY
 *v0.9.0*
 
 ## ABOUT
 A Windows console program for audio visualizations. Captures any audio playing from your computer automatically. Features a robust settings API to endlessly customize the look and feel of the available visuals.
-![Terminal Frequency Demo Sampler](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/img/demo.gif)
+![Terminal Frequency Demo Sampler](https://github.com/lethargiesleeps/TERMINAL_FREQUENCY/blob/main/resources/img/demo.gif)
 
 ### BUILT WITH
 - .NET 8.0

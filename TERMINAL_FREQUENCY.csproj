@@ -10,14 +10,15 @@
 		<DebugType>none</DebugType>
 		<Version>0.8.0</Version>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="img\**" />
+	  <EmbeddedResource Remove="img\**" />
+	  <None Remove="img\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="NAudio" Version="2.2.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="img\uml\diagrams\Config\" />
 	</ItemGroup>
 
 </Project>
