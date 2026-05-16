@@ -1,4 +1,4 @@
-﻿namespace TERMINAL_FREQUENCY.Config
+﻿namespace TERMINAL_FREQUENCY.Config.Settings
 {
     /// <summary>
     /// Defines a configurable settings object that supports restoring defaults

@@ -1,7 +1,7 @@
 ﻿using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
 {
     public class RingsSettings : IConfigurable
     {

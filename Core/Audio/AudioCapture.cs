@@ -2,6 +2,7 @@
 using NAudio.Wave;
 using System.Diagnostics;
 using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Config.Settings.Audio;
 using TERMINAL_FREQUENCY.Visualization;
 
 

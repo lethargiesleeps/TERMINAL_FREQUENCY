@@ -2,7 +2,7 @@
 using TERMINAL_FREQUENCY.Visualization.Shape;
 
 #nullable disable warnings
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
 {
     public class ShapeSettings : IConfigurable
     {

@@ -1,7 +1,6 @@
 ﻿
 using System.Diagnostics;
-
-using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Config.Settings.General;
 
 namespace TERMINAL_FREQUENCY.Core.CLI
 {

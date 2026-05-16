@@ -6,6 +6,7 @@ using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
+using TERMINAL_FREQUENCY.Visualization.NoiseField;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
@@ -117,6 +118,7 @@ namespace TERMINAL_FREQUENCY.Core
                 2 => "SHAPE",
                 3 => "EQ",
                 4 => "CUBE",
+                5 => "NOISEFIELD",
                 _ => "UNKNOWN"
             };
         }
@@ -269,6 +271,7 @@ namespace TERMINAL_FREQUENCY.Core
                     CubeRotationMode.Continuous => "CONT",
                     CubeRotationMode.OnVolume => "VOL",
                     CubeRotationMode.OnFrequency => "FREQ",
+                    CubeRotationMode.Random => "RND",
                     _ => "???"
                 };
             }
@@ -301,7 +304,8 @@ namespace TERMINAL_FREQUENCY.Core
             new Waterfall(settings), 
             new Shape(settings) ,
             new Equalizer(settings),
-            new Cube(settings)
+            new Cube(settings),
+            new NoiseField(settings)
         };
 
         /// <summary>

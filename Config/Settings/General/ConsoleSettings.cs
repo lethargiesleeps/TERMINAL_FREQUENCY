@@ -2,7 +2,7 @@
 using TERMINAL_FREQUENCY.Core;
 
 #nullable disable warnings
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.General
 {
     public class ConsoleSettings : IConfigurable
     {

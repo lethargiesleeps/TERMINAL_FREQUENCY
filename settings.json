@@ -265,5 +265,22 @@
     "PulseIntensity": 0.3,
     "PulseDecay": 0.95,
     "RandomModeFrequency": 8
+  },
+  "NoiseField": {
+    "Color": "White",
+    "CharacterSet": "!@#$%^&*()_+-=[]{}|;:',.<>?/`~",
+    "UseDualCharacterSets": true,
+    "QuietCharacterSet": ".,-~:;'`",
+    "LoudCharacterSet": "#@%&*!$",
+    "CharacterSwitchThreshold": 0.5,
+    "CharacterChangeRate": 0.3,
+    "MinDensity": 0.02,
+    "MaxDensity": 0.4,
+    "SpreadRadius": 0.45,
+    "JitterAmount": 0.3,
+    "CenterOrigin": true,
+    "VolumeThreshold": 0.5,
+    "Sensitivity": 1.0,
+    "DecayRate": 0.9
   }
 }

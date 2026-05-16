@@ -1,7 +1,7 @@
 ﻿using TERMINAL_FREQUENCY.Config.Font;
 using TERMINAL_FREQUENCY.Core;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.General
 {
     public class FontSettings : IConfigurable
     {

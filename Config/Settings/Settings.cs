@@ -1,4 +1,7 @@
 ﻿using Newtonsoft.Json;
+using TERMINAL_FREQUENCY.Config.Settings.Audio;
+using TERMINAL_FREQUENCY.Config.Settings.General;
+using TERMINAL_FREQUENCY.Config.Settings.Visualizations;
 
 namespace TERMINAL_FREQUENCY.Config.Settings
 {
@@ -41,6 +44,9 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         [JsonProperty("Cube")]
         public CubeSettings CubeSettings { get; private set; }
 
+        [JsonProperty("NoiseField")]
+        public NoiseFieldSettings NoiseFieldSettings { get; private set; }
+
         public Settings()
         {
             GlobalSettings = new GlobalSettings();
@@ -54,6 +60,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ShapeSettings = new ShapeSettings();
             EqualizerSettings = new EqualizerSettings();
             CubeSettings = new CubeSettings();
+            NoiseFieldSettings = new NoiseFieldSettings();
         }
 
         public void Restore()
@@ -69,6 +76,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ShapeSettings.Restore();
             EqualizerSettings.Restore();
             CubeSettings.Restore();
+            NoiseFieldSettings.Restore();
         }
 
         public void EnforceConstraints()
@@ -84,6 +92,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ShapeSettings.EnforceConstraints();
             EqualizerSettings.EnforceConstraints();
             CubeSettings.EnforceConstraints();
+            NoiseFieldSettings.EnforceConstraints();
         }
 
         public void EnforceMandatoryConstraints()
@@ -99,6 +108,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             ShapeSettings.EnforceMandatoryConstraints();
             EqualizerSettings.EnforceMandatoryConstraints();
             CubeSettings.EnforceMandatoryConstraints();
+            NoiseFieldSettings.EnforceMandatoryConstraints();
         }
     }
 }

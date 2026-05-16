@@ -1,4 +1,5 @@
 ﻿using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Config.Settings.Visualizations;
 using TERMINAL_FREQUENCY.Core.Rendering;
 
 namespace TERMINAL_FREQUENCY.Visualization.Rings

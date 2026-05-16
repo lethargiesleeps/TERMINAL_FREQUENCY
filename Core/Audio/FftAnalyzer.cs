@@ -1,5 +1,6 @@
 ﻿using NAudio.Dsp;
 using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Config.Settings.Audio;
 
 namespace TERMINAL_FREQUENCY.Core.Audio
 {

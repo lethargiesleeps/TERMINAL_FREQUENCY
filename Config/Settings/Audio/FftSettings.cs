@@ -1,4 +1,4 @@
-﻿namespace TERMINAL_FREQUENCY.Config.Settings
+﻿namespace TERMINAL_FREQUENCY.Config.Settings.Audio
 {
     public class FftSettings : IConfigurable
     {
@@ -27,7 +27,7 @@
             if (HighPass >= LowPass) HighPass = 50f;
             if (DedicatedBassBand && HighPass >= BassCutoff) HighPass = BassCutoff - 1f;
             if (LowPass > 20000f) LowPass = 20000f;
-            if (LowPass <= HighPass || (DedicatedBassBand && HighPass <= BassCutoff)) LowPass = 18000f;
+            if (LowPass <= HighPass || DedicatedBassBand && HighPass <= BassCutoff) LowPass = 18000f;
             if (BassCutoff <= HighPass || BassCutoff >= LowPass) BassCutoff = 150f;
         }
 

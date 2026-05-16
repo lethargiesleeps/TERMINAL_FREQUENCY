@@ -7,7 +7,7 @@ using TERMINAL_FREQUENCY.Config.Font;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.General
 {
     public class GlobalSettings : IConfigurable
     {

@@ -1,6 +1,6 @@
 ﻿using TERMINAL_FREQUENCY.Visualization.Cube;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
 {
     public class CubeSettings : IConfigurable
     {

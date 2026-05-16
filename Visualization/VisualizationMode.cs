@@ -9,6 +9,7 @@
         Waterfall,
         Shape,
         Equalizer,
-        Cube
+        Cube,
+        NoiseField
     }
 }

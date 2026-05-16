@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Core;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Audio
 {
     public class AudioCaptureSettings : IConfigurable
     {

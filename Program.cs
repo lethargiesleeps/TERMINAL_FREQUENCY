@@ -10,6 +10,7 @@ using TERMINAL_FREQUENCY.Core.Rendering;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
+using TERMINAL_FREQUENCY.Visualization.NoiseField;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
@@ -244,11 +245,20 @@ namespace TERMINAL_FREQUENCY
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
 
+                            if(_currentVisualization is NoiseField)
+                            {
+                                // - +, O P, 9 0, 7 8
+                                string fieldStatus = $"[-/+] THRESHOLD:{_settings.NoiseFieldSettings.VolumeThreshold:F2} | [O/P] SENS:{_settings.NoiseFieldSettings.Sensitivity:F2} | [9/0] JITTER:{_settings.NoiseFieldSettings.JitterAmount:F2} | [7/8] SPREAD:{_settings.NoiseFieldSettings.SpreadRadius:F2}";
+                                string fieldStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.NoiseFieldSettings.Color)} | CEN[T]ER:{(_settings.NoiseFieldSettings.CenterOrigin ? "ON" : "OFF")} | DUAL CHAR[S]ETS:{(_settings.NoiseFieldSettings.UseDualCharacterSets ? "ON" : "OFF")}";
+                                buffer.DrawString(0, buffer.Height - 3, fieldStatus, debugTextColor);
+                                buffer.DrawString(0, buffer.Height - 2, fieldStatus2, debugTextColor);
+                            }
+
                             if(_currentVisualization is Cube)
                             {
                                 float globalSpeed = (_settings.CubeSettings.RotationSpeedY + _settings.CubeSettings.RotationSpeedX + _settings.CubeSettings.RotationSpeedZ) / 3;
                                 string cubeStatus1 = $"[M]ODE:{Utility.FormatEnum(_settings.CubeSettings.RotationMode)} | [R]OTATION:{Utility.FormatEnum(_settings.CubeSettings.Direction)} | [O/P] GLOBAL SPEED:{globalSpeed:F3} | [9/0] SIZE:{_settings.CubeSettings.ZoomLevel:F2}";
-                                string cubeStatus2 = $"[C]COLOR:{Utility.FormatEnum(_settings.CubeSettings.Color)} | FREEZE [X]:{(_settings.CubeSettings.FreezeXRotation ? "ON" : "OFF")} | FREEZE [Y]:{(_settings.CubeSettings.FreezeYRotation ? "ON" : "OFF")} | FREEZE [Z]:{(_settings.CubeSettings.FreezeZRotation ? "ON" : "OFF")} | PUL[S]E:{(_settings.CubeSettings.PulseEnabled ? "ON" : "OFF")}";
+                                string cubeStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.CubeSettings.Color)} | FREEZE [X]:{(_settings.CubeSettings.FreezeXRotation ? "ON" : "OFF")} | FREEZE [Y]:{(_settings.CubeSettings.FreezeYRotation ? "ON" : "OFF")} | FREEZE [Z]:{(_settings.CubeSettings.FreezeZRotation ? "ON" : "OFF")} | PUL[S]E:{(_settings.CubeSettings.PulseEnabled ? "ON" : "OFF")}";
 
                                 if (_settings.CubeSettings.PulseEnabled)
                                     cubeStatus2 += $" | [7/8] INTENSITY:{_settings.CubeSettings.PulseIntensity:F3}";
@@ -598,6 +608,10 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Cube)
                             _settings.CubeSettings.Color = Utility.CycleNext(_colors, _settings.CubeSettings.Color);
+                        
+                        if(_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.Color = Utility.CycleNext(_colors, _settings.NoiseFieldSettings.Color);
+
                         break;
 
                     case ConsoleKey.F:
@@ -621,6 +635,9 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Cube)
                             _settings.CubeSettings.PulseEnabled = !_settings.CubeSettings.PulseEnabled;
+
+                        if(_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.UseDualCharacterSets = !_settings.NoiseFieldSettings.UseDualCharacterSets;
                         break;
 
                     case ConsoleKey.Y:
@@ -650,6 +667,9 @@ namespace TERMINAL_FREQUENCY
 
                         if(_currentVisualization is Equalizer)
                             _settings.EqualizerSettings.Direction = Utility.CycleNextEnum(_settings.EqualizerSettings.Direction);
+
+                        if(_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.CenterOrigin = !_settings.NoiseFieldSettings.CenterOrigin;
                         break;
 
                     case ConsoleKey.O: //decrement 1 or Origin toggle
@@ -687,10 +707,14 @@ namespace TERMINAL_FREQUENCY
                         
                         if(_currentVisualization is Cube)
                         {
-                            _settings.CubeSettings.RotationSpeedX = (float)Math.Max(0.002, _settings.CubeSettings.RotationSpeedX - 0.005f);
-                            _settings.CubeSettings.RotationSpeedY = (float)Math.Max(0.002, _settings.CubeSettings.RotationSpeedY - 0.005f);
-                            _settings.CubeSettings.RotationSpeedX = (float)Math.Max(0.001, _settings.CubeSettings.RotationSpeedZ - 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = Math.Max(0.002f, _settings.CubeSettings.RotationSpeedX - 0.005f);
+                            _settings.CubeSettings.RotationSpeedY = Math.Max(0.002f, _settings.CubeSettings.RotationSpeedY - 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = Math.Max(0.001f, _settings.CubeSettings.RotationSpeedZ - 0.005f);
                         }
+
+                        if(_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.Sensitivity = Math.Max(0.25f, _settings.NoiseFieldSettings.Sensitivity - 0.25f);
+                        
                         break;
 
                     case ConsoleKey.P: //increment 1
@@ -719,10 +743,15 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Cube)
                         {
-                            _settings.CubeSettings.RotationSpeedX = (float)Math.Min(0.5, _settings.CubeSettings.RotationSpeedX + 0.005f);
-                            _settings.CubeSettings.RotationSpeedY = (float)Math.Min(0.5, _settings.CubeSettings.RotationSpeedY + 0.005f);
-                            _settings.CubeSettings.RotationSpeedX = (float)Math.Min(0.3, _settings.CubeSettings.RotationSpeedZ + 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = Math.Min(0.5f, _settings.CubeSettings.RotationSpeedX + 0.005f);
+                            _settings.CubeSettings.RotationSpeedY = Math.Min(0.5f, _settings.CubeSettings.RotationSpeedY + 0.005f);
+                            _settings.CubeSettings.RotationSpeedX = Math.Min(0.3f, _settings.CubeSettings.RotationSpeedZ + 0.005f);
                         }
+
+
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.Sensitivity = Math.Min(10f, _settings.NoiseFieldSettings.Sensitivity + 0.25f);
+                        
                         break;
                     case ConsoleKey.OemMinus: //decrement 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
@@ -741,6 +770,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is IFrequencyReactive)
                             _settings.FftSettings.BandCount = Math.Max(4, _settings.FftSettings.BandCount - 2);
+
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.VolumeThreshold = Math.Max(0.02f, _settings.NoiseFieldSettings.VolumeThreshold - 0.02f);
                         break;
 
                     case ConsoleKey.OemPlus: //increment 2
@@ -762,6 +794,9 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is IFrequencyReactive)
                             _settings.FftSettings.BandCount = Math.Min(32, _settings.FftSettings.BandCount  + 2);
+
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.VolumeThreshold = Math.Min(1f, _settings.NoiseFieldSettings.VolumeThreshold + 0.02f);
                         break;
 
                     case ConsoleKey.D7:
@@ -769,6 +804,8 @@ namespace TERMINAL_FREQUENCY
                         if(_currentVisualization is Cube)
                             _settings.CubeSettings.PulseIntensity = Math.Max(0.05f, _settings.CubeSettings.PulseIntensity - 0.025f);
 
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.SpreadRadius = Math.Max(0.02f, _settings.NoiseFieldSettings.SpreadRadius - 0.02f);
                         break;
 
                     case ConsoleKey.D8:
@@ -776,6 +813,8 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Cube)
                             _settings.CubeSettings.PulseIntensity = Math.Min(1.5f, _settings.CubeSettings.PulseIntensity + 0.025f);
 
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.SpreadRadius = Math.Min(1f, _settings.NoiseFieldSettings.SpreadRadius + 0.02f);
                         break;
                     case ConsoleKey.D9: //decrement 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
@@ -799,6 +838,9 @@ namespace TERMINAL_FREQUENCY
                             else
                                 _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
                         }
+
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.JitterAmount = Math.Max(0.02f, _settings.NoiseFieldSettings.JitterAmount - 0.02f);
                         break;
 
                     case ConsoleKey.D0: //increment 3
@@ -825,6 +867,9 @@ namespace TERMINAL_FREQUENCY
                                 _settings.FftSettings.Sensitivity = Math.Min(3.0f, _settings.FftSettings.Sensitivity + 0.05f);
 
                         }
+
+                        if (_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.JitterAmount = Math.Min(1f, _settings.NoiseFieldSettings.JitterAmount + 0.02f);
                         break;
                 }
             }

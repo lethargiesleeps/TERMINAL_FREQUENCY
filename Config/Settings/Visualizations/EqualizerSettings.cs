@@ -7,7 +7,7 @@ using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
 {
     public class EqualizerSettings : IConfigurable
     {

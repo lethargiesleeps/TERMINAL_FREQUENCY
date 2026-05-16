@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using TERMINAL_FREQUENCY.Core;
 using TERMINAL_FREQUENCY.Core.Rendering;
 
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.General
 {
     public class RendererSettings : IConfigurable
     {

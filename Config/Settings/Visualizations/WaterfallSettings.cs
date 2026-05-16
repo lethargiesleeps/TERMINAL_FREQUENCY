@@ -3,7 +3,7 @@ using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
 
 #nullable disable warnings
-namespace TERMINAL_FREQUENCY.Config.Settings
+namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
 {
     public class WaterfallSettings : IConfigurable
     {

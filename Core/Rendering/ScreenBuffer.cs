@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 using TERMINAL_FREQUENCY.Config.Settings;
+using TERMINAL_FREQUENCY.Config.Settings.General;
 
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Core.Rendering
