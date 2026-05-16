@@ -226,6 +226,7 @@ An incorrect number value will result in the default being used.
 	- [PulseEnabled](#pulseenabled)
 	- [PulseIntensity](#pulseintensity)
 	- [PulseDecay](#pulsedecay)
+	- [RandomModeFrequency](#randommodefrequency)
 
 ---
 
@@ -1382,5 +1383,10 @@ Safe Mode Range: 0.0 - 1.0
 #### decimal | float
 How quickly the pulse effect fades back to normal size. Higher values hold the pulse longer. 0.95 takes about one second to return to normal.
 Safe Mode Range: 0.8 - 0.99
+
+### RandomModeFrequency
+#### whole number | int
+How frequently the direction changes when using Random direction. The lower the value, it actually changes more frequently, for less frequent changes increase this value.
+Sage Mode Range: 2 - 12
 
 **[Back to Top](#settings)**

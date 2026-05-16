@@ -223,7 +223,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
             if (_settings.CubeSettings.Direction == RotationDirection.Backward)
                 direction = -1;
             else if (_settings.CubeSettings.Direction == RotationDirection.Random)
-                direction = _rnd.Next(6) * 2 - 1;
+                direction = _rnd.Next(_settings.CubeSettings.RandomModeFrequency) * 2 - 1;
 
             float speedMultiplier = _settings.CubeSettings.RotationMode == CubeRotationMode.Continuous ? _settings.CubeSettings.ContinuousSpeedMultiplier: 1f;
 

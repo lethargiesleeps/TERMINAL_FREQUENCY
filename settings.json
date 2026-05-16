@@ -263,6 +263,7 @@
     "VolumeThreshold": 0.3,
     "PulseEnabled": true,
     "PulseIntensity": 0.3,
-    "PulseDecay": 0.95
+    "PulseDecay": 0.95,
+    "RandomModeFrequency": 8
   }
 }

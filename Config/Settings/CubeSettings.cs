@@ -25,7 +25,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
         public bool PulseEnabled { get; set; }
         public float PulseIntensity { get; set; }
         public float PulseDecay { get; set; }
-
+        public int RandomModeFrequency { get; set; }
         public CubeSettings()
         {
             Restore();
@@ -53,6 +53,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings
             PulseIntensity = 0.3f;
             PulseDecay = 0.95f;
             ContinuousSpeedMultiplier = 0.1f;
+            RandomModeFrequency = 8;
         }
 
         public void EnforceConstraints()
