@@ -268,12 +268,18 @@
   },
   "NoiseField": {
     "Color": "White",
+    "UseColorPattern": false,
+    "ColorPattern": [
+      "White",
+      "Cyan",
+      "Magenta"
+    ],
     "CharacterSet": "!@#$%^&*()_+-=[]{}|;:',.<>?/`~",
     "UseDualCharacterSets": true,
     "QuietCharacterSet": ".,-~:;'`",
     "LoudCharacterSet": "#@%&*!$",
     "CharacterSwitchThreshold": 0.5,
-    "CharacterChangeRate": 0.3,
+    "CharacterChangeRate": 1.0,
     "MinDensity": 0.02,
     "MaxDensity": 0.4,
     "SpreadRadius": 0.45,

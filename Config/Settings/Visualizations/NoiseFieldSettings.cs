@@ -9,6 +9,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
     public class NoiseFieldSettings : IConfigurable
     {
         public ConsoleColor Color { get; set; }
+        public bool UseColorPattern { get; set; } 
+        public ConsoleColor[] ColorPattern { get; set; }
         public string CharacterSet { get; set; }
         public bool UseDualCharacterSets { get; set; }
         public string QuietCharacterSet { get; set; }
@@ -43,9 +45,12 @@ namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
             VolumeThreshold = 0.5f;
             DecayRate = 0.9f;
             CharacterSwitchThreshold = 0.5f;
-            CharacterChangeRate = 0.3f;
+            CharacterChangeRate = 1f;
             Sensitivity = 1.0f;
             UseDualCharacterSets = true;
+            UseColorPattern = false;
+            ColorPattern = new ConsoleColor[] { ConsoleColor.White, ConsoleColor.Cyan, ConsoleColor.Magenta };
+            ;
         }
 
         public void EnforceConstraints()
@@ -73,6 +78,8 @@ namespace TERMINAL_FREQUENCY.Config.Settings.Visualizations
             if (DecayRate < 0.01f) DecayRate = 0.01f;
             if (Sensitivity < 0.1f) Sensitivity = 0.1f;
             if (Sensitivity > 10f) Sensitivity = 10f;
+            if (CharacterChangeRate < 0.01f) CharacterChangeRate = 0.01f;
+            if (CharacterChangeRate > 1f) CharacterChangeRate = 1f;
         }
     }
 }

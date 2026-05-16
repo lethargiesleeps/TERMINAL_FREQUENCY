@@ -249,7 +249,7 @@ namespace TERMINAL_FREQUENCY
                             {
                                 // - +, O P, 9 0, 7 8
                                 string fieldStatus = $"[-/+] THRESHOLD:{_settings.NoiseFieldSettings.VolumeThreshold:F2} | [O/P] SENS:{_settings.NoiseFieldSettings.Sensitivity:F2} | [9/0] JITTER:{_settings.NoiseFieldSettings.JitterAmount:F2} | [7/8] SPREAD:{_settings.NoiseFieldSettings.SpreadRadius:F2}";
-                                string fieldStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.NoiseFieldSettings.Color)} | CEN[T]ER:{(_settings.NoiseFieldSettings.CenterOrigin ? "ON" : "OFF")} | DUAL CHAR[S]ETS:{(_settings.NoiseFieldSettings.UseDualCharacterSets ? "ON" : "OFF")}";
+                                string fieldStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.NoiseFieldSettings.Color)} | CEN[T]ER:{(_settings.NoiseFieldSettings.CenterOrigin ? "ON" : "OFF")} | DUAL CHAR[S]ETS:{(_settings.NoiseFieldSettings.UseDualCharacterSets ? "ON" : "OFF")} | CLR PATTE[R]N:{(_settings.NoiseFieldSettings.UseColorPattern ? "ON" : "OFF")}";
                                 buffer.DrawString(0, buffer.Height - 3, fieldStatus, debugTextColor);
                                 buffer.DrawString(0, buffer.Height - 2, fieldStatus2, debugTextColor);
                             }
@@ -543,7 +543,8 @@ namespace TERMINAL_FREQUENCY
 
                         if (_currentVisualization is Cube)
                             _settings.CubeSettings.Direction = Utility.CycleNextEnum(_settings.CubeSettings.Direction);
-
+                        if(_currentVisualization is NoiseField)
+                            _settings.NoiseFieldSettings.UseColorPattern = !_settings.NoiseFieldSettings.UseColorPattern;
                         break;
 
                     case ConsoleKey.M:
@@ -659,6 +660,7 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is Cube)
                             _settings.CubeSettings.FreezeZRotation = !_settings.CubeSettings.FreezeZRotation;
                         break;
+                    
                     case ConsoleKey.T:
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
@@ -753,6 +755,7 @@ namespace TERMINAL_FREQUENCY
                             _settings.NoiseFieldSettings.Sensitivity = Math.Min(10f, _settings.NoiseFieldSettings.Sensitivity + 0.25f);
                         
                         break;
+                    
                     case ConsoleKey.OemMinus: //decrement 2
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
@@ -816,6 +819,7 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is NoiseField)
                             _settings.NoiseFieldSettings.SpreadRadius = Math.Min(1f, _settings.NoiseFieldSettings.SpreadRadius + 0.02f);
                         break;
+                    
                     case ConsoleKey.D9: //decrement 3
                         if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
 
@@ -871,6 +875,38 @@ namespace TERMINAL_FREQUENCY
                         if (_currentVisualization is NoiseField)
                             _settings.NoiseFieldSettings.JitterAmount = Math.Min(1f, _settings.NoiseFieldSettings.JitterAmount + 0.02f);
                         break;
+
+                    #region ChangeVisuals
+                    case ConsoleKey.NumPad0:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 0;
+                        break;
+
+                    case ConsoleKey.NumPad1:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 1;
+                        break;
+
+                    case ConsoleKey.NumPad2:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 2;
+                        break;
+
+                    case ConsoleKey.NumPad3:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 3;
+                        break;
+
+                    case ConsoleKey.NumPad4:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 4;
+                        break;
+
+                    case ConsoleKey.NumPad5:
+                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        _currentMode = 5;
+                        break;
+                        #endregion
                 }
             }
         }

@@ -76,6 +76,8 @@ namespace TERMINAL_FREQUENCY.Visualization.NoiseField
 
             for (int i = 0; i < particleCount; i++)
             {
+                if (_rnd.NextDouble() > nf.CharacterChangeRate)
+                    continue;
                 int posX, posY;
 
                 if (nf.CenterOrigin)
@@ -106,7 +108,8 @@ namespace TERMINAL_FREQUENCY.Visualization.NoiseField
                     charSet = _currentVolume > nf.CharacterSwitchThreshold ? nf.LoudCharacterSet : nf.QuietCharacterSet;
 
                 char c = charSet[_rnd.Next(charSet.Length)];
-                buffer.SetPixel(posX, posY, c, nf.Color);
+                ConsoleColor color = (nf.UseColorPattern && nf.ColorPattern.Length > 0) ? nf.ColorPattern[_rnd.Next(nf.ColorPattern.Length)] : nf.Color;
+                buffer.SetPixel(posX, posY, c, color);
             }
         }
     }
