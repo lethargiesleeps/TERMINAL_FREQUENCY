@@ -45,7 +45,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         public Rings(Settings settings)
         {
             _settings = settings;
-            _maxRings = _settings.RingsSettings.MaxRings;
+            _maxRings = _settings.Rings.MaxRings;
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
                 //update _rings
                 for (int i = _rings.Count - 1; i >= 0; i--)
                 {
-                    _rings[i].Update(_settings.RingsSettings.Speed, _settings.RingsSettings.FadeRate);
+                    _rings[i].Update(_settings.Rings.Speed, _settings.Rings.FadeRate);
 
                     if (!_rings[i].IsAlive)
                         _rings.RemoveAt(i);
@@ -99,23 +99,23 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         /// <param name="buffer">The screen buffer to draw to.</param>
         public void Draw(ScreenBuffer buffer)
         {
-            int centerX = buffer.Width / _settings.RingsSettings.Offset;
-            int centerY = buffer.Height / _settings.RingsSettings.Offset;
+            int centerX = buffer.Width / _settings.Rings.Offset;
+            int centerY = buffer.Height / _settings.Rings.Offset;
 
-            if(_settings.RingsSettings.DrawCrosshair)
-                buffer.SetPixel(centerX, centerY, _settings.RingsSettings.CrosshairChar, _settings.RingsSettings.CrosshairColor);
+            if(_settings.Rings.DrawCrosshair)
+                buffer.SetPixel(centerX, centerY, _settings.Rings.CrosshairChar, _settings.Rings.CrosshairColor);
 
-            float ambientRadius = _settings.RingsSettings.AmbientBaseRadius + _smoothedVolume * _settings.RingsSettings.AmbientVolumeMultiplier;
-            if (ambientRadius > _settings.RingsSettings.AmbientRadiusMax) ambientRadius = _settings.RingsSettings.AmbientRadiusMax;
+            float ambientRadius = _settings.Rings.AmbientBaseRadius + _smoothedVolume * _settings.Rings.AmbientVolumeMultiplier;
+            if (ambientRadius > _settings.Rings.AmbientRadiusMax) ambientRadius = _settings.Rings.AmbientRadiusMax;
 
-            for (int segmentIndex = 0; segmentIndex < _settings.RingsSettings.AmbientSegments; segmentIndex++)
+            for (int segmentIndex = 0; segmentIndex < _settings.Rings.AmbientSegments; segmentIndex++)
             {
-                double angle = segmentIndex * 2 * Math.PI / _settings.RingsSettings.AmbientSegments;
+                double angle = segmentIndex * 2 * Math.PI / _settings.Rings.AmbientSegments;
                 int x = centerX + (int)(Math.Cos(angle) * ambientRadius);
-                int y = centerY + (int)(Math.Sin(angle) * ambientRadius * _settings.RingsSettings.YStretch);
+                int y = centerY + (int)(Math.Sin(angle) * ambientRadius * _settings.Rings.YStretch);
 
-                if (_settings.RingsSettings.DrawCrosshair && segmentIndex % _settings.RingsSettings.AmbientDotInterval == 0)
-                    buffer.SetPixel(x, y, _settings.RingsSettings.CrosshairCharOutter, _settings.RingsSettings.CrosshairColor);
+                if (_settings.Rings.DrawCrosshair && segmentIndex % _settings.Rings.AmbientDotInterval == 0)
+                    buffer.SetPixel(x, y, _settings.Rings.CrosshairCharOutter, _settings.Rings.CrosshairColor);
             }
 
             //draw _rings - create a copy to avoid holding lock during rendering
@@ -128,12 +128,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
             for (int ringIndex = 0; ringIndex < ringsCopy.Count; ringIndex++)
             {
                 var ring = ringsCopy[ringIndex];
-                int segments = _settings.RingsSettings.Segments;
+                int segments = _settings.Rings.Segments;
                 for (int i = 0; i < segments; i++)
                 {
                     double angle = i * 2 * Math.PI / segments;
                     int x = centerX + (int)(Math.Cos(angle) * ring.Radius);
-                    int y = centerY + (int)(Math.Sin(angle) * ring.Radius * _settings.RingsSettings.YStretch);
+                    int y = centerY + (int)(Math.Sin(angle) * ring.Radius * _settings.Rings.YStretch);
 
                     //only draw if within buffer bounds
                     buffer.SetPixel(x, y, ring.GetChar(i), ring.GetColor());

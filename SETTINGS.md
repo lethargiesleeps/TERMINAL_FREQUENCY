@@ -227,6 +227,24 @@ An incorrect number value will result in the default being used.
 	- [PulseIntensity](#pulseintensity)
 	- [PulseDecay](#pulsedecay)
 	- [RandomModeFrequency](#randommodefrequency)
+- [NoiseField](#noisefield)
+	- [Color](#color-1)
+	- [UseColorPattern](#usecolorpattern)
+	- [ColorPattern](#colorpattern)
+	- [CharacterSet](#characterset)
+	- [UseDualCharacterSets](#usedualcharactersets)
+	- [QuietCharacterSet](#quietcharacterset)
+	- [LoudCharacterSet](#loudcharacterset)
+	- [CharacterSwitchThreshold](#characterswitchthreshold)
+	- [CharacterChangeRate](#characterchangerate)
+	- [MinDensity](#mindensity)
+	- [MaxDensity](#maxdensity)
+	- [SpreadRadius](#spreadradius)
+	- [JitterAmount](#jitteramount)
+	- [CenterOrigin](#centerorigin)
+	- [VolumeThreshold](#volumethreshold-1)
+	- [Sensitivity](#sensitivity)
+	- [DecayRate](#decayrate)
 
 ---
 
@@ -1388,5 +1406,88 @@ Safe Mode Range: 0.8 - 0.99
 #### whole number | int
 How frequently the direction changes when using Random direction. The lower the value, it actually changes more frequently, for less frequent changes increase this value.
 Sage Mode Range: 2 - 12
+
+**[Back to Top](#settings)**
+
+## NoiseField
+*Sensitivity Type: Volume*
+The following settings control the NoiseField visualizer, which scatters random characters across the screen with density and spread controlled by audio volume.
+
+### Color
+#### ConsoleColor | enum
+Default color for all particles when UseColorPattern is false. Accepts any ConsoleColor value.
+
+### UseColorPattern
+#### true/false | bool
+If true, each particle picks a random color from ColorPattern instead of using the single Color.
+
+### ColorPattern
+#### text list | ConsoleColor[]
+Array of colors to randomly assign to particles when UseColorPattern is true. Each particle gets a random color from this list per frame.
+
+### CharacterSet
+#### text | string
+Default set of characters used for particles when UseDualCharacterSets is false. Characters are randomly selected from this string.
+
+### UseDualCharacterSets
+#### true/false | bool
+If true, switches between QuietCharacterSet and LoudCharacterSet based on volume relative to CharacterSwitchThreshold. If false, only CharacterSet is used.
+
+### QuietCharacterSet
+#### text | string
+Characters used when volume is below CharacterSwitchThreshold. Typically subtle characters like dots and dashes. Only used when UseDualCharacterSets is true.
+
+### LoudCharacterSet
+#### text | string
+Characters used when volume is above CharacterSwitchThreshold. Typically aggressive symbols like hashes and exclamation marks. Only used when UseDualCharacterSets is true.
+
+### CharacterSwitchThreshold
+#### decimal | float
+Volume level at which the character set switches from quiet to loud. Only used when UseDualCharacterSets is true.
+Safe Mode Range: 0.0 - 1.0
+
+### CharacterChangeRate
+#### decimal | float
+Probability per particle that it will be drawn each frame. 1.0 draws all particles every frame (full speed). 0.5 draws roughly half the particles (half speed). 0.1 draws only 10% (slow flicker).
+Safe Mode Range: 0.01 - 1.0
+
+### MinDensity
+#### decimal | float
+Minimum particle density as a fraction of total screen area. Controls how sparse the field is during silence or low volume.
+Safe Mode Range: 0.0 - 1.0
+
+### MaxDensity
+#### decimal | float
+Maximum particle density at peak volume. Must be greater than MinDensity. Higher values create more particles and more CPU usage.
+Safe Mode Range: 0.0 - 1.0
+
+### SpreadRadius
+#### decimal | float
+How far particles spread from the center when CenterOrigin is true. 0 keeps all particles at center. 1.0 fills the entire screen.
+Safe Mode Range: 0.0 - 1.0
+
+### JitterAmount
+#### decimal | float
+Random position offset applied to each particle at high volume. Higher values create more chaotic, shaky movement. 0 = no jitter.
+Safe Mode Range: 0.0 - 1.0
+
+### CenterOrigin
+#### true/false | bool
+If true, particles originate from the center of the screen and spread outward. If false, particles are randomly distributed across the entire screen.
+
+### VolumeThreshold
+#### decimal | float
+Percentage above the moving average volume required to activate the field. 0.3 means volume must be 30% above recent average. Adaptive to any audio level.
+Safe Mode Range: 0.0 - 2.0
+
+### Sensitivity
+#### decimal | float
+Global sensitivity multiplier. Higher values make the field react to quieter audio. Lower values require louder audio to trigger. 1.0 is default.
+Safe Mode Range: 0.1 - 10.0
+
+### DecayRate
+#### decimal | float
+How quickly the particle density fades after a loud moment. Higher values hold the peak longer for dramatic effect. Lower values snap back faster.
+Safe Mode Range: 0.8 - 0.99
 
 **[Back to Top](#settings)**

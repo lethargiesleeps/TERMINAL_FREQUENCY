@@ -69,45 +69,45 @@ namespace TERMINAL_FREQUENCY
             }
             finally
             {
-                if (_settings.GlobalSettings.EnableSafeMode) _settings.EnforceConstraints();
-                if (_settings.GlobalSettings.ForceDefaultSettings) _settings.Restore();
+                if (_settings.Global.EnableSafeMode) _settings.EnforceConstraints();
+                if (_settings.Global.ForceDefaultSettings) _settings.Restore();
             }
 
             //setup console settings, font, audio capture and renderer
-            _exclusiveMode = _settings.GlobalSettings.EnableExclusiveMode;
-            _currentMode = (int)_settings.GlobalSettings.DefaultMode;
-            _colors = _settings.ConsoleSettings.DefaultColors;
-            Console.BackgroundColor = _settings.ConsoleSettings.BackgroundColor;
+            _exclusiveMode = _settings.Global.EnableExclusiveMode;
+            _currentMode = (int)_settings.Global.DefaultMode;
+            _colors = _settings.Window.DefaultColors;
+            Console.BackgroundColor = _settings.Window.BackgroundColor;
 
-            if (_settings.RendererSettings.EnableThreadPriority)
-                Thread.CurrentThread.Priority = _settings.RendererSettings.ThreadPriority;
+            if (_settings.Renderer.EnableThreadPriority)
+                Thread.CurrentThread.Priority = _settings.Renderer.ThreadPriority;
 
             Config.Font.Font.SetCustomFont(Config.Font.FontFace.Consolas, 16, false); //always start at default type
             Config.Font.Font.SaveCurrentFont();
 
-            if((_settings.FontSettings.EnableRasterFont || (_settings.GlobalSettings.EnableRasterOnDirectWrite && _settings.RendererSettings.RendererMode == RenderMode.DirectWrite)))
-                Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+            if((_settings.Font.EnableRasterFont || (_settings.Global.EnableRasterOnDirectWrite && _settings.Renderer.RendererMode == RenderMode.DirectWrite)))
+                Config.Font.Font.SetRasterFont(_settings.Font.RasterFontType);
 
-            if(_settings.FontSettings.EnableCustomFont)
+            if(_settings.Font.EnableCustomFont)
             {
                 Config.Font.Font.RestorePreviousFont();
                 Config.Font.Font.SetCustomFont(
-                    _settings.FontSettings.CustomFontFace,
-                    _settings.FontSettings.CustomFontSize,
-                    _settings.FontSettings.CustomFontBold,
-                    _settings.FontSettings.CustomFontFaceOverride
+                    _settings.Font.CustomFontFace,
+                    _settings.Font.CustomFontSize,
+                    _settings.Font.CustomFontBold,
+                    _settings.Font.CustomFontFaceOverride
                 );
                 Config.Font.Font.SaveCurrentFont();
             }
 
 
             ConsoleWindow.SetScreenSize(115, 35); //always launch at these defaults
-            CLI.HandleCliArgs(args, _settings.GlobalSettings);
+            CLI.HandleCliArgs(args, _settings.Global);
 
             HandleConsoleWindow(); //Sets all windows settings
 
             //if enabled, user selects audio device, otherwise use loopback capture
-            if (_settings.AudioCaptureSettings.UserSelectedDevice && _settings.AudioCaptureSettings.SpecifyAudioDevice)
+            if (_settings.AudioCapture.UserSelectedDevice && _settings.AudioCapture.SpecifyAudioDevice)
                 _selectedDeviceIndex = Utility.SelectAudioDevice();
 
             try
@@ -115,8 +115,8 @@ namespace TERMINAL_FREQUENCY
                 _visualizations = Utility.RefreshVisuals(_settings); //instantiate new visual classes
 
                 //configure audio capture
-                AudioCapture? audioCapture = _settings.AudioCaptureSettings.SpecifyAudioDevice 
-                    ? new AudioCapture(_settings, (_selectedDeviceIndex > -1 ? _selectedDeviceIndex : _settings.AudioCaptureSettings.AudioDeviceIndex)) 
+                AudioCapture? audioCapture = _settings.AudioCapture.SpecifyAudioDevice 
+                    ? new AudioCapture(_settings, (_selectedDeviceIndex > -1 ? _selectedDeviceIndex : _settings.AudioCapture.AudioDeviceIndex)) 
                     : new AudioCapture(_settings);
 
                 if (audioCapture == null)
@@ -140,8 +140,8 @@ namespace TERMINAL_FREQUENCY
                 {
                     if (_isPaused) return;
 
-                    if (_settings.ConsoleSettings.EnableFlashOnBeat)
-                        ConsoleWindow.FlashWindowOnBeat(_settings.ConsoleSettings.FlashOnBeatCount);
+                    if (_settings.Window.EnableFlashOnBeat)
+                        ConsoleWindow.FlashWindowOnBeat(_settings.Window.FlashOnBeatCount);
 
                     if (_currentVisualization is ISpikeReactive visualization) visualization.OnSpike(volume);
                 };
@@ -167,7 +167,7 @@ namespace TERMINAL_FREQUENCY
 
                     if(!_isPaused)
                     {
-                        if(_settings.GlobalSettings.EnableDebugMode)
+                        if(_settings.Global.EnableDebugMode)
                         {
 
                             _framesInWindow++;
@@ -189,7 +189,7 @@ namespace TERMINAL_FREQUENCY
                         _currentVisualization.Draw(buffer);
 
                         //debug bar
-                        if(_settings.GlobalSettings.EnableDebugMode)
+                        if(_settings.Global.EnableDebugMode)
                         {
                             ConsoleColor debugTextColor = ConsoleColor.Gray;
                             ConsoleColor fpsColor = ConsoleColor.Gray;
@@ -207,40 +207,40 @@ namespace TERMINAL_FREQUENCY
 
                             if (_currentVisualization is Rings rings)
                             {
-                                string ringsStatus = $"RE[V]ERSE:{(_settings.RingsSettings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.RingsSettings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.RingsSettings.ColorMode)} | RANDO[M] CHARS:{(_settings.RingsSettings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.RingsSettings.Radius} | [9/0] MAX RINGS:{_settings.RingsSettings.MaxRings} | [O/P] SEGMENTS:{_settings.RingsSettings.Segments}";
+                                string ringsStatus = $"RE[V]ERSE:{(_settings.Rings.ReverseMode ? "ON" : "OFF")} | [S]OLID:{(_settings.Rings.SolidColor ? "ON" : "OFF")} | [C]OLOR:{Utility.FormatEnum(_settings.Rings.ColorMode)} | RANDO[M] CHARS:{(_settings.Rings.CharRandomizer ? "ON" : "OFF")} | [-/=] RADIUS:{_settings.Rings.Radius} | [9/0] MAX RINGS:{_settings.Rings.MaxRings} | [O/P] SEGMENTS:{_settings.Rings.Segments}";
                                 buffer.DrawString(0, buffer.Height - 3, ringsStatus, debugTextColor);
                                 //data in top left
-                                buffer.DrawString(0, 3, $"RINGS:{rings.RingCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
+                                buffer.DrawString(0, 3, $"RINGS:{rings.RingCount}/{_settings.Waterfall.MaxStreams}", debugTextColor);
                             }
 
                             if (_currentVisualization is Waterfall waterfall)
                             {
                                 //controls
-                                string waterfallStatus = $"[R]AINBOW:{(_settings.WaterfallSettings.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.WaterfallSettings.Mode)} | RE[V]ERSE:{(_settings.WaterfallSettings.ReverseMode ? "ON" : "OFF")} | [-/=] THICKNESS: {_settings.WaterfallSettings.Thickness}";
+                                string waterfallStatus = $"[R]AINBOW:{(_settings.Waterfall.RainbowMode ? "ON" : "OFF")} | [M]ODE:{Utility.FormatEnum(_settings.Waterfall.Mode)} | RE[V]ERSE:{(_settings.Waterfall.ReverseMode ? "ON" : "OFF")} | [-/=] THICKNESS: {_settings.Waterfall.Thickness}";
 
-                                if (!_settings.WaterfallSettings.RainbowMode)
-                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(_settings.WaterfallSettings.Color)}";
+                                if (!_settings.Waterfall.RainbowMode)
+                                    waterfallStatus += $" | [C]OLOR:{Utility.FormatEnum(_settings.Waterfall.Color)}";
 
-                                if (_settings.WaterfallSettings.Mode == WaterfallMode.Normal)
-                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.WaterfallSettings.Origin)}";
+                                if (_settings.Waterfall.Mode == WaterfallMode.Normal)
+                                    waterfallStatus += $" | [O]RIGIN:{Utility.FormatEnum(_settings.Waterfall.Origin)}";
 
                                 buffer.DrawString(0, buffer.Height - 3, waterfallStatus, debugTextColor);
 
                                 //data in top left
-                                buffer.DrawString(0, 3, $"STREAMS:{waterfall.StreamCount}/{_settings.WaterfallSettings.MaxStreams}", debugTextColor);
+                                buffer.DrawString(0, 3, $"STREAMS:{waterfall.StreamCount}/{_settings.Waterfall.MaxStreams}", debugTextColor);
                                 
                             }
 
                             if(_currentVisualization is Shape)
                             {
-                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(_settings.ShapeSettings.Type)} | LA[Y]OUT:{Utility.FormatEnum(_settings.ShapeSettings.Layout)} | [C]OLOR:{Utility.FormatEnum(_settings.ShapeSettings.UniformColor)} | [F]ILL:{(_settings.ShapeSettings.FillMode ? "ON" : "OFF")} | RE[V]ERSE:{(_settings.ShapeSettings.ReverseMode ? "ON" : "OFF")} | SMOO[T]H:{(_settings.ShapeSettings.SmoothMode ? "ON" : "OFF")} | [-/=] SIZE:{_settings.ShapeSettings.MaxSizePercent:F2}";
+                                string shapeStatus = $"[S]HAPE:{Utility.FormatEnum(_settings.Shape.Type)} | LA[Y]OUT:{Utility.FormatEnum(_settings.Shape.Layout)} | [C]OLOR:{Utility.FormatEnum(_settings.Shape.UniformColor)} | [F]ILL:{(_settings.Shape.FillMode ? "ON" : "OFF")} | RE[V]ERSE:{(_settings.Shape.ReverseMode ? "ON" : "OFF")} | SMOO[T]H:{(_settings.Shape.SmoothMode ? "ON" : "OFF")} | [-/=] SIZE:{_settings.Shape.MaxSizePercent:F2}";
 
-                                if (_settings.ShapeSettings.Type == ShapeType.Polygon)
-                                    shapeStatus += $" | [9/0] VERT:{_settings.ShapeSettings.PolygonSides}";
-                                if(_settings.ShapeSettings.Layout != ShapeLayout.Single && _settings.ShapeSettings.Layout != ShapeLayout.Concentric)
-                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.Count}";
-                                if(_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
-                                    shapeStatus += $" | [O/P] COUNT:{_settings.ShapeSettings.ConcentricLayers}";
+                                if (_settings.Shape.Type == ShapeType.Polygon)
+                                    shapeStatus += $" | [9/0] VERT:{_settings.Shape.PolygonSides}";
+                                if(_settings.Shape.Layout != ShapeLayout.Single && _settings.Shape.Layout != ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.Shape.Count}";
+                                if(_settings.Shape.Layout == ShapeLayout.Concentric)
+                                    shapeStatus += $" | [O/P] COUNT:{_settings.Shape.ConcentricLayers}";
 
                                 buffer.DrawString(0, buffer.Height - 3, shapeStatus, debugTextColor);
                             }
@@ -248,20 +248,20 @@ namespace TERMINAL_FREQUENCY
                             if(_currentVisualization is NoiseField)
                             {
                                 // - +, O P, 9 0, 7 8
-                                string fieldStatus = $"[-/+] THRESHOLD:{_settings.NoiseFieldSettings.VolumeThreshold:F2} | [O/P] SENS:{_settings.NoiseFieldSettings.Sensitivity:F2} | [9/0] JITTER:{_settings.NoiseFieldSettings.JitterAmount:F2} | [7/8] SPREAD:{_settings.NoiseFieldSettings.SpreadRadius:F2}";
-                                string fieldStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.NoiseFieldSettings.Color)} | CEN[T]ER:{(_settings.NoiseFieldSettings.CenterOrigin ? "ON" : "OFF")} | DUAL CHAR[S]ETS:{(_settings.NoiseFieldSettings.UseDualCharacterSets ? "ON" : "OFF")} | CLR PATTE[R]N:{(_settings.NoiseFieldSettings.UseColorPattern ? "ON" : "OFF")}";
+                                string fieldStatus = $"[-/+] THRESHOLD:{_settings.NoiseField.VolumeThreshold:F2} | [O/P] SENS:{_settings.NoiseField.Sensitivity:F2} | [9/0] JITTER:{_settings.NoiseField.JitterAmount:F2} | [7/8] SPREAD:{_settings.NoiseField.SpreadRadius:F2}";
+                                string fieldStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.NoiseField.Color)} | CEN[T]ER:{(_settings.NoiseField.CenterOrigin ? "ON" : "OFF")} | DUAL CHAR[S]ETS:{(_settings.NoiseField.UseDualCharacterSets ? "ON" : "OFF")} | CLR PATTE[R]N:{(_settings.NoiseField.UseColorPattern ? "ON" : "OFF")}";
                                 buffer.DrawString(0, buffer.Height - 3, fieldStatus, debugTextColor);
                                 buffer.DrawString(0, buffer.Height - 2, fieldStatus2, debugTextColor);
                             }
 
                             if(_currentVisualization is Cube)
                             {
-                                float globalSpeed = (_settings.CubeSettings.RotationSpeedY + _settings.CubeSettings.RotationSpeedX + _settings.CubeSettings.RotationSpeedZ) / 3;
-                                string cubeStatus1 = $"[M]ODE:{Utility.FormatEnum(_settings.CubeSettings.RotationMode)} | [R]OTATION:{Utility.FormatEnum(_settings.CubeSettings.Direction)} | [O/P] GLOBAL SPEED:{globalSpeed:F3} | [9/0] SIZE:{_settings.CubeSettings.ZoomLevel:F2}";
-                                string cubeStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.CubeSettings.Color)} | FREEZE [X]:{(_settings.CubeSettings.FreezeXRotation ? "ON" : "OFF")} | FREEZE [Y]:{(_settings.CubeSettings.FreezeYRotation ? "ON" : "OFF")} | FREEZE [Z]:{(_settings.CubeSettings.FreezeZRotation ? "ON" : "OFF")} | PUL[S]E:{(_settings.CubeSettings.PulseEnabled ? "ON" : "OFF")}";
+                                float globalSpeed = (_settings.Cube.RotationSpeedY + _settings.Cube.RotationSpeedX + _settings.Cube.RotationSpeedZ) / 3;
+                                string cubeStatus1 = $"[M]ODE:{Utility.FormatEnum(_settings.Cube.RotationMode)} | [R]OTATION:{Utility.FormatEnum(_settings.Cube.Direction)} | [O/P] GLOBAL SPEED:{globalSpeed:F3} | [9/0] SIZE:{_settings.Cube.ZoomLevel:F2}";
+                                string cubeStatus2 = $"[C]OLOR:{Utility.FormatEnum(_settings.Cube.Color)} | FREEZE [X]:{(_settings.Cube.FreezeXRotation ? "ON" : "OFF")} | FREEZE [Y]:{(_settings.Cube.FreezeYRotation ? "ON" : "OFF")} | FREEZE [Z]:{(_settings.Cube.FreezeZRotation ? "ON" : "OFF")} | PUL[S]E:{(_settings.Cube.PulseEnabled ? "ON" : "OFF")}";
 
-                                if (_settings.CubeSettings.PulseEnabled)
-                                    cubeStatus2 += $" | [7/8] INTENSITY:{_settings.CubeSettings.PulseIntensity:F3}";
+                                if (_settings.Cube.PulseEnabled)
+                                    cubeStatus2 += $" | [7/8] INTENSITY:{_settings.Cube.PulseIntensity:F3}";
 
                                 buffer.DrawString(0, buffer.Height - 3, cubeStatus1, debugTextColor);
                                 buffer.DrawString(0, buffer.Height - 2, cubeStatus2, debugTextColor);
@@ -269,7 +269,7 @@ namespace TERMINAL_FREQUENCY
                             }
                             if (_currentVisualization is IFrequencyReactive)
                             {
-                                bool skipFrequencyData = _currentVisualization is Cube cube && _settings.CubeSettings.RotationMode != CubeRotationMode.OnFrequency;
+                                bool skipFrequencyData = _currentVisualization is Cube cube && _settings.Cube.RotationMode != CubeRotationMode.OnFrequency;
 
                                 //draw frequency data
                                 try
@@ -278,7 +278,7 @@ namespace TERMINAL_FREQUENCY
                                     {
                                         int debugBufferHeight = 4;
                                         int debugBufferWidth = 0;
-                                        string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.FftSettings.BandCount);
+                                        string[] frequencyData = audioCapture.FftAnalyzer.GetBandFrequencyData(_settings.Fft.BandCount);
                                         int bandsPerColumn = frequencyData.Length > 16 ? 8 : 4;
 
                                         for (int i = 0; i < frequencyData.Length; i++)
@@ -305,8 +305,8 @@ namespace TERMINAL_FREQUENCY
                                 //global frequency controls
                                 var controls = new List<string>
                                 {
-                                    $"[-/+] BANDS:{_settings.FftSettings.BandCount}",
-                                    $"[9/0] SENSITIVITY:{_settings.FftSettings.Sensitivity:F1}",
+                                    $"[-/+] BANDS:{_settings.Fft.BandCount}",
+                                    $"[9/0] SENSITIVITY:{_settings.Fft.Sensitivity:F1}",
                                 };
 
                                 if (_currentVisualization is Cube) controls.RemoveAt(1);
@@ -314,13 +314,13 @@ namespace TERMINAL_FREQUENCY
                                 //equalizer specific
                                 if (_currentVisualization is Equalizer)
                                 {
-                                    controls.Add($"[C]OLOR MODE:{_settings.EqualizerSettings.ColorMode.ToString().ToUpper()}");
-                                    controls.Add($"DIREC[T]ION:{_settings.EqualizerSettings.Direction.ToString().ToUpper()}");
-                                    controls.Add($"[S]OLID:{(_settings.EqualizerSettings.SolidBands ? "ON" : "OFF")}");
-                                    controls.Add($"[O]RIGIN: {_settings.EqualizerSettings.Origin.ToString().ToUpper()}");
+                                    controls.Add($"[C]OLOR MODE:{_settings.Equalizer.ColorMode.ToString().ToUpper()}");
+                                    controls.Add($"DIREC[T]ION:{_settings.Equalizer.Direction.ToString().ToUpper()}");
+                                    controls.Add($"[S]OLID:{(_settings.Equalizer.SolidBands ? "ON" : "OFF")}");
+                                    controls.Add($"[O]RIGIN: {_settings.Equalizer.Origin.ToString().ToUpper()}");
 
-                                    if(_settings.EqualizerSettings.Origin == VisualizationOrigin.Center)
-                                        controls.Add($"HO[R]IZONTAL: {(_settings.EqualizerSettings.HorizontalWhenCentered ? "ON" : "OFF")}");
+                                    if(_settings.Equalizer.Origin == VisualizationOrigin.Center)
+                                        controls.Add($"HO[R]IZONTAL: {(_settings.Equalizer.HorizontalWhenCentered ? "ON" : "OFF")}");
                                 }
 
                                 //draw controls, below FPS
@@ -338,14 +338,14 @@ namespace TERMINAL_FREQUENCY
                             string modeName = Utility.GetModeName(_currentMode);
                             string line1 = $"VOL: {audioCapture.SmoothedVolume:F2} | PEAK: {audioCapture.PeakVolume:F2} | RMS: {audioCapture.RMS:F2}";
                             string line2 = $"MODE: {modeName}";
-                            string line3 = $"LOCK: {(_settings.GlobalSettings.EnableControlLock ? "ON" : "OFF")} | DEVICE: {audioCapture.GetDeviceName()}";
+                            string line3 = $"LOCK: {(_settings.Global.EnableControlLock ? "ON" : "OFF")} | DEVICE: {audioCapture.GetDeviceName()}";
 
                             buffer.DrawString(0, 0, line2, debugTextColor);
                             buffer.DrawString(0, 1, line3, debugTextColor);
                             buffer.DrawString(0, 2, line1, ConsoleColor.Green);
 
 
-                            if (_settings.GlobalSettings.ShowGlobalControls)
+                            if (_settings.Global.ShowGlobalControls)
                             {
                                 string controls = "[TAB] MODE | [SPACE] PAUSE | [D]EBUG | [L]OCK | [F1] SAVE | [F2] LOAD | [F3] DEFAULTS | [F5] FULL | [ESC] EXIT";
                                 buffer.DrawString(0, buffer.Height - 1, controls, debugTextColor);
@@ -359,14 +359,14 @@ namespace TERMINAL_FREQUENCY
                         buffer.Render(); //main render
 
                         //yield settings
-                        long targetTicks = Stopwatch.Frequency / _settings.RendererSettings.TargetFps;
+                        long targetTicks = Stopwatch.Frequency / _settings.Renderer.TargetFps;
 
-                        if(_settings.RendererSettings.EnableYield)
-                            Thread.Sleep(_settings.RendererSettings.YieldTimeout);
-                        else if(_settings.RendererSettings.EnableSpinWait)
+                        if(_settings.Renderer.EnableYield)
+                            Thread.Sleep(_settings.Renderer.YieldTimeout);
+                        else if(_settings.Renderer.EnableSpinWait)
                         {
                             while (_stopWatch.ElapsedTicks - frameStart < targetTicks)
-                                Thread.SpinWait(_settings.RendererSettings.SpinWaitIterations);
+                                Thread.SpinWait(_settings.Renderer.SpinWaitIterations);
                         }
                     }
                     else
@@ -412,7 +412,7 @@ namespace TERMINAL_FREQUENCY
                     #region GlobalInputs
                     //exit
                     case ConsoleKey.Escape:
-                        if (_settings.GlobalSettings.SaveOnExit)
+                        if (_settings.Global.SaveOnExit)
                             SettingsManager.Save(_settings);
 
                         audioCapture?.Stop();
@@ -425,13 +425,13 @@ namespace TERMINAL_FREQUENCY
 
                     //pause
                     case ConsoleKey.Spacebar:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _isPaused = !_isPaused;
                         break;
 
                     //change visual mode
                     case ConsoleKey.Tab:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         if(!_isPaused)
                             _currentMode = (_currentMode + 1) % _visualizations.Count;
                         break;
@@ -439,19 +439,19 @@ namespace TERMINAL_FREQUENCY
                     //toggle debug mode
                     case ConsoleKey.D:
                         if(!_isPaused)
-                            _settings.GlobalSettings.EnableDebugMode = !_settings.GlobalSettings.EnableDebugMode;
+                            _settings.Global.EnableDebugMode = !_settings.Global.EnableDebugMode;
                         break;
 
                     //lock controls
                     case ConsoleKey.L:
                         if (!_isPaused)
-                            _settings.GlobalSettings.EnableControlLock = !_settings.GlobalSettings.EnableControlLock;
+                            _settings.Global.EnableControlLock = !_settings.Global.EnableControlLock;
                         break;
 
                     //save
                     case ConsoleKey.F1:
                         {
-                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            if (_settings.Global.EnableControlLock) return;
                             string normalConsoleTitle = Console.Title ?? "";
                             string saveStatusIndicator = "";
                             _isSavingOrLoading = true;
@@ -481,7 +481,7 @@ namespace TERMINAL_FREQUENCY
                     //load
                     case ConsoleKey.F2:
                         {
-                            if (_settings.GlobalSettings.EnableControlLock) return;
+                            if (_settings.Global.EnableControlLock) return;
                             #pragma warning disable CA1416 // Validate platform compatibility
                             string normalConsoleTitle = Console.Title;
                                #pragma warning restore CA1416 // Validate platform compatibility
@@ -515,12 +515,12 @@ namespace TERMINAL_FREQUENCY
                         }
                     //restore
                     case ConsoleKey.F3:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _settings.Restore();
                         audioCapture.UpdateSettings(_settings);
                         _visualizations = Utility.RefreshVisuals(_settings);
                         _currentVisualization = _visualizations[_currentMode];
-                        buffer.UpdateBackgroundColor(_settings.ConsoleSettings.BackgroundColor);
+                        buffer.UpdateBackgroundColor(_settings.Window.BackgroundColor);
                         break;
 
                     //full screen
@@ -532,29 +532,29 @@ namespace TERMINAL_FREQUENCY
                     #endregion
 
                     case ConsoleKey.R:
-                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if(_isPaused || _settings.Global.EnableControlLock) return;
 
                         if(_currentVisualization is Waterfall)
-                            _settings.WaterfallSettings.RainbowMode = !_settings.WaterfallSettings.RainbowMode;
+                            _settings.Waterfall.RainbowMode = !_settings.Waterfall.RainbowMode;
 
                         if (_currentVisualization is Equalizer)
-                            if (_settings.EqualizerSettings.Origin == VisualizationOrigin.Center)
-                                _settings.EqualizerSettings.HorizontalWhenCentered = !_settings.EqualizerSettings.HorizontalWhenCentered;
+                            if (_settings.Equalizer.Origin == VisualizationOrigin.Center)
+                                _settings.Equalizer.HorizontalWhenCentered = !_settings.Equalizer.HorizontalWhenCentered;
 
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.Direction = Utility.CycleNextEnum(_settings.CubeSettings.Direction);
+                            _settings.Cube.Direction = Utility.CycleNextEnum(_settings.Cube.Direction);
                         if(_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.UseColorPattern = !_settings.NoiseFieldSettings.UseColorPattern;
+                            _settings.NoiseField.UseColorPattern = !_settings.NoiseField.UseColorPattern;
                         break;
 
                     case ConsoleKey.M:
                         if(_isPaused)
                         {
                             buffer.CycleRenderMode();
-                            if(_settings.GlobalSettings.EnableRasterOnDirectWrite)
+                            if(_settings.Global.EnableRasterOnDirectWrite)
                             {
-                                if (_settings.RendererSettings.RendererMode == RenderMode.DirectWrite)
-                                    Config.Font.Font.SetRasterFont(_settings.FontSettings.RasterFontType);
+                                if (_settings.Renderer.RendererMode == RenderMode.DirectWrite)
+                                    Config.Font.Font.SetRasterFont(_settings.Font.RasterFontType);
                                 else
                                     Config.Font.Font.RestorePreviousFont();
                             }
@@ -562,349 +562,354 @@ namespace TERMINAL_FREQUENCY
                             return;
                         }
 
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
-                            _settings.RingsSettings.CharRandomizer = !_settings.RingsSettings.CharRandomizer;
+                            _settings.Rings.CharRandomizer = !_settings.Rings.CharRandomizer;
 
                         if(_currentVisualization is Waterfall)
-                            _settings.WaterfallSettings.Mode = Utility.CycleNextEnum(_settings.WaterfallSettings.Mode);
+                            _settings.Waterfall.Mode = Utility.CycleNextEnum(_settings.Waterfall.Mode);
 
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.RotationMode = Utility.CycleNextEnum(_settings.CubeSettings.RotationMode);
+                            _settings.Cube.RotationMode = Utility.CycleNextEnum(_settings.Cube.RotationMode);
                         
                         break;
 
                     case ConsoleKey.V:
-                        if(_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if(_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            _settings.RingsSettings.ReverseMode = !_settings.RingsSettings.ReverseMode;
+                            _settings.Rings.ReverseMode = !_settings.Rings.ReverseMode;
 
                         if (_currentVisualization is Waterfall)
-                            _settings.WaterfallSettings.ReverseMode = !_settings.WaterfallSettings.ReverseMode;
+                            _settings.Waterfall.ReverseMode = !_settings.Waterfall.ReverseMode;
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.ReverseMode = !_settings.ShapeSettings.ReverseMode;
+                            _settings.Shape.ReverseMode = !_settings.Shape.ReverseMode;
                         break;
 
                     case ConsoleKey.C:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
                             RingColorMode[] cycle = { RingColorMode.Light, RingColorMode.Red, RingColorMode.Green, RingColorMode.Blue, RingColorMode.Yellow, RingColorMode.RainbowLight, RingColorMode.RainbowDark, RingColorMode.Dark };
-                            _settings.RingsSettings.ColorMode = Utility.CycleNext(cycle, _settings.RingsSettings.ColorMode);
+                            _settings.Rings.ColorMode = Utility.CycleNext(cycle, _settings.Rings.ColorMode);
                         }
 
-                        if(_currentVisualization is Waterfall && !_settings.WaterfallSettings.RainbowMode)
-                            _settings.WaterfallSettings.Color = Utility.CycleNext(_colors, _settings.WaterfallSettings.Color);
+                        if(_currentVisualization is Waterfall && !_settings.Waterfall.RainbowMode)
+                            _settings.Waterfall.Color = Utility.CycleNext(_colors, _settings.Waterfall.Color);
 
 
                         if(_currentVisualization is Shape)
-                            _settings.ShapeSettings.UniformColor = Utility.CycleNext(_colors, _settings.ShapeSettings.UniformColor);
+                            _settings.Shape.UniformColor = Utility.CycleNext(_colors, _settings.Shape.UniformColor);
 
                         if (_currentVisualization is Equalizer)
-                            _settings.EqualizerSettings.ColorMode = Utility.CycleNextEnum(_settings.EqualizerSettings.ColorMode);
+                            _settings.Equalizer.ColorMode = Utility.CycleNextEnum(_settings.Equalizer.ColorMode);
 
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.Color = Utility.CycleNext(_colors, _settings.CubeSettings.Color);
+                            _settings.Cube.Color = Utility.CycleNext(_colors, _settings.Cube.Color);
                         
                         if(_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.Color = Utility.CycleNext(_colors, _settings.NoiseFieldSettings.Color);
+                            _settings.NoiseField.Color = Utility.CycleNext(_colors, _settings.NoiseField.Color);
 
                         break;
 
                     case ConsoleKey.F:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.FillMode = !_settings.ShapeSettings.FillMode;
+                            _settings.Shape.FillMode = !_settings.Shape.FillMode;
                         break;
 
                     case ConsoleKey.S:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
-                            _settings.RingsSettings.SolidColor = !_settings.RingsSettings.SolidColor;
+                            _settings.Rings.SolidColor = !_settings.Rings.SolidColor;
 
                         if(_currentVisualization is Shape)
-                            _settings.ShapeSettings.Type = Utility.CycleNextEnum(_settings.ShapeSettings.Type);
+                            _settings.Shape.Type = Utility.CycleNextEnum(_settings.Shape.Type);
 
                         if (_currentVisualization is Equalizer)
-                            _settings.EqualizerSettings.SolidBands = !_settings.EqualizerSettings.SolidBands;
+                            _settings.Equalizer.SolidBands = !_settings.Equalizer.SolidBands;
 
                         if(_currentVisualization is Cube)
-                            _settings.CubeSettings.PulseEnabled = !_settings.CubeSettings.PulseEnabled;
+                            _settings.Cube.PulseEnabled = !_settings.Cube.PulseEnabled;
 
                         if(_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.UseDualCharacterSets = !_settings.NoiseFieldSettings.UseDualCharacterSets;
+                            _settings.NoiseField.UseDualCharacterSets = !_settings.NoiseField.UseDualCharacterSets;
                         break;
 
                     case ConsoleKey.Y:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.Layout = Utility.CycleNextEnum(_settings.ShapeSettings.Layout);
+                            _settings.Shape.Layout = Utility.CycleNextEnum(_settings.Shape.Layout);
                         
                         if(_currentVisualization is Cube)
-                            _settings.CubeSettings.FreezeYRotation = !_settings.CubeSettings.FreezeYRotation;
+                            _settings.Cube.FreezeYRotation = !_settings.Cube.FreezeYRotation;
                         break;
 
                     case ConsoleKey.X:
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.FreezeXRotation = !_settings.CubeSettings.FreezeXRotation;
+                            _settings.Cube.FreezeXRotation = !_settings.Cube.FreezeXRotation;
                         break;
 
                     case ConsoleKey.Z:
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.FreezeZRotation = !_settings.CubeSettings.FreezeZRotation;
+                            _settings.Cube.FreezeZRotation = !_settings.Cube.FreezeZRotation;
                         break;
                     
                     case ConsoleKey.T:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.SmoothMode = !_settings.ShapeSettings.SmoothMode;
+                            _settings.Shape.SmoothMode = !_settings.Shape.SmoothMode;
 
                         if(_currentVisualization is Equalizer)
-                            _settings.EqualizerSettings.Direction = Utility.CycleNextEnum(_settings.EqualizerSettings.Direction);
+                            _settings.Equalizer.Direction = Utility.CycleNextEnum(_settings.Equalizer.Direction);
 
                         if(_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.CenterOrigin = !_settings.NoiseFieldSettings.CenterOrigin;
+                            _settings.NoiseField.CenterOrigin = !_settings.NoiseField.CenterOrigin;
                         break;
 
                     case ConsoleKey.O: //decrement 1 or Origin toggle
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            _settings.RingsSettings.Segments = Math.Max(8, _settings.RingsSettings.Segments - 2);
-                            _settings.RingsSettings.AmbientSegments = Math.Max(8, _settings.RingsSettings.AmbientSegments - 2);
+                            _settings.Rings.Segments = Math.Max(8, _settings.Rings.Segments - 2);
+                            _settings.Rings.AmbientSegments = Math.Max(8, _settings.Rings.AmbientSegments - 2);
                         }
 
-                        if (_currentVisualization is Waterfall && _settings.WaterfallSettings.Mode == WaterfallMode.Normal)
+                        if (_currentVisualization is Waterfall && _settings.Waterfall.Mode == WaterfallMode.Normal)
                         {
                             VisualizationOrigin[] cycle = { VisualizationOrigin.Top, VisualizationOrigin.Right, VisualizationOrigin.Bottom, VisualizationOrigin.Left };
-                            _settings.WaterfallSettings.Origin = Utility.CycleNext(cycle, _settings.WaterfallSettings.Origin);
+                            _settings.Waterfall.Origin = Utility.CycleNext(cycle, _settings.Waterfall.Origin);
                         }
 
                         if (_currentVisualization is Shape)
                         {
-                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
+                            if (_settings.Shape.Layout == ShapeLayout.Single) return;
 
-                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                            if (_settings.Shape.Layout == ShapeLayout.Concentric)
                             {
-                                int layerCount = Math.Max(1, _settings.ShapeSettings.ConcentricLayers - 1);
-                                _settings.ShapeSettings.ConcentricLayers = layerCount;
+                                int layerCount = Math.Max(1, _settings.Shape.ConcentricLayers - 1);
+                                _settings.Shape.ConcentricLayers = layerCount;
                                 return;
                             }
 
-                            int shapeCount = Math.Max(1, _settings.ShapeSettings.Count - 1);
-                            _settings.ShapeSettings.Count = shapeCount;
+                            int shapeCount = Math.Max(1, _settings.Shape.Count - 1);
+                            _settings.Shape.Count = shapeCount;
                         }
 
                         if(_currentVisualization is Equalizer)
-                            _settings.EqualizerSettings.Origin = Utility.CycleNextEnum(_settings.EqualizerSettings.Origin);
+                            _settings.Equalizer.Origin = Utility.CycleNextEnum(_settings.Equalizer.Origin);
                         
                         if(_currentVisualization is Cube)
                         {
-                            _settings.CubeSettings.RotationSpeedX = Math.Max(0.002f, _settings.CubeSettings.RotationSpeedX - 0.005f);
-                            _settings.CubeSettings.RotationSpeedY = Math.Max(0.002f, _settings.CubeSettings.RotationSpeedY - 0.005f);
-                            _settings.CubeSettings.RotationSpeedX = Math.Max(0.001f, _settings.CubeSettings.RotationSpeedZ - 0.005f);
+                            _settings.Cube.RotationSpeedX = Math.Max(0.002f, _settings.Cube.RotationSpeedX - 0.005f);
+                            _settings.Cube.RotationSpeedY = Math.Max(0.002f, _settings.Cube.RotationSpeedY - 0.005f);
+                            _settings.Cube.RotationSpeedX = Math.Max(0.001f, _settings.Cube.RotationSpeedZ - 0.005f);
                         }
 
                         if(_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.Sensitivity = Math.Max(0.25f, _settings.NoiseFieldSettings.Sensitivity - 0.25f);
+                            _settings.NoiseField.Sensitivity = Math.Max(0.25f, _settings.NoiseField.Sensitivity - 0.25f);
                         
                         break;
 
                     case ConsoleKey.P: //increment 1
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            _settings.RingsSettings.Segments = Math.Min(100, _settings.RingsSettings.Segments + 2);
-                            _settings.RingsSettings.AmbientSegments = Math.Min(80, _settings.RingsSettings.AmbientSegments + 2);
+                            _settings.Rings.Segments = Math.Min(100, _settings.Rings.Segments + 2);
+                            _settings.Rings.AmbientSegments = Math.Min(80, _settings.Rings.AmbientSegments + 2);
                         }
 
                         if (_currentVisualization is Shape)
                         {
-                            if (_settings.ShapeSettings.Layout == ShapeLayout.Single) return;
+                            if (_settings.Shape.Layout == ShapeLayout.Single) return;
 
-                            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
+                            if (_settings.Shape.Layout == ShapeLayout.Concentric)
                             {
-                                int layerCount = Math.Min(10, _settings.ShapeSettings.ConcentricLayers + 1);
-                                _settings.ShapeSettings.ConcentricLayers = layerCount;
+                                int layerCount = Math.Min(10, _settings.Shape.ConcentricLayers + 1);
+                                _settings.Shape.ConcentricLayers = layerCount;
                                 return;
                             }
-                            int shapeCount = Math.Min(4, _settings.ShapeSettings.Count + 1);
-                            _settings.ShapeSettings.Count = shapeCount;
+                            int shapeCount = Math.Min(4, _settings.Shape.Count + 1);
+                            _settings.Shape.Count = shapeCount;
                         }
                         
 
                         if (_currentVisualization is Cube)
                         {
-                            _settings.CubeSettings.RotationSpeedX = Math.Min(0.5f, _settings.CubeSettings.RotationSpeedX + 0.005f);
-                            _settings.CubeSettings.RotationSpeedY = Math.Min(0.5f, _settings.CubeSettings.RotationSpeedY + 0.005f);
-                            _settings.CubeSettings.RotationSpeedX = Math.Min(0.3f, _settings.CubeSettings.RotationSpeedZ + 0.005f);
+                            _settings.Cube.RotationSpeedX = Math.Min(0.5f, _settings.Cube.RotationSpeedX + 0.005f);
+                            _settings.Cube.RotationSpeedY = Math.Min(0.5f, _settings.Cube.RotationSpeedY + 0.005f);
+                            _settings.Cube.RotationSpeedX = Math.Min(0.3f, _settings.Cube.RotationSpeedZ + 0.005f);
                         }
 
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.Sensitivity = Math.Min(10f, _settings.NoiseFieldSettings.Sensitivity + 0.25f);
+                            _settings.NoiseField.Sensitivity = Math.Min(10f, _settings.NoiseField.Sensitivity + 0.25f);
                         
                         break;
                     
                     case ConsoleKey.OemMinus: //decrement 2
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            _settings.RingsSettings.Radius = Math.Max(1, _settings.RingsSettings.Radius - 2);
-                            _settings.RingsSettings.RadiusMax = Math.Max(_settings.RingsSettings.Radius + 2, _settings.RingsSettings.RadiusMax - 2);
+                            _settings.Rings.Radius = Math.Max(1, _settings.Rings.Radius - 2);
+                            _settings.Rings.RadiusMax = Math.Max(_settings.Rings.Radius + 2, _settings.Rings.RadiusMax - 2);
                         }
 
                         if (_currentVisualization is Waterfall)
-                            _settings.WaterfallSettings.Thickness = Math.Max(1, _settings.WaterfallSettings.Thickness - 1);
+                            _settings.Waterfall.Thickness = Math.Max(1, _settings.Waterfall.Thickness - 1);
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.MaxSizePercent = Math.Max(0.05f, _settings.ShapeSettings.MaxSizePercent - 0.02f);
+                            _settings.Shape.MaxSizePercent = Math.Max(0.05f, _settings.Shape.MaxSizePercent - 0.02f);
 
                         if (_currentVisualization is IFrequencyReactive)
-                            _settings.FftSettings.BandCount = Math.Max(4, _settings.FftSettings.BandCount - 2);
+                            _settings.Fft.BandCount = Math.Max(4, _settings.Fft.BandCount - 2);
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.VolumeThreshold = Math.Max(0.02f, _settings.NoiseFieldSettings.VolumeThreshold - 0.02f);
+                            _settings.NoiseField.VolumeThreshold = Math.Max(0.02f, _settings.NoiseField.VolumeThreshold - 0.02f);
                         break;
 
                     case ConsoleKey.OemPlus: //increment 2
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
                         {
-                            _settings.RingsSettings.Radius = Math.Min(195, _settings.RingsSettings.Radius + 2);
-                            _settings.RingsSettings.RadiusMax = Math.Min(200, _settings.RingsSettings.RadiusMax + 2);
-                            if (_settings.RingsSettings.RadiusMax <= _settings.RingsSettings.Radius)
-                                _settings.RingsSettings.RadiusMax = _settings.RingsSettings.Radius + 2;
+                            _settings.Rings.Radius = Math.Min(195, _settings.Rings.Radius + 2);
+                            _settings.Rings.RadiusMax = Math.Min(200, _settings.Rings.RadiusMax + 2);
+                            if (_settings.Rings.RadiusMax <= _settings.Rings.Radius)
+                                _settings.Rings.RadiusMax = _settings.Rings.Radius + 2;
                         }
 
                         if (_currentVisualization is Waterfall)
-                            _settings.WaterfallSettings.Thickness = Math.Min(10, _settings.WaterfallSettings.Thickness + 1);
+                            _settings.Waterfall.Thickness = Math.Min(10, _settings.Waterfall.Thickness + 1);
 
                         if (_currentVisualization is Shape)
-                            _settings.ShapeSettings.MaxSizePercent = Math.Min(1.0f, _settings.ShapeSettings.MaxSizePercent + 0.02f);
+                            _settings.Shape.MaxSizePercent = Math.Min(1.0f, _settings.Shape.MaxSizePercent + 0.02f);
 
                         if (_currentVisualization is IFrequencyReactive)
-                            _settings.FftSettings.BandCount = Math.Min(32, _settings.FftSettings.BandCount  + 2);
+                            _settings.Fft.BandCount = Math.Min(32, _settings.Fft.BandCount  + 2);
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.VolumeThreshold = Math.Min(1f, _settings.NoiseFieldSettings.VolumeThreshold + 0.02f);
+                            _settings.NoiseField.VolumeThreshold = Math.Min(1f, _settings.NoiseField.VolumeThreshold + 0.02f);
                         break;
 
                     case ConsoleKey.D7:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
                         if(_currentVisualization is Cube)
-                            _settings.CubeSettings.PulseIntensity = Math.Max(0.05f, _settings.CubeSettings.PulseIntensity - 0.025f);
+                            _settings.Cube.PulseIntensity = Math.Max(0.05f, _settings.Cube.PulseIntensity - 0.025f);
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.SpreadRadius = Math.Max(0.02f, _settings.NoiseFieldSettings.SpreadRadius - 0.02f);
+                            _settings.NoiseField.SpreadRadius = Math.Max(0.02f, _settings.NoiseField.SpreadRadius - 0.02f);
                         break;
 
                     case ConsoleKey.D8:
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
                         if (_currentVisualization is Cube)
-                            _settings.CubeSettings.PulseIntensity = Math.Min(1.5f, _settings.CubeSettings.PulseIntensity + 0.025f);
+                            _settings.Cube.PulseIntensity = Math.Min(1.5f, _settings.Cube.PulseIntensity + 0.025f);
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.SpreadRadius = Math.Min(1f, _settings.NoiseFieldSettings.SpreadRadius + 0.02f);
+                            _settings.NoiseField.SpreadRadius = Math.Min(1f, _settings.NoiseField.SpreadRadius + 0.02f);
                         break;
                     
                     case ConsoleKey.D9: //decrement 3
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if (_currentVisualization is Rings)
-                            _settings.RingsSettings.MaxRings = Math.Max(3, _settings.RingsSettings.MaxRings - 1);
+                            _settings.Rings.MaxRings = Math.Max(3, _settings.Rings.MaxRings - 1);
 
                         if (_currentVisualization is Shape)
                         {
-                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
+                            if (_settings.Shape.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            _settings.ShapeSettings.PolygonSides = Utility.CyclePrevious(validSides, _settings.ShapeSettings.PolygonSides, true);
+                            _settings.Shape.PolygonSides = Utility.CyclePrevious(validSides, _settings.Shape.PolygonSides, true);
                         }
 
                         if (_currentVisualization is IFrequencyReactive)
                         {
                             if(_currentVisualization is Cube)
-                                _settings.CubeSettings.ZoomLevel = (float)Math.Max(5.0f, _settings.CubeSettings.ZoomLevel - 0.5f);
+                                _settings.Cube.ZoomLevel = (float)Math.Max(5.0f, _settings.Cube.ZoomLevel - 0.5f);
                             else
-                                _settings.FftSettings.Sensitivity = Math.Max(0.5f, _settings.FftSettings.Sensitivity - 0.05f);
+                                _settings.Fft.Sensitivity = Math.Max(0.5f, _settings.Fft.Sensitivity - 0.05f);
                         }
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.JitterAmount = Math.Max(0.02f, _settings.NoiseFieldSettings.JitterAmount - 0.02f);
+                            _settings.NoiseField.JitterAmount = Math.Max(0.02f, _settings.NoiseField.JitterAmount - 0.02f);
                         break;
 
                     case ConsoleKey.D0: //increment 3
-                        if (_isPaused || _settings.GlobalSettings.EnableControlLock) return;
+                        if (_isPaused || _settings.Global.EnableControlLock) return;
 
                         if(_currentVisualization is Rings)
                             if (_currentVisualization is Rings)
-                                _settings.RingsSettings.MaxRings = Math.Min(20, _settings.RingsSettings.MaxRings + 1);
+                                _settings.Rings.MaxRings = Math.Min(20, _settings.Rings.MaxRings + 1);
 
                         if (_currentVisualization is Shape)
                         {
-                            if (_settings.ShapeSettings.Type != ShapeType.Polygon) return;
+                            if (_settings.Shape.Type != ShapeType.Polygon) return;
 
                             int[] validSides = { 5, 6, 8, 10, 12 };
 
-                            _settings.ShapeSettings.PolygonSides = Utility.CycleNext(validSides, _settings.ShapeSettings.PolygonSides, true);
+                            _settings.Shape.PolygonSides = Utility.CycleNext(validSides, _settings.Shape.PolygonSides, true);
                         }
 
                         if (_currentVisualization is IFrequencyReactive)
                         {
                             if (_currentVisualization is Cube)
-                                _settings.CubeSettings.ZoomLevel = (float)Math.Min(50.0f, _settings.CubeSettings.ZoomLevel + 0.5f);
+                                _settings.Cube.ZoomLevel = (float)Math.Min(50.0f, _settings.Cube.ZoomLevel + 0.5f);
                             else
-                                _settings.FftSettings.Sensitivity = Math.Min(3.0f, _settings.FftSettings.Sensitivity + 0.05f);
+                                _settings.Fft.Sensitivity = Math.Min(3.0f, _settings.Fft.Sensitivity + 0.05f);
 
                         }
 
                         if (_currentVisualization is NoiseField)
-                            _settings.NoiseFieldSettings.JitterAmount = Math.Min(1f, _settings.NoiseFieldSettings.JitterAmount + 0.02f);
+                            _settings.NoiseField.JitterAmount = Math.Min(1f, _settings.NoiseField.JitterAmount + 0.02f);
                         break;
 
                     #region ChangeVisuals
                     case ConsoleKey.NumPad0:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 0;
                         break;
 
                     case ConsoleKey.NumPad1:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 1;
                         break;
 
                     case ConsoleKey.NumPad2:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 2;
                         break;
 
                     case ConsoleKey.NumPad3:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 3;
                         break;
 
                     case ConsoleKey.NumPad4:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 4;
                         break;
 
                     case ConsoleKey.NumPad5:
-                        if (_settings.GlobalSettings.EnableControlLock) return;
+                        if (_settings.Global.EnableControlLock) return;
                         _currentMode = 5;
+                        break;
+
+                    case ConsoleKey.NumPad6:
+                        if (_settings.Global.EnableControlLock) return;
+                        _currentMode = 6;
                         break;
                         #endregion
                 }
@@ -918,61 +923,61 @@ namespace TERMINAL_FREQUENCY
         static void HandleConsoleWindow()
         {
 
-            if (_settings.ConsoleSettings.DisableCursor)
+            if (_settings.Window.DisableCursor)
                 Console.CursorVisible = false;
 
             //manage window features
-            if (_settings.ConsoleSettings.DisableTitleBar && !_exclusiveMode)
+            if (_settings.Window.DisableTitleBar && !_exclusiveMode)
                 ConsoleWindow.DisableTitleBar(); //TODO: still see a bit of border, likely DWM border
 
-            if(_settings.ConsoleSettings.DisableScrollBars && !_exclusiveMode)
+            if(_settings.Window.DisableScrollBars && !_exclusiveMode)
                 ConsoleWindow.DisableScrollBars();
 
 
 
-            ConsoleWindow.SetAlwaysOnTop(_settings.ConsoleSettings.AlwaysOnTop);
-            ConsoleWindow.SetOpacity((byte)_settings.ConsoleSettings.WindowOpacity);
-            ConsoleWindow.SetClickThrough(_settings.ConsoleSettings.EnableClickThrough);
+            ConsoleWindow.SetAlwaysOnTop(_settings.Window.AlwaysOnTop);
+            ConsoleWindow.SetOpacity((byte)_settings.Window.WindowOpacity);
+            ConsoleWindow.SetClickThrough(_settings.Window.EnableClickThrough);
 
-            if (_settings.ConsoleSettings.EnableWindowVibrancy)
+            if (_settings.Window.EnableWindowVibrancy)
                 ConsoleWindow.SetWindowVibrancy(
-                    (byte)_settings.ConsoleSettings.WindowVibrancyR,
-                    (byte)_settings.ConsoleSettings.WindowVibrancyG,
-                    (byte)_settings.ConsoleSettings.WindowVibrancyB,
-                    (byte)_settings.ConsoleSettings.WindowVibrancyA
+                    (byte)_settings.Window.WindowVibrancyR,
+                    (byte)_settings.Window.WindowVibrancyG,
+                    (byte)_settings.Window.WindowVibrancyB,
+                    (byte)_settings.Window.WindowVibrancyA
                 );
-            else if (_settings.ConsoleSettings.EnableWindowBlur)
-                ConsoleWindow.SetWindowBlur(_settings.ConsoleSettings.EnableWindowBlur);
+            else if (_settings.Window.EnableWindowBlur)
+                ConsoleWindow.SetWindowBlur(_settings.Window.EnableWindowBlur);
 
             //size
             if (_exclusiveMode)
                 ConsoleWindow.ExclusiveMode(true);
-            else if (_settings.ConsoleSettings.LaunchMaximized)
+            else if (_settings.Window.LaunchMaximized)
                 ConsoleWindow.SetFullScreen();
-            else if (_settings.ConsoleSettings.EnableCustomWindowSize)
-                ConsoleWindow.SetScreenSize(_settings.ConsoleSettings.CustomWindowWidth, _settings.ConsoleSettings.CustomWindowHeight);
+            else if (_settings.Window.EnableCustomWindowSize)
+                ConsoleWindow.SetScreenSize(_settings.Window.CustomWindowWidth, _settings.Window.CustomWindowHeight);
 
             //position
-            if (!_settings.ConsoleSettings.LaunchMaximized && !_exclusiveMode)
+            if (!_settings.Window.LaunchMaximized && !_exclusiveMode)
             {
-                if (_settings.ConsoleSettings.LaunchAt && _settings.ConsoleSettings.LaunchAtX >= 0 && _settings.ConsoleSettings.LaunchAtY >= 0)
-                    ConsoleWindow.LaunchConsoleAt(_settings.ConsoleSettings.LaunchAtX, _settings.ConsoleSettings.LaunchAtY);
-                else if (_settings.ConsoleSettings.LaunchInCenter)
+                if (_settings.Window.LaunchAt && _settings.Window.LaunchAtX >= 0 && _settings.Window.LaunchAtY >= 0)
+                    ConsoleWindow.LaunchConsoleAt(_settings.Window.LaunchAtX, _settings.Window.LaunchAtY);
+                else if (_settings.Window.LaunchInCenter)
                     ConsoleWindow.LaunchConsoleCenter();
             }
 
-            if (_settings.ConsoleSettings.DisableWindowResize)
+            if (_settings.Window.DisableWindowResize)
                 ConsoleWindow.DisableResize();
 
             //manage process title
-            if (_settings.ConsoleSettings.DisableAppTitle)
+            if (_settings.Window.DisableAppTitle)
                 Console.Title = string.Empty;
-            else if (!string.IsNullOrEmpty(_settings.ConsoleSettings.CustomTitle))
-                Console.Title = _settings.ConsoleSettings.CustomTitle;
+            else if (!string.IsNullOrEmpty(_settings.Window.CustomTitle))
+                Console.Title = _settings.Window.CustomTitle;
             else
                 Console.Title = _isChild ? $"TERMINAL FREQUENCY - Child" : "TERMINAL FREQUENCY";
 
-            if (!_settings.GlobalSettings.BypassStartupScreen)
+            if (!_settings.Global.BypassStartupScreen)
                 Utility.PrintStartup();
         }
     }

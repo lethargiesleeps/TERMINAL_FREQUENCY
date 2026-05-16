@@ -7,6 +7,7 @@ using TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Cube;
 using TERMINAL_FREQUENCY.Visualization.Equalizer;
 using TERMINAL_FREQUENCY.Visualization.NoiseField;
+using TERMINAL_FREQUENCY.Visualization.ParticleBurst.TERMINAL_FREQUENCY.Visualization;
 using TERMINAL_FREQUENCY.Visualization.Rings;
 using TERMINAL_FREQUENCY.Visualization.Shape;
 using TERMINAL_FREQUENCY.Visualization.Waterfall;
@@ -119,6 +120,7 @@ namespace TERMINAL_FREQUENCY.Core
                 3 => "EQ",
                 4 => "CUBE",
                 5 => "NOISEFIELD",
+                6 => "PARTICLES",
                 _ => "UNKNOWN"
             };
         }
@@ -305,7 +307,9 @@ namespace TERMINAL_FREQUENCY.Core
             new Shape(settings) ,
             new Equalizer(settings),
             new Cube(settings),
-            new NoiseField(settings)
+            new NoiseField(settings),
+            new ParticleBurst(settings)
+
         };
 
         /// <summary>

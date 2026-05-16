@@ -30,7 +30,7 @@ namespace TERMINAL_FREQUENCY.Visualization.NoiseField
 
         public void Update(float volume)
         {
-            var nf = _settings.NoiseFieldSettings;
+            var nf = _settings.NoiseField;
 
             _volumeAverage = _volumeAverage * 0.99f + volume * 0.01f;
 
@@ -50,7 +50,7 @@ namespace TERMINAL_FREQUENCY.Visualization.NoiseField
 
         public void Draw(ScreenBuffer buffer)
         {
-            NoiseFieldSettings nf = _settings.NoiseFieldSettings;
+            NoiseFieldSettings nf = _settings.NoiseField;
             int width = buffer.Width;
             int height = buffer.Height;
             int centerX = width / 2;

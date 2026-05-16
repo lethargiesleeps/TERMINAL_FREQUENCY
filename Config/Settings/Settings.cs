@@ -12,103 +12,110 @@ namespace TERMINAL_FREQUENCY.Config.Settings
     public class Settings : IConfigurable
     {
         [JsonProperty("Global")]
-        public GlobalSettings GlobalSettings { get; private set; }
+        public GlobalSettings Global { get; private set; }
 
         [JsonProperty("Font")]
-        public FontSettings FontSettings { get; private set; }
+        public FontSettings Font { get; private set; }
 
         [JsonProperty("Rendering")]
-        public RendererSettings RendererSettings { get; private set; }
+        public RendererSettings Renderer { get; private set; }
 
         [JsonProperty("Window")]
-        public ConsoleSettings ConsoleSettings { get; private set; }
+        public WindowSettings Window { get; private set; }
 
         [JsonProperty("AudioCapture")]
-        public AudioCaptureSettings AudioCaptureSettings { get; private set; }
+        public AudioCaptureSettings AudioCapture { get; private set; }
 
         [JsonProperty("FFT")]
-        public FftSettings FftSettings { get; private set; }
+        public FftSettings Fft { get; private set; }
 
         [JsonProperty("Rings")]
-        public RingsSettings RingsSettings { get; private set; }
+        public RingsSettings Rings { get; private set; }
 
         [JsonProperty("Waterfall")]
-        public WaterfallSettings WaterfallSettings { get; private set; }
+        public WaterfallSettings Waterfall { get; private set; }
 
         [JsonProperty("Shape")]
-        public ShapeSettings ShapeSettings { get; private set; }
+        public ShapeSettings Shape { get; private set; }
 
         [JsonProperty("Equalizer")]
-        public EqualizerSettings EqualizerSettings { get; private set; }
+        public EqualizerSettings Equalizer { get; private set; }
 
         [JsonProperty("Cube")]
-        public CubeSettings CubeSettings { get; private set; }
+        public CubeSettings Cube { get; private set; }
 
         [JsonProperty("NoiseField")]
-        public NoiseFieldSettings NoiseFieldSettings { get; private set; }
+        public NoiseFieldSettings NoiseField { get; private set; }
+
+        [JsonProperty("ParticleBurst")]
+        public ParticleBurstSettings ParticleBurst { get; private set; }
 
         public Settings()
         {
-            GlobalSettings = new GlobalSettings();
-            FontSettings = new FontSettings();
-            RendererSettings = new RendererSettings();
-            ConsoleSettings = new ConsoleSettings();
-            AudioCaptureSettings = new AudioCaptureSettings();
-            FftSettings = new FftSettings();
-            RingsSettings = new RingsSettings();
-            WaterfallSettings = new WaterfallSettings();
-            ShapeSettings = new ShapeSettings();
-            EqualizerSettings = new EqualizerSettings();
-            CubeSettings = new CubeSettings();
-            NoiseFieldSettings = new NoiseFieldSettings();
+            Global = new GlobalSettings();
+            Font = new FontSettings();
+            Renderer = new RendererSettings();
+            Window = new WindowSettings();
+            AudioCapture = new AudioCaptureSettings();
+            Fft = new FftSettings();
+            Rings = new RingsSettings();
+            Waterfall = new WaterfallSettings();
+            Shape = new ShapeSettings();
+            Equalizer = new EqualizerSettings();
+            Cube = new CubeSettings();
+            NoiseField = new NoiseFieldSettings();
+            ParticleBurst = new ParticleBurstSettings();
         }
 
         public void Restore()
         {
-            GlobalSettings.Restore();
-            FontSettings.Restore();
-            RendererSettings.Restore();
-            ConsoleSettings.Restore();
-            AudioCaptureSettings.Restore();
-            FftSettings.Restore();
-            RingsSettings.Restore();
-            WaterfallSettings.Restore();
-            ShapeSettings.Restore();
-            EqualizerSettings.Restore();
-            CubeSettings.Restore();
-            NoiseFieldSettings.Restore();
+            Global.Restore();
+            Font.Restore();
+            Renderer.Restore();
+            Window.Restore();
+            AudioCapture.Restore();
+            Fft.Restore();
+            Rings.Restore();
+            Waterfall.Restore();
+            Shape.Restore();
+            Equalizer.Restore();
+            Cube.Restore();
+            NoiseField.Restore();
+            ParticleBurst.Restore();
         }
 
         public void EnforceConstraints()
         {
-            GlobalSettings.EnforceConstraints();
-            FontSettings.EnforceConstraints();
-            RendererSettings.EnforceConstraints();
-            ConsoleSettings.EnforceConstraints();
-            AudioCaptureSettings.EnforceConstraints();
-            FftSettings.EnforceConstraints();
-            RingsSettings.EnforceConstraints();
-            WaterfallSettings.EnforceConstraints();
-            ShapeSettings.EnforceConstraints();
-            EqualizerSettings.EnforceConstraints();
-            CubeSettings.EnforceConstraints();
-            NoiseFieldSettings.EnforceConstraints();
+            Global.EnforceConstraints();
+            Font.EnforceConstraints();
+            Renderer.EnforceConstraints();
+            Window.EnforceConstraints();
+            AudioCapture.EnforceConstraints();
+            Fft.EnforceConstraints();
+            Rings.EnforceConstraints();
+            Waterfall.EnforceConstraints();
+            Shape.EnforceConstraints();
+            Equalizer.EnforceConstraints();
+            Cube.EnforceConstraints();
+            NoiseField.EnforceConstraints();
+            ParticleBurst.EnforceConstraints();
         }
 
         public void EnforceMandatoryConstraints()
         {
-            GlobalSettings.EnforceMandatoryConstraints();
-            FontSettings.EnforceMandatoryConstraints();
-            RendererSettings.EnforceMandatoryConstraints();
-            ConsoleSettings.EnforceMandatoryConstraints();
-            AudioCaptureSettings.EnforceMandatoryConstraints();
-            FftSettings.EnforceMandatoryConstraints();
-            RingsSettings.EnforceMandatoryConstraints();
-            WaterfallSettings.EnforceMandatoryConstraints();
-            ShapeSettings.EnforceMandatoryConstraints();
-            EqualizerSettings.EnforceMandatoryConstraints();
-            CubeSettings.EnforceMandatoryConstraints();
-            NoiseFieldSettings.EnforceMandatoryConstraints();
+            Global.EnforceMandatoryConstraints();
+            Font.EnforceMandatoryConstraints();
+            Renderer.EnforceMandatoryConstraints();
+            Window.EnforceMandatoryConstraints();
+            AudioCapture.EnforceMandatoryConstraints();
+            Fft.EnforceMandatoryConstraints();
+            Rings.EnforceMandatoryConstraints();
+            Waterfall.EnforceMandatoryConstraints();
+            Shape.EnforceMandatoryConstraints();
+            Equalizer.EnforceMandatoryConstraints();
+            Cube.EnforceMandatoryConstraints();
+            NoiseField.EnforceMandatoryConstraints();
+            ParticleBurst.EnforceMandatoryConstraints();
         }
     }
 }

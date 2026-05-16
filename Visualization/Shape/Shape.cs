@@ -36,9 +36,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         public Shape(Settings settings)
         {
             _settings = settings;
-            IsReversed = _settings.ShapeSettings.ReverseMode;
-            IsSmoothingEnabled = _settings.ShapeSettings.SmoothMode;
-            IsCustomColorEnabled = _settings.ShapeSettings.UseCustomColor;
+            IsReversed = _settings.Shape.ReverseMode;
+            IsSmoothingEnabled = _settings.Shape.SmoothMode;
+            IsCustomColorEnabled = _settings.Shape.UseCustomColor;
         }
 
         #region IVisualization
@@ -51,12 +51,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="volume">The smoothed audio volume level from <see cref="AudioCapture"/>.</param>
         public void Update(float volume)
         {
-            IsReversed = _settings.ShapeSettings.ReverseMode;
-            IsSmoothingEnabled = _settings.ShapeSettings.SmoothMode;
-            IsCustomColorEnabled = _settings.ShapeSettings.UseCustomColor;
+            IsReversed = _settings.Shape.ReverseMode;
+            IsSmoothingEnabled = _settings.Shape.SmoothMode;
+            IsCustomColorEnabled = _settings.Shape.UseCustomColor;
 
             float maxSize = GetEffectiveMaxSize();
-            float minSize = _settings.ShapeSettings.MinSizePercent;
+            float minSize = _settings.Shape.MinSizePercent;
             float scaledVolume;
 
             if (IsReversed)
@@ -68,7 +68,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
                 float normalizedVolume = _peakVolume > 0.01f ? Math.Clamp(volume / _peakVolume, 0f, 1f) : 0f;
 
-                if (normalizedVolume < _settings.ShapeSettings.TriggerThreshold * _settings.ShapeSettings.ReverseVolumeSensitivity)
+                if (normalizedVolume < _settings.Shape.TriggerThreshold * _settings.Shape.ReverseVolumeSensitivity)
                     normalizedVolume = 0;
 
 
@@ -80,16 +80,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             else
             {
                 //raw audio volume
-                if (volume < _settings.ShapeSettings.TriggerThreshold)
+                if (volume < _settings.Shape.TriggerThreshold)
                     volume = 0;
 
-                scaledVolume = volume * _settings.ShapeSettings.VolumeSensitivity;
+                scaledVolume = volume * _settings.Shape.VolumeSensitivity;
 
                 _targetSize = minSize + (scaledVolume * (maxSize - minSize));
             }
 
             _currentSize = IsSmoothingEnabled
-                ? _currentSize + (_targetSize - _currentSize) * _settings.ShapeSettings.LerpFactor
+                ? _currentSize + (_targetSize - _currentSize) * _settings.Shape.LerpFactor
                 : _targetSize;
         }
 
@@ -99,7 +99,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// </summary>
         public void OnSpike()
         {
-            _targetSize = IsReversed ? _settings.ShapeSettings.MinSizePercent : GetEffectiveMaxSize();
+            _targetSize = IsReversed ? _settings.Shape.MinSizePercent : GetEffectiveMaxSize();
             if (!IsSmoothingEnabled) _currentSize = _targetSize;
         }
 
@@ -114,7 +114,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         public void Draw(ScreenBuffer buffer)
         {
-            switch (_settings.ShapeSettings.Layout)
+            switch (_settings.Shape.Layout)
             {
                 case ShapeLayout.Concentric: DrawConcentric(buffer); break;
                 case ShapeLayout.Vertical: DrawVertical(buffer); break;
@@ -142,7 +142,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
             int thickness = GetEffectiveThickness(1);
 
-            DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+            DrawShapeAt(buffer, centerX, centerY, radius, (_settings.Shape.FillMode) ? radius : thickness, _settings.Shape.UniformColor);
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawVertical(ScreenBuffer buffer)
         {
-            int count = _settings.ShapeSettings.Count;
+            int count = _settings.Shape.Count;
 
             if (count == 1)
             {
@@ -172,7 +172,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 maxDimension = (int)(maxDimension * SIZE_BOOST);
                 int radius = (int)(maxDimension * _currentSize / 2);
 
-                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.Shape.FillMode) ? radius : thickness, _settings.Shape.UniformColor);
 
             }
 
@@ -185,7 +185,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawHorizontal(ScreenBuffer buffer)
         {
-            int count = _settings.ShapeSettings.Count;
+            int count = _settings.Shape.Count;
 
             if (count == 1)
             {
@@ -204,7 +204,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 int maxDimension = Math.Min(buffer.Width / Math.Max(1, count), buffer.Height);
                 int radius = (int)(maxDimension * _currentSize / 2);
 
-                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+                DrawShapeAt(buffer, centerX, centerY, radius, (_settings.Shape.FillMode) ? radius : thickness, _settings.Shape.UniformColor);
             }
         }
 
@@ -216,7 +216,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawPyramid(ScreenBuffer buffer)
         {
-            int count = _settings.ShapeSettings.Count;
+            int count = _settings.Shape.Count;
             int thickness = GetEffectiveThickness(count);
 
             //do normal if under 3
@@ -238,7 +238,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 else
                     shapesInRow = row == 0 ? count - 1 : 1;  //inverted
 
-                int rowSpacing = (int)(buffer.Height * _settings.ShapeSettings.PyramidRowSpacing);
+                int rowSpacing = (int)(buffer.Height * _settings.Shape.PyramidRowSpacing);
 
                 int rowY = !inverted
                     ? buffer.Height / 2 - ((rows - 1 - row) * rowSpacing)
@@ -253,7 +253,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     int maxDim = Math.Min(buffer.Width / 3, buffer.Height / 3);
                     int radius = (int)(maxDim * _currentSize / 2);
 
-                    DrawShapeAt(buffer, centerX, rowY, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+                    DrawShapeAt(buffer, centerX, rowY, radius, (_settings.Shape.FillMode) ? radius : thickness, _settings.Shape.UniformColor);
 
                     shapeIndex++;
                 }
@@ -269,7 +269,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawQuadrant(ScreenBuffer buffer)
         {
-            int count = _settings.ShapeSettings.Count;
+            int count = _settings.Shape.Count;
             int thickness = GetEffectiveThickness(count);
             int[] indices = GetQuadrantIndices(count);
             int actualShapes = indices.Length;
@@ -278,10 +278,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             (int x, int y)[] quads;
 
             if(count == 4) maxDimension = (int)(maxDimension * SIZE_BOOST);
-            if (_settings.ShapeSettings.QuadrantCentered && actualShapes == 4)
+            if (_settings.Shape.QuadrantCentered && actualShapes == 4)
             {
                 //cluster to middle
-                int gap = Math.Min(buffer.Width, buffer.Height) / _settings.ShapeSettings.QuadrantGapDivisor;
+                int gap = Math.Min(buffer.Width, buffer.Height) / _settings.Shape.QuadrantGapDivisor;
                 quads = new (int, int)[]
                 {
                     (buffer.Width / 2 - gap, buffer.Height / 2 - gap), //top-left of center
@@ -305,7 +305,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             for (int i = 0; i < indices.Length; i++)
             {
                 int index = indices[i];
-                DrawShapeAt(buffer, quads[index].x, quads[index].y, radius, (_settings.ShapeSettings.FillMode) ? radius : thickness, _settings.ShapeSettings.UniformColor);
+                DrawShapeAt(buffer, quads[index].x, quads[index].y, radius, (_settings.Shape.FillMode) ? radius : thickness, _settings.Shape.UniformColor);
             }
         }
 
@@ -318,7 +318,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="buffer">The screen buffer to draw to.</param>
         private void DrawConcentric(ScreenBuffer buffer)
         {
-            int count = _settings.ShapeSettings.ConcentricLayers;
+            int count = _settings.Shape.ConcentricLayers;
 
             if(count == 1)
             {
@@ -329,7 +329,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             int centerX = buffer.Width / 2;
             int centerY = buffer.Height / 2;
             
-            int padding = _settings.ShapeSettings.ConcentricPadding;
+            int padding = _settings.Shape.ConcentricPadding;
             int thickness = GetEffectiveThickness(count);
             int maxDimension = Math.Min(buffer.Width, buffer.Height);
 
@@ -370,7 +370,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         {
             if (radius <= 0) return;
 
-            switch (_settings.ShapeSettings.Type)
+            switch (_settings.Shape.Type)
             {
                 case ShapeType.Circle:
                     DrawCircle(buffer, centerX, centerY, radius, thickness, color);
@@ -406,9 +406,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         private void DrawCircle(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             bool isFill = thickness >= radius - 1;
-            float density = isFill ? 1.5f : _settings.ShapeSettings.CircleSegmentDensity;
-            int minSeg = isFill ? 24 : _settings.ShapeSettings.CircleMinSegments;
-            int maxSeg = isFill ?  100 * (int)(_settings.ShapeSettings.MaxSizePercent * 100) : _settings.ShapeSettings.CircleMaxSegments;
+            float density = isFill ? 1.5f : _settings.Shape.CircleSegmentDensity;
+            int minSeg = isFill ? 24 : _settings.Shape.CircleMinSegments;
+            int maxSeg = isFill ?  100 * (int)(_settings.Shape.MaxSizePercent * 100) : _settings.Shape.CircleMaxSegments;
 
             int innerRadius = Math.Max(0, radius - thickness);
 
@@ -425,17 +425,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     double angle = (i * 2 * Math.PI) / segments;
                     int x = centerX + (int)(Math.Cos(angle) * r);
                     int y = centerY + (int)(Math.Sin(angle) * r * 0.45);
-                    buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
+                    buffer.SetPixel(x, y, _settings.Shape.Character, color);
                 }
             }
 
             if (radius <= thickness + 1)
             {
-                buffer.SetPixel(centerX, centerY, _settings.ShapeSettings.Character, color);
-                buffer.SetPixel(centerX + 1, centerY, _settings.ShapeSettings.Character, color);
-                buffer.SetPixel(centerX, centerY + 1, _settings.ShapeSettings.Character, color);
-                buffer.SetPixel(centerX - 1, centerY, _settings.ShapeSettings.Character, color);
-                buffer.SetPixel(centerX, centerY - 1, _settings.ShapeSettings.Character, color);
+                buffer.SetPixel(centerX, centerY, _settings.Shape.Character, color);
+                buffer.SetPixel(centerX + 1, centerY, _settings.Shape.Character, color);
+                buffer.SetPixel(centerX, centerY + 1, _settings.Shape.Character, color);
+                buffer.SetPixel(centerX - 1, centerY, _settings.Shape.Character, color);
+                buffer.SetPixel(centerX, centerY - 1, _settings.Shape.Character, color);
             }
         }
 
@@ -453,8 +453,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="color">Colour of shape.</param>
         private void DrawSquare(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
-            int halfWidth = (int)(radius * _settings.ShapeSettings.SquareWidthRatio);
-            int halfHeight = (int)(radius * _settings.ShapeSettings.SquareHeightRatio * 0.45f);
+            int halfWidth = (int)(radius * _settings.Shape.SquareWidthRatio);
+            int halfHeight = (int)(radius * _settings.Shape.SquareHeightRatio * 0.45f);
 
             for (int t = 0; t < thickness; t++)
             {
@@ -468,18 +468,18 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                 {
                     for (int y = top; y <= bottom; y++)
                         for (int x = left; x <= right; x++)
-                            buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
+                            buffer.SetPixel(x, y, _settings.Shape.Character, color);
                 }
                 else
                 {
                     for (int x = left; x <= right; x++)
-                        buffer.SetPixel(x, top, _settings.ShapeSettings.Character, color);
+                        buffer.SetPixel(x, top, _settings.Shape.Character, color);
                     for (int x = left; x <= right; x++)
-                        buffer.SetPixel(x, bottom, _settings.ShapeSettings.Character, color);
+                        buffer.SetPixel(x, bottom, _settings.Shape.Character, color);
                     for (int y = top; y <= bottom; y++)
-                        buffer.SetPixel(left, y, _settings.ShapeSettings.Character, color);
+                        buffer.SetPixel(left, y, _settings.Shape.Character, color);
                     for (int y = top; y <= bottom; y++)
-                        buffer.SetPixel(right, y, _settings.ShapeSettings.Character, color);
+                        buffer.SetPixel(right, y, _settings.Shape.Character, color);
                 }
             }
         }
@@ -507,7 +507,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
                     float rowProgress = Math.Abs(y - centerY) / (float)halfHeight;
                     int rowHalfWidth = (int)(halfWidth * (1 - rowProgress));
                     for (int x = centerX - rowHalfWidth; x <= centerX + rowHalfWidth; x++)
-                        buffer.SetPixel(x, y, _settings.ShapeSettings.Character, color);
+                        buffer.SetPixel(x, y, _settings.Shape.Character, color);
                 }
                 return;
             }
@@ -545,7 +545,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
 
             while (true)
             {
-                buffer.SetPixel(x0, y0, _settings.ShapeSettings.Character, color);
+                buffer.SetPixel(x0, y0, _settings.Shape.Character, color);
 
                 if (x0 == x1 && y0 == y1) break;
 
@@ -578,7 +578,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         private void DrawPolygon(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
             bool isFill = thickness >= radius - 1;
-            int sides = isFill ? Math.Max(_settings.ShapeSettings.PolygonSides, 16) : _settings.ShapeSettings.PolygonSides;
+            int sides = isFill ? Math.Max(_settings.Shape.PolygonSides, 16) : _settings.Shape.PolygonSides;
 
             (int x, int y)[] vertices = new (int, int)[sides];
             for (int i = 0; i < sides; i++)
@@ -618,8 +618,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="color">Colour of shape.</param>
         private void DrawTriangleUp(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
-            int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
-            int triangleHeight = (int)(sideLength * _settings.ShapeSettings.TriangleHeightMultiplier * _settings.ShapeSettings.TriangleAspectCorrection);
+            int sideLength = (int)(radius * _settings.Shape.TriangleSideMultiplier);
+            int triangleHeight = (int)(sideLength * _settings.Shape.TriangleHeightMultiplier * _settings.Shape.TriangleAspectCorrection);
 
             for (int t = 0; t < thickness; t++)
             {
@@ -647,8 +647,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="color">Colour of shape.</param>
         private void DrawTriangleDown(ScreenBuffer buffer, int centerX, int centerY, int radius, int thickness, ConsoleColor color)
         {
-            int sideLength = (int)(radius * _settings.ShapeSettings.TriangleSideMultiplier);
-            int triangleHeight = (int)(sideLength * _settings.ShapeSettings.TriangleHeightMultiplier * _settings.ShapeSettings.TriangleAspectCorrection);
+            int sideLength = (int)(radius * _settings.Shape.TriangleSideMultiplier);
+            int triangleHeight = (int)(sideLength * _settings.Shape.TriangleHeightMultiplier * _settings.Shape.TriangleAspectCorrection);
 
             for (int t = 0; t < thickness; t++)
             {
@@ -674,20 +674,20 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// </summary>
         private float GetEffectiveMaxSize()
         {
-            if (_settings.ShapeSettings.Layout == ShapeLayout.Concentric)
-                return _settings.ShapeSettings.MaxSizePercent;
+            if (_settings.Shape.Layout == ShapeLayout.Concentric)
+                return _settings.Shape.MaxSizePercent;
 
-            int count = _settings.ShapeSettings.Count;
+            int count = _settings.Shape.Count;
 
             //layouts that center a single shape use full size
             if (count == 1)
-                return _settings.ShapeSettings.MaxSizePercent;
+                return _settings.Shape.MaxSizePercent;
 
             //pyramid with 2 shapes uses full size (falls back to single)
-            if (_settings.ShapeSettings.Layout == ShapeLayout.Pyramid && count < 3)
-                return _settings.ShapeSettings.MaxSizePercent;
+            if (_settings.Shape.Layout == ShapeLayout.Pyramid && count < 3)
+                return _settings.Shape.MaxSizePercent;
 
-            return _settings.ShapeSettings.MaxSizePercent / count;
+            return _settings.Shape.MaxSizePercent / count;
         }
 
         /// <summary>
@@ -697,8 +697,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         /// <param name="shapeCount">How many shapes are in the window to determine effective thickness</param>
         private int GetEffectiveThickness(int shapeCount)
         {
-            int thickness = _settings.ShapeSettings.Thickness;
-            int maxThickness = _settings.ShapeSettings.ThicknessMax;
+            int thickness = _settings.Shape.Thickness;
+            int maxThickness = _settings.Shape.ThicknessMax;
 
             thickness = Math.Max(1, thickness / shapeCount);
             return Math.Min(thickness, maxThickness);
@@ -715,12 +715,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         {
             if (IsCustomColorEnabled)
             {
-                ConsoleColor[] colors = _settings.ShapeSettings.CustomColors;
+                ConsoleColor[] colors = _settings.Shape.CustomColors;
                 if (colors != null && colors.Length > 0)
                     return colors[shapeIndex % colors.Length];
             }
 
-            return _settings.ShapeSettings.UniformColor;
+            return _settings.Shape.UniformColor;
         }
 
         /// <summary>
@@ -783,10 +783,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
         private int[] GetQuadrantIndices(int count)
         {
             //user defined positions
-            if (_settings.ShapeSettings.QuadrantIndices != null && _settings.ShapeSettings.QuadrantIndices.Length > 0)
+            if (_settings.Shape.QuadrantIndices != null && _settings.Shape.QuadrantIndices.Length > 0)
             {
-                int[] result = new int[Math.Min(count, _settings.ShapeSettings.QuadrantIndices.Length)];
-                Array.Copy(_settings.ShapeSettings.QuadrantIndices, result, result.Length);
+                int[] result = new int[Math.Min(count, _settings.Shape.QuadrantIndices.Length)];
+                Array.Copy(_settings.Shape.QuadrantIndices, result, result.Length);
                 return result;
             }
 
@@ -794,17 +794,17 @@ namespace TERMINAL_FREQUENCY.Visualization.Shape
             switch (count)
             {
                 case 1:
-                    _settings.ShapeSettings.QuadrantCentered = true; //do centered mode
+                    _settings.Shape.QuadrantCentered = true; //do centered mode
                     return new int[] { 0, 1, 2, 3 };
                 case 2:
-                    _settings.ShapeSettings.QuadrantCentered = false;
+                    _settings.Shape.QuadrantCentered = false;
                     return new int[] { 0, 3 }; //diagonal
                 case 3:
-                    _settings.ShapeSettings.QuadrantCentered = false;
+                    _settings.Shape.QuadrantCentered = false;
                     return new int[] { 1, 2 }; //reverse diagonal
                 case 4:
                 default:
-                    _settings.ShapeSettings.QuadrantCentered = false;
+                    _settings.Shape.QuadrantCentered = false;
                     return new int[] { 0, 1, 2, 3 };
             }
         }

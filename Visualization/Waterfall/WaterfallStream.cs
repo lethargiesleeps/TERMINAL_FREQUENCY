@@ -56,7 +56,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
             Origin = origin == VisualizationOrigin.Center ? VisualizationOrigin.Top : origin;
             IsReversed = isReversed;
 
-            if (_settings.WaterfallSettings.RainbowMode)
+            if (_settings.Waterfall.RainbowMode)
             {
                 ConsoleColor newColor;
                 do
@@ -75,9 +75,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         /// </summary>
         public void Update()
         {
-            Progress += _settings.WaterfallSettings.Speed * 0.025f; //0.025f is speed scaling factor
+            Progress += _settings.Waterfall.Speed * 0.025f; //0.025f is speed scaling factor
             if(Progress > 1.0f) Progress = 1.0f;
-            Life -= _settings.WaterfallSettings.FadeRate;
+            Life -= _settings.Waterfall.FadeRate;
             if (Progress >= 1.0f)
                 Life = 0;
         }
@@ -93,8 +93,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         /// <param name="consoleSize">The width or height of the console, depending on flow direction.</param>
         public float GetWidth(float consoleSize)
         {
-            float startWidth = consoleSize * _settings.WaterfallSettings.StartWidthPercent;
-            float endWidth = consoleSize * _settings.WaterfallSettings.EndWidthPercent;
+            float startWidth = consoleSize * _settings.Waterfall.StartWidthPercent;
+            float endWidth = consoleSize * _settings.Waterfall.EndWidthPercent;
 
             //linear interp
             return startWidth + (endWidth - startWidth) * Progress;
@@ -111,13 +111,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         public char GetCharacter(int position, int totalPositions)
         {
             float positionRatio = (float)position / totalPositions;
-            if (Progress < _settings.WaterfallSettings.MidpointChange)
-                return positionRatio < 0.3f || positionRatio > 0.7f ? _settings.WaterfallSettings.VerticalChars[0] : ' ';
-            else if (Progress < _settings.WaterfallSettings.EndpointChange)
-                return positionRatio < 0.2f || positionRatio > 0.8f ? _settings.WaterfallSettings.VerticalChars[1] :
-                       position % 3 == 0 ? _settings.WaterfallSettings.VerticalChars[2] : ' ';
+            if (Progress < _settings.Waterfall.MidpointChange)
+                return positionRatio < 0.3f || positionRatio > 0.7f ? _settings.Waterfall.VerticalChars[0] : ' ';
+            else if (Progress < _settings.Waterfall.EndpointChange)
+                return positionRatio < 0.2f || positionRatio > 0.8f ? _settings.Waterfall.VerticalChars[1] :
+                       position % 3 == 0 ? _settings.Waterfall.VerticalChars[2] : ' ';
             else
-                return position % 4 == 0 ? _settings.WaterfallSettings.VerticalChars[2] : ' ';
+                return position % 4 == 0 ? _settings.Waterfall.VerticalChars[2] : ' ';
         }
 
         /// <summary>
@@ -128,27 +128,27 @@ namespace TERMINAL_FREQUENCY.Visualization.Waterfall
         /// </summary>
         public ConsoleColor GetColor()
         {
-            if (_settings.WaterfallSettings.RainbowMode)
+            if (_settings.Waterfall.RainbowMode)
             {
-                if (Progress < _settings.WaterfallSettings.RainbowFadeBright)
+                if (Progress < _settings.Waterfall.RainbowFadeBright)
                     return ConsoleColor.White;
-                else if (Progress < _settings.WaterfallSettings.RainbowFadeColor)
+                else if (Progress < _settings.Waterfall.RainbowFadeColor)
                     return _streamColor;
-                else if (Progress < _settings.WaterfallSettings.RainbowFadeDark)
+                else if (Progress < _settings.Waterfall.RainbowFadeDark)
                     return Utility.DarkenColor(_streamColor);
-                else if (Progress < _settings.WaterfallSettings.RainbowFadeDarkGray)
+                else if (Progress < _settings.Waterfall.RainbowFadeDarkGray)
                     return ConsoleColor.DarkGray;
                 else
                     return ConsoleColor.Black;
             }
             else
             {
-                if (Progress < _settings.WaterfallSettings.NormalFadeWhite)
+                if (Progress < _settings.Waterfall.NormalFadeWhite)
                     return ConsoleColor.White;
-                else if (Progress < _settings.WaterfallSettings.NormalFadeGray)
-                    return _settings.WaterfallSettings.Color;
-                else if (Progress < _settings.WaterfallSettings.NormalFadeDarkGray)
-                    return Utility.DarkenColor(_settings.WaterfallSettings.Color);
+                else if (Progress < _settings.Waterfall.NormalFadeGray)
+                    return _settings.Waterfall.Color;
+                else if (Progress < _settings.Waterfall.NormalFadeDarkGray)
+                    return Utility.DarkenColor(_settings.Waterfall.Color);
                 else
                     return ConsoleColor.Black;
             }

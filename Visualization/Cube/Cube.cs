@@ -55,24 +55,24 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
 
             Array.Fill(_zBuffer, 0f);
 
-            if (_settings.CubeSettings.RotationMode == CubeRotationMode.Continuous)
+            if (_settings.Cube.RotationMode == CubeRotationMode.Continuous)
                 ApplyRotation();
 
             // Render cube faces
-            float cubeHalfSize = _settings.CubeSettings.CubeWidth;
-            float pointSpacing = _settings.CubeSettings.PointDensity;
-            char[] chars = _settings.CubeSettings.FaceCharacters;
+            float cubeHalfSize = _settings.Cube.CubeWidth;
+            float pointSpacing = _settings.Cube.PointDensity;
+            char[] chars = _settings.Cube.FaceCharacters;
 
             for (float x = -cubeHalfSize; x < cubeHalfSize; x += pointSpacing)
             {
                 for (float y = -cubeHalfSize; y < cubeHalfSize; y += pointSpacing)
                 {
-                    RenderFace(buffer, width, height, x, y, -cubeHalfSize, chars[0], _settings.CubeSettings.Color); //front
-                    RenderFace(buffer, width, height, cubeHalfSize, y, x, chars[1], _settings.CubeSettings.Color);   //right
-                    RenderFace(buffer, width, height, -cubeHalfSize, y, -x, chars[2], _settings.CubeSettings.Color);  //left
-                    RenderFace(buffer, width, height, -x, y, cubeHalfSize, chars[3], _settings.CubeSettings.Color);   //back
-                    RenderFace(buffer, width, height, x, -cubeHalfSize, -y, chars[4], _settings.CubeSettings.Color);  //bottom
-                    RenderFace(buffer, width, height, x, cubeHalfSize, y, chars[5], _settings.CubeSettings.Color);    //top
+                    RenderFace(buffer, width, height, x, y, -cubeHalfSize, chars[0], _settings.Cube.Color); //front
+                    RenderFace(buffer, width, height, cubeHalfSize, y, x, chars[1], _settings.Cube.Color);   //right
+                    RenderFace(buffer, width, height, -cubeHalfSize, y, -x, chars[2], _settings.Cube.Color);  //left
+                    RenderFace(buffer, width, height, -x, y, cubeHalfSize, chars[3], _settings.Cube.Color);   //back
+                    RenderFace(buffer, width, height, x, -cubeHalfSize, -y, chars[4], _settings.Cube.Color);  //bottom
+                    RenderFace(buffer, width, height, x, cubeHalfSize, y, chars[5], _settings.Cube.Color);    //top
                 }
             }
         }
@@ -86,12 +86,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
         /// <param name="bands">Normalized frequency band data from the FFT analyzer.</param>
         public void OnFrequencyData(float[] bands)
         {
-            if (_settings.CubeSettings.RotationMode == CubeRotationMode.OnFrequency)
+            if (_settings.Cube.RotationMode == CubeRotationMode.OnFrequency)
             {
                 if (bands == null || bands.Length == 0) return;
 
                 float bassEnergy;
-                if (_settings.FftSettings.DedicatedBassBand)
+                if (_settings.Fft.DedicatedBassBand)
                 {
                     bassEnergy = bands[0];
                 }
@@ -104,7 +104,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
                     bassEnergy /= bassBandCount;
                 }
 
-                if (bassEnergy > _settings.CubeSettings.FrequencyThreshold)
+                if (bassEnergy > _settings.Cube.FrequencyThreshold)
                     ApplyRotation();
             }
         }
@@ -118,13 +118,13 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
         /// <param name="volume">The smoothed audio volume level from <see cref="AudioCapture"/>.</param>
         public void Update(float volume)
         {
-            if (_settings.CubeSettings.RotationMode == CubeRotationMode.OnVolume && volume > _settings.CubeSettings.VolumeThreshold)
+            if (_settings.Cube.RotationMode == CubeRotationMode.OnVolume && volume > _settings.Cube.VolumeThreshold)
                 ApplyRotation();
 
-            if (_settings.CubeSettings.PulseEnabled)
-                _pulseAmount = volume * _settings.CubeSettings.PulseIntensity;
+            if (_settings.Cube.PulseEnabled)
+                _pulseAmount = volume * _settings.Cube.PulseIntensity;
             else
-                _pulseAmount *= _settings.CubeSettings.PulseDecay;
+                _pulseAmount *= _settings.Cube.PulseDecay;
 
         }
 
@@ -145,12 +145,12 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
         {
             float xPos = CalculateX(x, y, z);
             float yPos = CalculateY(x, y, z);
-            float zPos = CalculateZ(x, y, z) + _settings.CubeSettings.DistanceFromCam;
+            float zPos = CalculateZ(x, y, z) + _settings.Cube.DistanceFromCam;
 
             if (zPos <= 0) return;
 
             float oneOverZ = 1f / zPos;
-            float pulsedZoom = _settings.CubeSettings.ZoomLevel * (1f + _pulseAmount);
+            float pulsedZoom = _settings.Cube.ZoomLevel * (1f + _pulseAmount);
             int projectedScreenX = (int)(w / 2 + pulsedZoom * oneOverZ * xPos * 2);
             int projectedScreenY = (int)(h / 2 + pulsedZoom * oneOverZ * yPos);
 
@@ -222,16 +222,16 @@ namespace TERMINAL_FREQUENCY.Visualization.Cube
         {
             int direction = 1;
 
-            if (_settings.CubeSettings.Direction == RotationDirection.Backward)
+            if (_settings.Cube.Direction == RotationDirection.Backward)
                 direction = -1;
-            else if (_settings.CubeSettings.Direction == RotationDirection.Random)
-                direction = _rnd.Next(_settings.CubeSettings.RandomModeFrequency) * 2 - 1;
+            else if (_settings.Cube.Direction == RotationDirection.Random)
+                direction = _rnd.Next(_settings.Cube.RandomModeFrequency) * 2 - 1;
 
-            float speedMultiplier = _settings.CubeSettings.RotationMode == CubeRotationMode.Continuous ? _settings.CubeSettings.ContinuousSpeedMultiplier: 1f;
+            float speedMultiplier = _settings.Cube.RotationMode == CubeRotationMode.Continuous ? _settings.Cube.ContinuousSpeedMultiplier: 1f;
 
-            _angleA = _settings.CubeSettings.FreezeXRotation ? 0f : _angleA + _settings.CubeSettings.RotationSpeedX * direction * speedMultiplier;
-            _angleB = _settings.CubeSettings.FreezeYRotation ? 0f : _angleB + _settings.CubeSettings.RotationSpeedY * direction * speedMultiplier;
-            _angleC = _settings.CubeSettings.FreezeZRotation ? 0f : _angleC + _settings.CubeSettings.RotationSpeedZ * direction * speedMultiplier;
+            _angleA = _settings.Cube.FreezeXRotation ? 0f : _angleA + _settings.Cube.RotationSpeedX * direction * speedMultiplier;
+            _angleB = _settings.Cube.FreezeYRotation ? 0f : _angleB + _settings.Cube.RotationSpeedY * direction * speedMultiplier;
+            _angleC = _settings.Cube.FreezeZRotation ? 0f : _angleC + _settings.Cube.RotationSpeedZ * direction * speedMultiplier;
         }
     }
 }

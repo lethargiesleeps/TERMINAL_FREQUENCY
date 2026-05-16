@@ -288,5 +288,18 @@
     "VolumeThreshold": 0.5,
     "Sensitivity": 1.0,
     "DecayRate": 0.9
+  },
+  "ParticleBurst": {
+    "Color": "White",
+    "CharacterSet": "*+.oO0@",
+    "ParticleCount": 50,
+    "SpeedMin": 0.5,
+    "SpeedMax": 1.0,
+    "LifeMin": 0.3,
+    "LifeMax": 1.0,
+    "FadeRate": 0.02,
+    "SpreadAngle": 360.0,
+    "MaxBursts": 8,
+    "BurstsPerSpike": 3
   }
 }

@@ -10,6 +10,7 @@
         Shape,
         Equalizer,
         Cube,
-        NoiseField
+        NoiseField,
+        ParticleBurst
     }
 }

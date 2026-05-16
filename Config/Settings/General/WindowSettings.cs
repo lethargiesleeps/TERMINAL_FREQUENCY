@@ -4,7 +4,7 @@ using TERMINAL_FREQUENCY.Core;
 #nullable disable warnings
 namespace TERMINAL_FREQUENCY.Config.Settings.General
 {
-    public class ConsoleSettings : IConfigurable
+    public class WindowSettings : IConfigurable
     {
         public ConsoleColor BackgroundColor { get; set; }              //TODO: bg color of console at launch, not implemented
         public bool DisableCursor { get; set; }                        //if true, console cursor is disabled
@@ -39,7 +39,7 @@ namespace TERMINAL_FREQUENCY.Config.Settings.General
         private const int SM_CXSCREEN = 0;
         private const int SM_CYSCREEN = 1;
 
-        public ConsoleSettings()
+        public WindowSettings()
         {
             Restore();
         }

@@ -22,7 +22,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
         public Equalizer(Settings settings)
         {
             _settings = settings;
-            _smoothedBands = new float[_settings.FftSettings.BandCount];
+            _smoothedBands = new float[_settings.Fft.BandCount];
         }
 
         public void OnFrequencyData(float[] bands)
@@ -35,9 +35,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
 
             for (int i = 0; i < bands.Length && i < _smoothedBands.Length; i++)
             {
-                if (_settings.EqualizerSettings.SmoothMode)
+                if (_settings.Equalizer.SmoothMode)
                 {
-                    _smoothedBands[i] += (bands[i] - _smoothedBands[i]) * _settings.EqualizerSettings.LerpFactor;
+                    _smoothedBands[i] += (bands[i] - _smoothedBands[i]) * _settings.Equalizer.LerpFactor;
                     _smoothedBands[i] *= 0.995f; //slight decay so bands always moving
                 }
                 else
@@ -49,8 +49,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
         }
         public void Draw(ScreenBuffer buffer)
         {
-            EqualizerSettings eq = _settings.EqualizerSettings;
-            int displayBands = _settings.FftSettings.BandCount;
+            EqualizerSettings eq = _settings.Equalizer;
+            int displayBands = _settings.Fft.BandCount;
             int dataBands = eq.Direction == EqDirection.Mirror ? displayBands / 2 : displayBands;
             int barSpacing = eq.BandSpacing;
 
@@ -175,10 +175,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
                 for (int l = 0; l < length; l++)
                 {
                     int drawX = fromLeft ? baseX + l : baseX - l;
-                    bool isEdge = !_settings.EqualizerSettings.SolidBands && (l == 0 || l == length - 1 || h == 0 || h == height - 1);
+                    bool isEdge = !_settings.Equalizer.SolidBands && (l == 0 || l == length - 1 || h == 0 || h == height - 1);
 
-                    if (_settings.EqualizerSettings.SolidBands || isEdge)
-                        buffer.SetPixel(drawX, y + h, _settings.EqualizerSettings.BandCharacter, color);
+                    if (_settings.Equalizer.SolidBands || isEdge)
+                        buffer.SetPixel(drawX, y + h, _settings.Equalizer.BandCharacter, color);
                 }
             }
         }
@@ -189,7 +189,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
             int copyLength = Math.Min(_smoothedBands.Length, dataBands);
             Array.Copy(_smoothedBands, bands, copyLength);
 
-            if (_settings.EqualizerSettings.Direction == EqDirection.HighToLow)
+            if (_settings.Equalizer.Direction == EqDirection.HighToLow)
                 Array.Reverse(bands);
 
             return bands;
@@ -197,14 +197,14 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
 
         private ConsoleColor GetBandColor(int index)
         {
-            ConsoleColor[] gradient = _settings.EqualizerSettings.GradientColors;
+            ConsoleColor[] gradient = _settings.Equalizer.GradientColors;
 
-            switch (_settings.EqualizerSettings.ColorMode)
+            switch (_settings.Equalizer.ColorMode)
             {
                 case EqColorMode.Uniform:
-                    return _settings.EqualizerSettings.UniformColor;
+                    return _settings.Equalizer.UniformColor;
                 case EqColorMode.Pattern:
-                    var pattern = _settings.EqualizerSettings.ColorPattern;
+                    var pattern = _settings.Equalizer.ColorPattern;
                     return pattern.Length > 0 ? pattern[index % pattern.Length] : ConsoleColor.White;
                 case EqColorMode.Gradient:
                     float value = _smoothedBands[index % _smoothedBands.Length];
@@ -222,10 +222,10 @@ namespace TERMINAL_FREQUENCY.Visualization.Equalizer
                 for (int h = 0; h < height; h++)
                 {
                     int drawY = fromTop ? baseY + h : baseY - h;
-                    bool isEdge = !_settings.EqualizerSettings.SolidBands && (h == 0 || h == height - 1 || w == 0 || w == width - 1);
+                    bool isEdge = !_settings.Equalizer.SolidBands && (h == 0 || h == height - 1 || w == 0 || w == width - 1);
 
-                    if (_settings.EqualizerSettings.SolidBands || isEdge)
-                        buffer.SetPixel(x + w, drawY, _settings.EqualizerSettings.BandCharacter, color);
+                    if (_settings.Equalizer.SolidBands || isEdge)
+                        buffer.SetPixel(x + w, drawY, _settings.Equalizer.BandCharacter, color);
                 }
             }
         }

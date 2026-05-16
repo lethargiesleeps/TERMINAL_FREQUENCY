@@ -78,7 +78,7 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         public void Start()
         {
 
-            if(_settings.AudioCaptureSettings.SpecifyAudioDevice)
+            if(_settings.AudioCapture.SpecifyAudioDevice)
             {
                 _mmDeviceEnumerator = new MMDeviceEnumerator();
                 _devices = _mmDeviceEnumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
@@ -144,14 +144,14 @@ namespace TERMINAL_FREQUENCY.Core.Audio
         /// </summary>
         private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            int sampleCount = e.BytesRecorded / _settings.AudioCaptureSettings.AudioSampleResolution;
+            int sampleCount = e.BytesRecorded / _settings.AudioCapture.AudioSampleResolution;
             if (sampleCount == 0) return;
 
             double sumSquares = 0;
 
             for (int i = 0; i < sampleCount; i++)
             {
-                float sample = BitConverter.ToSingle(e.Buffer, i * _settings.AudioCaptureSettings.AudioSampleResolution);
+                float sample = BitConverter.ToSingle(e.Buffer, i * _settings.AudioCapture.AudioSampleResolution);
                 sumSquares += (double)sample * (double)sample;
             }
 
@@ -160,25 +160,25 @@ namespace TERMINAL_FREQUENCY.Core.Audio
             if (double.IsNaN(RMS) || double.IsInfinity(RMS))
                 return;
 
-            float volumeNow = (float)RMS * _settings.AudioCaptureSettings.RmsMultiplier;
+            float volumeNow = (float)RMS * _settings.AudioCapture.RmsMultiplier;
 
             //noise gate
-            if (volumeNow < _settings.AudioCaptureSettings.NoiseGateFloor)
+            if (volumeNow < _settings.AudioCapture.NoiseGateFloor)
                 volumeNow = 0;
 
             //smooth out volume
-            SmoothedVolume = SmoothedVolume * _settings.AudioCaptureSettings.SmoothingFactorExisting + volumeNow * _settings.AudioCaptureSettings.SmoothingFactorIncoming;
+            SmoothedVolume = SmoothedVolume * _settings.AudioCapture.SmoothingFactorExisting + volumeNow * _settings.AudioCapture.SmoothingFactorIncoming;
 
             //track peak
-            if (volumeNow > PeakVolume && volumeNow > _settings.AudioCaptureSettings.PeakTrackingMinimum)
+            if (volumeNow > PeakVolume && volumeNow > _settings.AudioCapture.PeakTrackingMinimum)
                 PeakVolume = volumeNow;
-            PeakVolume *= _settings.AudioCaptureSettings.PeakDecayFactor;
+            PeakVolume *= _settings.AudioCapture.PeakDecayFactor;
 
             //notif event listeners
             OnVolumeUpdated?.Invoke(SmoothedVolume);
 
             //Check for spikes
-            if (volumeNow > _settings.AudioCaptureSettings.SpikeVolumeMinimum && volumeNow > SmoothedVolume * _settings.AudioCaptureSettings.SpikeRatio)
+            if (volumeNow > _settings.AudioCapture.SpikeVolumeMinimum && volumeNow > SmoothedVolume * _settings.AudioCapture.SpikeRatio)
             {
                 OnVolumeSpike?.Invoke(volumeNow);
                 SmoothedVolume = volumeNow;
@@ -193,14 +193,14 @@ namespace TERMINAL_FREQUENCY.Core.Audio
                         FftAnalyzer.Process(
                             e.Buffer,
                             e.BytesRecorded,
-                            _settings.AudioCaptureSettings.AudioSampleResolution,
+                            _settings.AudioCapture.AudioSampleResolution,
                             _waveIn.WaveFormat.Channels,
                             _waveIn.WaveFormat.SampleRate,
-                            _settings.FftSettings.BandCount,
-                            _settings.FftSettings.Sensitivity,
-                            _settings.FftSettings.HighPass,
-                            _settings.FftSettings.LowPass,
-                            _settings.FftSettings.BassCutoff
+                            _settings.Fft.BandCount,
+                            _settings.Fft.Sensitivity,
+                            _settings.Fft.HighPass,
+                            _settings.Fft.LowPass,
+                            _settings.Fft.BassCutoff
                         );
 
                         if (FftAnalyzer.FrequencyBands != null)

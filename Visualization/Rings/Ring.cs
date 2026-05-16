@@ -27,8 +27,8 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         public Ring(Settings settings)
         {
             _settings = settings;
-            Radius = _settings.RingsSettings.ReverseMode ? _settings.RingsSettings.RadiusMax : _settings.RingsSettings.Radius;
-            Life = _settings.RingsSettings.Lifetime;
+            Radius = _settings.Rings.ReverseMode ? _settings.Rings.RadiusMax : _settings.Rings.Radius;
+            Life = _settings.Rings.Lifetime;
             _rnd = new Random();
         }
 
@@ -40,7 +40,7 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         /// <param name="fadeRate">Life subtracted per frame. Higher values make rings die faster.</param>
         public void Update(float speed = 0.7f, float fadeRate = 0.02f)
         {
-            Radius += _settings.RingsSettings.ReverseMode ? -speed : speed;
+            Radius += _settings.Rings.ReverseMode ? -speed : speed;
             Life -= fadeRate;
         }
 
@@ -48,9 +48,9 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         /// Returns true if the ring is still visible. In normal mode, alive while below <see cref="RingsSettings.RadiusMax"/>.
         /// In reverse mode, alive while above <see cref="RingsSettings.RadiusMin"/>.
         /// </summary>
-        public bool IsAlive => _settings.RingsSettings.ReverseMode
-        ? Life > 0 && Radius >= _settings.RingsSettings.RadiusMin //alive while above min
-        : Life > 0 && Radius <= _settings.RingsSettings.RadiusMax; //alive while below max
+        public bool IsAlive => _settings.Rings.ReverseMode
+        ? Life > 0 && Radius >= _settings.Rings.RadiusMin //alive while above min
+        : Life > 0 && Radius <= _settings.Rings.RadiusMax; //alive while below max
 
         /// <summary>
         /// Returns the display color for this ring based on its normalized remaining life.
@@ -61,38 +61,38 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         public ConsoleColor GetColor()
         {
             //all floats are between 0 and 1 once normalized
-            float normalizedLife = _settings.RingsSettings.Lifetime == 1.0f ? Life
-                : Life / _settings.RingsSettings.Lifetime;
+            float normalizedLife = _settings.Rings.Lifetime == 1.0f ? Life
+                : Life / _settings.Rings.Lifetime;
 
 
-            switch (_settings.RingsSettings.ColorMode)
+            switch (_settings.Rings.ColorMode)
             {
                 case RingColorMode.Light:
-                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.White;
+                    if (normalizedLife > 0.6f || _settings.Rings.SolidColor) return ConsoleColor.White;
                     if (normalizedLife > 0.3f) return ConsoleColor.Gray;
                     return ConsoleColor.DarkGray;
                 case RingColorMode.Dark: //use if console bg colour not black
-                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.Black;
+                    if (normalizedLife > 0.6f || _settings.Rings.SolidColor) return ConsoleColor.Black;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkGray;
                     return ConsoleColor.Gray;
                 case RingColorMode.Red:
-                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Red;
+                    if (_settings.Rings.SolidColor) return ConsoleColor.Red;
                     if (normalizedLife > 0.9f) return ConsoleColor.Magenta;
                     if (normalizedLife > 0.6f) return ConsoleColor.Red;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkMagenta;
                     return ConsoleColor.DarkRed;
                 case RingColorMode.Green:
-                    if (normalizedLife > 0.6f || _settings.RingsSettings.SolidColor) return ConsoleColor.Green;
+                    if (normalizedLife > 0.6f || _settings.Rings.SolidColor) return ConsoleColor.Green;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkGreen;
                     return ConsoleColor.DarkGray;
                 case RingColorMode.Blue:
-                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Blue;
+                    if (_settings.Rings.SolidColor) return ConsoleColor.Blue;
                     if (normalizedLife > 0.9f) return ConsoleColor.Cyan;
                     if (normalizedLife > 0.6f) return ConsoleColor.Blue;
                     if (normalizedLife > 0.3f) return ConsoleColor.DarkCyan;
                     return ConsoleColor.DarkBlue;
                 case RingColorMode.Yellow:
-                    if (_settings.RingsSettings.SolidColor) return ConsoleColor.Yellow;
+                    if (_settings.Rings.SolidColor) return ConsoleColor.Yellow;
                     if (normalizedLife > 0.6f) return ConsoleColor.White;
                     if (normalizedLife > 0.3f) return ConsoleColor.Yellow;
                     return ConsoleColor.DarkYellow;
@@ -126,15 +126,15 @@ namespace TERMINAL_FREQUENCY.Visualization.Rings
         /// <returns>The character to draw at this segment.</returns>
         public char GetChar(int segmentIndex)
         {
-            if (_settings.RingsSettings.CharRandomizer)
+            if (_settings.Rings.CharRandomizer)
             {
-                string charSet = _settings.RingsSettings.CharRandomizerCharset;
+                string charSet = _settings.Rings.CharRandomizerCharset;
                 int randomIndex = _rnd.Next(0, charSet.Length);
                 return charSet[randomIndex];
             }
             else
             {
-                char[] chars = _settings.RingsSettings.Characters;
+                char[] chars = _settings.Rings.Characters;
                 if (chars == null || chars.Length == 0)
                     return 'O';
 

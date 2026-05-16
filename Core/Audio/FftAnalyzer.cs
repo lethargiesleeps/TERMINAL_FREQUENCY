@@ -102,11 +102,11 @@ namespace TERMINAL_FREQUENCY.Core.Audio
 
                 int band;
 
-                if (_settings.FftSettings.DedicatedBassBand && freq <= bassBandCutoff)
+                if (_settings.Fft.DedicatedBassBand && freq <= bassBandCutoff)
                 {
                     band = 0;
                 }
-                else if (_settings.FftSettings.DedicatedBassBand)
+                else if (_settings.Fft.DedicatedBassBand)
                 {
                     float logFreq = (float)(Math.Log(freq / bassBandCutoff) / Math.Log(highFreq / bassBandCutoff));
                     band = 1 + (int)(logFreq * (numBands - 1));
@@ -153,12 +153,12 @@ namespace TERMINAL_FREQUENCY.Core.Audio
             {
                 float bandLow, bandHigh;
 
-                if (_settings.FftSettings.DedicatedBassBand && i == 0)
+                if (_settings.Fft.DedicatedBassBand && i == 0)
                 {
                     bandLow = _highPassCutoff;
                     bandHigh = _bassBandCutoff;
                 }
-                else if (_settings.FftSettings.DedicatedBassBand)
+                else if (_settings.Fft.DedicatedBassBand)
                 {
                     bandLow = (float)(_bassBandCutoff * Math.Pow(_lowPassCutoff / _bassBandCutoff, (float)(i - 1) / (bandCount - 1)));
                     bandHigh = (float)(_bassBandCutoff * Math.Pow(_lowPassCutoff / _bassBandCutoff, (float)i / (bandCount - 1)));
